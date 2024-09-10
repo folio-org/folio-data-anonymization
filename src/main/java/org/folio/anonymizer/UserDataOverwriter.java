@@ -19,26 +19,38 @@ public class UserDataOverwriter {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public void overwriteUserData() {
-        Jdbi jdbi = Database.getInstance();
-        String schemaName = Database.getSchemaName("mod_users");
-        String tableName = Database.getTableName("mod_users", "users");
+        Jdbi jdbi = getInstance();
+        String selectQuery = String.format("SELECT id, data FROM %s.%s", getSchemaName("mod-users"), TABLE_NAME);
+        String updateQuery = String.format("UPDATE %s.%s SET data = :newData WHERE id = :id", getSchemaName("mod-users"), TABLE_NAME);
 
-        jdbi.useTransaction(handle -> {
-            handle.createQuery("SELECT id, data FROM " + tableName)
+        jdbi.useHandle(handle -> {
+            List<Map<String, Object>> users = handle.createQuery(selectQuery)
+                    .setFetchSize(BATCH_SIZE)
                     .mapToMap()
-                    .forEach(row -> {
-                        Integer id = (Integer) row.get("id");
-                        String jsonData = (String) row.get("data");
-                        String newJsonData = overwriteJsonData(jsonData);
+                    .list();
 
-                        handle.createUpdate("UPDATE " + tableName + " SET jsonb = :data WHERE id = :id")
-                                .bind("data", newJsonData)
-                                .bind("id", id)
-                                .execute();
-                    });
+            PreparedBatch updateBatch = handle.prepareBatch(updateQuery);
+            int count = 0;
+
+            for (Map<String, Object> user : users) {
+                int id = (int) user.get("id");
+                String jsonData = (String) user.get("data");
+                String newJsonData = overwriteJsonData(jsonData);
+
+                updateBatch.bind("newData", newJsonData).bind("id", id).add();
+                count++;
+
+                if (count % BATCH_SIZE == 0) {
+                    updateBatch.execute();
+                    updateBatch = handle.prepareBatch(updateQuery);
+                }
+            }
+            if (count % BATCH_SIZE != 0) {
+                updateBatch.execute();
+            }
+
+            logger.info("Data overwrite completed for table: {}", TABLE_NAME);
         });
-
-        logger.info("Data overwrite completed for table: {}", tableName);
     }
 
     private String overwriteJsonData(String jsonData) {
@@ -74,10 +86,24 @@ public class UserDataOverwriter {
             personalData.put("lastName", faker.name().lastName());
             personalData.put("firstName", faker.name().firstName());
             personalData.put("middleName", faker.name().nameSuffix());
+            personalData.put("barcode", faker.lorem().characters());
+            personalData.put("externalSystemId", faker.idNumber().valid());
             personalData.put("dateOfBirth", faker.date().birthday().toString());
             personalData.put("phone", faker.phoneNumber().phoneNumber());
             personalData.put("mobilePhone", faker.phoneNumber().cellPhone());
             personalData.put("email", faker.internet().emailAddress());
+
+            // Handle 'addresses' array
+            List<Map<String, Object>> addresses = (List<Map<String, Object>>) personalData.get("addresses");
+            if (addresses != null && !addresses.isEmpty()) {
+                for (Map<String, Object> address : addresses) {
+                    address.put("city", faker.address().city());
+                    address.put("region", faker.address().state());
+                    address.put("countryId", faker.address().country());
+                    address.put("postalCode", faker.address().zipCode());
+                    address.put("addressLine1", faker.address().streetAddress());
+                }
+            }
         }
         return personalData;
     }
