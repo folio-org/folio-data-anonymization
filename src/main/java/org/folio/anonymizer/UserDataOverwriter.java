@@ -2,6 +2,7 @@ package org.folio.anonymizer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
+import lombok.experimental.UtilityClass;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jdbi.v3.core.Jdbi;
@@ -11,10 +12,13 @@ import org.jdbi.v3.core.statement.PreparedBatch;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.folio.anonymizer.Database.getSchemaName;
 import static org.folio.anonymizer.Database.getTableName;
 
+
+@UtilityClass
 public class UserDataOverwriter {
 
     private static final Logger logger = LogManager.getLogger(UserDataOverwriter.class);
@@ -31,19 +35,20 @@ public class UserDataOverwriter {
 
         String module = "mod-users";
         String tableName = "users";
-        String uuidValue = "0002cf45-5e88-49e1-90fe-104399884fe9";  // Replace with actual UUID value
+        String uuidValue = "0fe9";  // Replace with actual UUID value
 
         String selectQuery = String.format(
-                "SELECT id, jsonb FROM %s WHERE id = '%s'::uuid LIMIT 1",
+                "SELECT id, jsonb FROM %s WHERE id = '%s' LIMIT 1",
                 getTableName(module, tableName),
                 uuidValue
         );
 
         System.out.println("the select query is "+selectQuery);
         String updateQuery = String.format(
-                "UPDATE %s SET jsonb = :newData WHERE id = :id::uuid",
+                "UPDATE %s SET jsonb = to_jsonb(:newData) WHERE id = :id",
                 getTableName(module, tableName)
         );
+
         jdbi.useHandle(handle -> {
             List<Map<String, Object>> users = handle.createQuery(selectQuery)
                     .setFetchSize(BATCH_SIZE)
@@ -54,7 +59,7 @@ public class UserDataOverwriter {
             int count = 0;
 
             for (Map<String, Object> user : users) {
-                int id = (int) user.get("id");
+                UUID id = (UUID) user.get("id"); // Cast to UUID instead of int
                 String jsonData = (String) user.get("data");
                 String newJsonData = overwriteJsonData(jsonData);
 
@@ -70,7 +75,7 @@ public class UserDataOverwriter {
                 updateBatch.execute();
             }
 
-            logger.info("Data overwrite completed for table: {}",  getTableName(module, tableName));
+            logger.info("Data overwrite completed for table: {}", getTableName(module, tableName));
         });
     }
 

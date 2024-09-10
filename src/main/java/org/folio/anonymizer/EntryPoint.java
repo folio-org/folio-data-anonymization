@@ -7,5 +7,6 @@ public class EntryPoint {
 
   public static void main(String[] args) {
     log.info(Database.getInstance());
+    UserDataOverwriter.overwriteUserData();
   }
 }
