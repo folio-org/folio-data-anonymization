@@ -1,3 +1,4 @@
+package org.folio.anonymizer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
@@ -5,11 +6,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.PreparedBatch;
-import org.jdbi.v3.core.statement.StatementContext;
+
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.folio.anonymizer.Database.getSchemaName;
+import static org.folio.anonymizer.Database.getTableName;
 
 public class UserDataOverwriter {
 
@@ -19,10 +23,27 @@ public class UserDataOverwriter {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public void overwriteUserData() {
-        Jdbi jdbi = getInstance();
-        String selectQuery = String.format("SELECT id, data FROM %s.%s", getSchemaName("mod-users"), TABLE_NAME);
-        String updateQuery = String.format("UPDATE %s.%s SET data = :newData WHERE id = :id", getSchemaName("mod-users"), TABLE_NAME);
+        //String selectQuery = String.format("SELECT id, data FROM %s.%s", getSchemaName("mod-users"), TABLE_NAME);
+        Jdbi jdbi = Database.getInstance();
+//        String uuidValue = "0002cf45-5e88-49e1-90fe-104399884fe9";
+//        String selectQuery = String.format("SELECT id, jsonb FROM %s.%s WHERE id = '%s'::uuid LIMIT 1", getSchemaName("mod-users"), getTableName(getSchemaName("mod-users")+"users"), uuidValue);
+//        String updateQuery = String.format("UPDATE %s.%s SET jsonb = :newData WHERE id = :id::uuid", getSchemaName("mod-users"), TABLE_NAME);
 
+        String module = "mod-users";
+        String tableName = "users";
+        String uuidValue = "0002cf45-5e88-49e1-90fe-104399884fe9";  // Replace with actual UUID value
+
+        String selectQuery = String.format(
+                "SELECT id, jsonb FROM %s WHERE id = '%s'::uuid LIMIT 1",
+                getTableName(module, tableName),
+                uuidValue
+        );
+
+        System.out.println("the select query is "+selectQuery);
+        String updateQuery = String.format(
+                "UPDATE %s SET jsonb = :newData WHERE id = :id::uuid",
+                getTableName(module, tableName)
+        );
         jdbi.useHandle(handle -> {
             List<Map<String, Object>> users = handle.createQuery(selectQuery)
                     .setFetchSize(BATCH_SIZE)
@@ -49,7 +70,7 @@ public class UserDataOverwriter {
                 updateBatch.execute();
             }
 
-            logger.info("Data overwrite completed for table: {}", TABLE_NAME);
+            logger.info("Data overwrite completed for table: {}",  getTableName(module, tableName));
         });
     }
 
@@ -85,7 +106,7 @@ public class UserDataOverwriter {
         if (personalData != null) {
             personalData.put("lastName", faker.name().lastName());
             personalData.put("firstName", faker.name().firstName());
-            personalData.put("middleName", faker.name().nameSuffix());
+            personalData.put("middleName", faker.name().nameWithMiddle());
             personalData.put("barcode", faker.lorem().characters());
             personalData.put("externalSystemId", faker.idNumber().valid());
             personalData.put("dateOfBirth", faker.date().birthday().toString());
