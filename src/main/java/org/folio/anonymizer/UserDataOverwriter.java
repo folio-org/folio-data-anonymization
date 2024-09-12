@@ -30,13 +30,10 @@ public class UserDataOverwriter {
 
     String selectQuery = String.format("SELECT id, jsonb::text FROM %s", getTableName(module, tableName));
 
-    log.debug("the select query is " + selectQuery);
     String updateQuery = String.format(
       "UPDATE %s SET jsonb = :newData::jsonb WHERE id = :id",
       getTableName(module, tableName)
     );
-
-    log.debug("the updated query is " + updateQuery);
 
     jdbi.useHandle(handle -> {
       List<Map<String, Object>> users = handle.createQuery(selectQuery).setFetchSize(BATCH_SIZE).mapToMap().list();
@@ -85,7 +82,7 @@ public class UserDataOverwriter {
 
   private void anonymizeUserData(Map<String, Object> dataMap) {
     dataMap.put("barcode", faker.lorem().characters());
-    dataMap.put("externalSystemId", faker.idNumber().valid());
+    dataMap.put("externalSystemId", faker.number().digits(30));
 
     // Anonymize `personal` data if present
     Map<String, Object> personalData = (Map<String, Object>) dataMap.get("personal");
