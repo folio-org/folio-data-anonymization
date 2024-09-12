@@ -184,11 +184,11 @@ public class InventoryShuffler {
       availableDestinationsQueue.add(batch);
     }
 
-    waitForDone();
+    waitForDone("instances", allIds.size());
 
     log.info("Sending temporary IDs to get restored");
     inNeedOfMoving.get().addAll(temporaryIds);
-    waitForDone();
+    waitForDone("instances-cleanup", temporaryIds.size());
 
     log.info("Shutting down executors for instance FK updates...");
     fkUpdatePool
@@ -222,11 +222,11 @@ public class InventoryShuffler {
       availableDestinationsQueue.add(batch);
     }
 
-    waitForDone();
+    waitForDone("holdings", allIds.size());
 
     log.info("Sending temporary IDs to get restored");
     inNeedOfMoving.get().addAll(temporaryIds);
-    waitForDone();
+    waitForDone("holdings-cleanup", temporaryIds.size());
 
     log.info("Shutting down executors for holding FK updates...");
     fkUpdatePool
@@ -260,11 +260,11 @@ public class InventoryShuffler {
       availableDestinationsQueue.add(batch);
     }
 
-    waitForDone();
+    waitForDone("items", allIds.size());
 
     log.info("Sending temporary IDs to get restored");
     inNeedOfMoving.get().addAll(temporaryIds);
-    waitForDone();
+    waitForDone("items-cleanup", temporaryIds.size());
 
     log.info("Shutting down executors for item FK updates...");
     fkUpdatePool
@@ -278,7 +278,7 @@ public class InventoryShuffler {
     log.info("All done moving items!");
   }
 
-  private static void waitForDone() {
+  private static void waitForDone(String label, int referenceCount) {
     Utils.sneakyGet(
       mainUpdatePool.submit(
         new Runnable() {
@@ -301,7 +301,12 @@ public class InventoryShuffler {
               if (i % 5 == 0) {
                 i = 0;
                 log.info(
-                  "in need of moving={}, available destination sets={}, working={}",
+                  "[{}] [{}%] in need of moving={}, available destination sets={}, working={}",
+                  label,
+                  String.format(
+                    "%.2f",
+                    (referenceCount - inNeedOfMoving.get().size()) / ((double) referenceCount) * 100
+                  ),
                   inNeedOfMoving.get().size(),
                   availableDestinationsQueue.size(),
                   numWorking.get()

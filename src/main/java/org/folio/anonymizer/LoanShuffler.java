@@ -69,7 +69,12 @@ public class LoanShuffler {
           return null;
         });
 
-      log.info("Persisted batch {}-{}", i, end);
+      log.info(
+        "{}% done, persisted batch {}-{}",
+        String.format("%.2f", ((double) i) / numLoansToShuffle * 100),
+        i,
+        end
+      );
     }
 
     log.info("Done!");
