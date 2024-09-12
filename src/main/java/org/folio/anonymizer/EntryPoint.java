@@ -8,8 +8,9 @@ public class EntryPoint {
   public static void main(String[] args) {
     Database.getInstance();
 
+    InventoryShuffler.shuffle();
     LoanShuffler.shuffleLoans();
     UserDataOverwriter.overwriteUserData();
-    InventoryShuffler.shuffle();
+    VendorDataOverwriter.overwriteVendorData();
   }
 }
