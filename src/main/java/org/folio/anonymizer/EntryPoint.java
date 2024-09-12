@@ -10,5 +10,6 @@ public class EntryPoint {
 
     LoanShuffler.shuffleLoans();
     UserDataOverwriter.overwriteUserData();
+    InventoryShuffler.shuffle();
   }
 }
