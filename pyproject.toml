@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "folio-data-anonymization"
+version = "0.1.0"
+description = "Anonymize folio data"
+authors = ["Shelley Doljack <sdoljack@stanford.edu>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+asyncio = "^3.4.3"
+asyncpg = "^0.30.0"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.4"
+black = "^24.10.0"
+mypy = "^1.13.0"
+flake8 = "^7.1.1"
+pytest-mock-resources = "^2.12.1"
+pytest-asyncio = "^0.25.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
+include = '\.pyi?$'
+skip-string-normalization = true
+color = true
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+explicit_package_bases = true
+warn_unreachable = true
+pretty = true
+show_error_context = true
