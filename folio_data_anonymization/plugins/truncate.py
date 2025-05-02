@@ -15,7 +15,7 @@ def truncate_db_objects(**kwargs):
     with open(sql_file()) as sqv:
         query = sqv.read()
 
-    schemas_tables = ','.join(kwargs.get('schemas_tables', []))
+    schemas_tables = kwargs.get('schemas_tables', [])
     logger.info(f"Will truncate {schemas_tables}")
 
     truncation_result = SQLExecuteQueryOperator(

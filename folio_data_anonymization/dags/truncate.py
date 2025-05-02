@@ -28,7 +28,9 @@ with DAG(
     @task
     def fetch_schemas_tables():
         with open('../plugins/config/truncate-schemas-tables.json', 'r') as file:
-            return json.load(file)
+            json_list = json.load(file)
+
+        return ','.join(json_list)
 
     @task
     def truncate_schemas_tables(*kwargs):
