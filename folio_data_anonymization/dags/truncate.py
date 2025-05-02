@@ -1,9 +1,11 @@
+import json
+
 from datetime import timedelta
 
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.decorators import task
 
-from plugins.git_plugins.truncate import truncate
+from plugins.git_plugins.truncate import truncate_db_objects
 
 
 default_args = {
@@ -23,10 +25,19 @@ with DAG(
     params={},
 ) as dag:
 
-    truncate_tables = PythonOperator(
-        task_id="table_truncation",
-        python_callable=truncate,
-    )
+    @task
+    def fetch_schemas_tables():
+        with open('../plugins/config/truncate-schemas-tables.json', 'r') as file:
+            return json.load(file)
+
+    @task
+    def truncate_schemas_tables(*kwargs):
+        schemas_tables = kwargs.get('schemas_tables', [])
+        return truncate_db_objects(schemas_tables)
+
+    schemas_tables = fetch_schemas_tables()
+
+    truncate_database_objects = truncate_schemas_tables(schemas_tables)
 
 
-(truncate_tables)
+(schemas_tables >> truncate_database_objects)
