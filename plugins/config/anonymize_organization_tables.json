@@ -1,0 +1,95 @@
+[
+  {
+    "table_name": "mod_organizations_storage.contacts",
+    "anonymize": {
+      "jsonb": [
+        {
+          "emails": [
+            "value"
+          ]
+        },
+        "lastName",
+        "firstName",
+        {
+          "addresses": [
+            "addressLine1",
+            "addressLine2",
+            "city",
+            "stateRegion",
+            "country"
+          ]
+        },
+        {
+          "urls": [
+            "value"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "table_name": "mod_organizations_storage.interface_credentials",
+    "anonymize": {
+      "jsonb": [
+        "username",
+        "password"
+      ]
+    }
+  },
+  {
+    "table_name": "mod_organizations_storage.interfaces",
+    "anonymize": {
+      "jsonb": [
+        "uri",
+        "name",
+        "notes"
+      ]
+    }
+  },
+  {
+    "table_name": "mod_organizations_storage.organizations",
+    "anonymize": {
+      "jsonb": [
+        "code",
+        "name",
+        {
+          "emails": [
+            "value"
+          ]
+        },
+        {
+          "aliases": [
+            "value"
+          ]
+        },
+        {
+          "phoneNumbers": [
+            "phoneNumber",
+            "addressLine1",
+            "addressLine2",
+            "city",
+            "stateRegion",
+            "country",
+            "zipCode"
+          ]
+        },
+        {
+          "urls": [
+            "value"
+          ]
+        },
+        "edi, libEdiType",
+        "edi, vendorEdiType"
+      ]
+    },
+    "set_to_empty": {
+      "jsonb": [
+        {
+          "aliases": [
+            "description"
+          ]
+        }
+      ]
+    }
+  }
+]
