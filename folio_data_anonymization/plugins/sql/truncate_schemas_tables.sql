@@ -1,0 +1,1 @@
+TRUNCATE TABLE %(schemas_tables)s RESTART IDENTITY;
