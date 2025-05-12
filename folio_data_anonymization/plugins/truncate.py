@@ -20,13 +20,12 @@ def tables_list():
     return ','.join(tenant_json_list)
 
 
-def truncate_db_objects(**kwargs):
+def truncate_db_objects(schemas_tables, **kwargs):
     context = get_current_context()
 
     with open(sql_file()) as sqv:
         query = sqv.read()
 
-    schemas_tables = kwargs.get('schemas_tables', [])
     logger.info(f"Will truncate {schemas_tables}")
 
     truncation_result = SQLExecuteQueryOperator(

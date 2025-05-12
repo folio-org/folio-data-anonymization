@@ -31,13 +31,12 @@ with DAG(
         return tables_list()
 
     @task
-    def truncate_schemas_tables(*kwargs):
-        schemas_tables = kwargs.get('schemas_tables', [])
+    def truncate_schemas_tables(schemas_tables):
         return truncate_db_objects(schemas_tables)
 
     schemas_tables = fetch_schemas_tables()
 
-    truncate_database_objects = truncate_schemas_tables(schemas_tables=schemas_tables)
+    truncate_database_objects = truncate_schemas_tables(schemas_tables)
 
 
 (schemas_tables >> truncate_database_objects)
