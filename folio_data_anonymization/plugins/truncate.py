@@ -1,12 +1,23 @@
+import json
 import logging
 
 from pathlib import Path
 
+from airflow.models import Variable
 from airflow.operators.python import get_current_context
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
-
 logger = logging.getLogger(__name__)
+
+
+def tables_list():
+    with open(tables_json_file(), 'r') as file:
+        json_list = json.load(file)
+
+    tenant_id = Variable.get("TENANT_ID", "diku")
+    tenant_json_list = [f"{tenant_id}_" + item for item in json_list]
+
+    return ','.join(tenant_json_list)
 
 
 def truncate_db_objects(**kwargs):
@@ -29,6 +40,15 @@ def truncate_db_objects(**kwargs):
     ).execute(context)
 
     return truncation_result
+
+
+def tables_json_file(**kwargs) -> Path:
+    _path = (
+        Path(kwargs.get("airflow", "/opt/airflow"))
+        / "../plugins/config/truncate_schemas_tables.json"
+    )
+
+    return _path
 
 
 def sql_file(**kwargs) -> Path:
