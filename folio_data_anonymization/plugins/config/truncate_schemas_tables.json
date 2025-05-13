@@ -1,7 +1,5 @@
 [
     "mod_agreements.entitlement",
-    "mod_audit.acquisition_order_log",
-    "mod_audit.acquisition_piece_log",
     "mod_bulk_operations.bulk_operation",
     "mod_bulk_operations.bulk_operation_data_processing",
     "mod_bulk_operations.bulk_operation_execution",
