@@ -7,8 +7,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
-psycopg = "^3.2.4"
+psycopg = {extras = ["binary"], version = "^3.2.8"}
 apache-airflow = "^3.0.0"
+faker = "^37.1.0"
 
 [tool.poetry.group.test.dependencies]
 black = "^24.10.0"
@@ -26,13 +27,13 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 88
-target-version = ['py313']
+target-version = ['py312']
 include = '\.pyi?$'
 skip-string-normalization = true
 color = true
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.12"
 ignore_missing_imports = true
 explicit_package_bases = true
 warn_unreachable = true
