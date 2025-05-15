@@ -25,3 +25,24 @@ def test_org_fake_jsonb(configurations):
     assert organization["addresses"][0]["city"] != original_org["addresses"][0]["city"]
     assert organization["emails"][0]["value"] != original_org["emails"][0]["value"]
     assert len(organization["aliases"][0]["description"]) == 0
+
+
+def test_user_fake_jsonb(configurations):
+    with (pathlib.Path(__file__).parent / "examples/user.json").open() as fo:
+        user = json.load(fo)
+
+    original_user = copy.deepcopy(user)
+    for row in configurations.get("anonymize_all_user_tables"):
+        if row['table_name'].startswith("mod_users.users"):
+            user_config = row
+
+    fake_jsonb(user, user_config)
+
+    assert user["username"] != original_user["username"]
+    assert user["barcode"] != original_user["barcode"]
+    assert user["externalSystemId"] != original_user["externalSystemId"]
+    assert user["personal"]["lastName"] != original_user["personal"]["lastName"]
+    assert (
+        user["personal"]["addresses"][0]["addressLine1"]
+        != original_user["personal"]["addresses"][0]["addressLine1"]
+    )

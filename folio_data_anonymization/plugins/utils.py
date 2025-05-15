@@ -1,10 +1,11 @@
 from faker import Faker
 from jsonpath_ng import parse
 
-from folio_data_anonymization.plugins.providers import Organizations
+from folio_data_anonymization.plugins.providers import Organizations, Users
 
 faker = Faker()
 faker.add_provider(Organizations)
+faker.add_provider(Users)
 
 
 def fake_jsonb(jsonb: dict, config: dict) -> dict:
