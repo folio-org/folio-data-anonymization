@@ -1,7 +1,7 @@
 import pydantic
 import pytest
 
-from folio_data_anonymization.plugins.truncate import tables_list, truncate_db_objects
+from plugins.truncate import tables_list, truncate_db_objects
 
 
 class MockSQLExecuteQueryOperator(pydantic.BaseModel):
