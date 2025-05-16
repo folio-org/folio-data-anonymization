@@ -2,11 +2,11 @@ import copy
 import json
 import pathlib
 
-from folio_data_anonymization.plugins.utils import fake_jsonb
+from plugins.utils import fake_jsonb
 
 
 def test_org_fake_jsonb(configurations):
-    with (pathlib.Path(__file__).parent / "examples/organization.json").open() as fo:
+    with (pathlib.Path(__file__).parent / "fixtures/organization.json").open() as fo:
         organization = json.load(fo)
 
     original_org = copy.deepcopy(organization)

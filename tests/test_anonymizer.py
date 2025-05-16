@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock
-from folio_data_anonymization.plugins.anonymizer import (
+from plugins.anonymizer import (
     anonymize,
 )
 
@@ -19,7 +19,7 @@ def mock_data() -> list:
 
 def test_anonymize(mocker, mock_users, mock_data, caplog):
     mocker.patch(
-        "folio_data_anonymization.plugins.anonymizer.Users",
+        "plugins.anonymizer.Users",
         return_value=mock_users,
     )
     anonymize(data=mock_data)

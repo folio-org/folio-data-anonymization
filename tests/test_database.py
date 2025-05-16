@@ -2,8 +2,8 @@ import pytest
 import psycopg
 import os
 from pytest_postgresql import factories
-from folio_data_anonymization.plugins.database import Database
-from folio_data_anonymization.plugins.users import Users
+from plugins.database import Database
+from plugins.users import Users
 
 
 @pytest.fixture
@@ -80,7 +80,7 @@ def test_table_name(env_vars, postgresql):
 
 def test_anonymize_users(mocker, postgresql, caplog):
     mocker.patch(
-        "folio_data_anonymization.plugins.users.Users", return_value=postgresql
+        "plugins.users.Users", return_value=postgresql
     )
     users_task = Users()
     users_task.anonymize_users()
