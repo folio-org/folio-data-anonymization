@@ -32,7 +32,7 @@ def test_user_fake_jsonb(configurations):
         user = json.load(fo)
 
     original_user = copy.deepcopy(user)
-    for row in configurations.get("anonymize_all_user_tables"):
+    for row in configurations.get("anonymize_users_tables"):
         if row['table_name'].startswith("mod_users.users"):
             user_config = row
 

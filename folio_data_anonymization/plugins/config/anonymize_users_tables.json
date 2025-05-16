@@ -1,56 +1,5 @@
 [
   {
-    "table_name": "mod_audit.circulation_logs",
-    "anonymize": {
-      "jsonb": [
-        "source",
-        "userBarcode"
-      ]
-    }
-  },
-  {
-    "table_name": "mod_circulation_storage.request",
-    "anonymize": {
-      "jsonb": [
-        "requester, barcode",
-        "requester, lastName",
-        "requester, firstName",
-        "requester, middleName",
-        "proxy, barcode",
-        "proxy, lastName",
-        "proxy, firstName",
-        "proxy, middleName"
-      ]
-    },
-    "set_to_empty": {
-      "jsonb": [
-        "patronComments"
-      ]
-    }
-  },
-  {
-    "table_name": "mod_courses.coursereserves_courselistings",
-    "anonymize": {
-      "jsonb": [
-        {
-          "instructorObjects": [
-            "name",
-            "barcode"
-          ]
-        }
-      ]
-    }
-  },
-  {
-    "table_name": "mod_courses.coursereserves_instructors",
-    "anonymize": {
-      "jsonb": [
-        "name",
-        "barcode"
-      ]
-    }
-  },
-  {
     "table_name": "mod_users.users",
     "anonymize": {
       "jsonb": [
