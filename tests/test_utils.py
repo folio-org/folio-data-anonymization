@@ -28,7 +28,7 @@ def test_org_fake_jsonb(configurations):
 
 
 def test_user_fake_jsonb(configurations):
-    with (pathlib.Path(__file__).parent / "examples/user.json").open() as fo:
+    with (pathlib.Path(__file__).parent / "fixtures/user.json").open() as fo:
         user = json.load(fo)
 
     original_user = copy.deepcopy(user)
