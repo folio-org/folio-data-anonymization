@@ -7,8 +7,8 @@ serviceAccount:
   create: true
 configuration:
   core:
-    dags_folder: "/opt/bitnami/airflow/dags/git_dags"
-    plugins_folder: "/opt/bitnami/airflow/plugins/git_plugins"
+    dags_folder: "/opt/bitnami/airflow/dags"
+    plugins_folder: "/opt/bitnami/airflow/plugins"
     load_examples: "False"
     hostname_callable: "airflow.utils.net.get_host_ip_address"
 auth:
@@ -20,14 +20,14 @@ dags:
     - repository: "https://github.com/folio-org/folio-data-anonymization.git"
       branch: "main"
       name: "dags"
-      path: /folio_data_anonymization/dags
+      path: /folio_data_anonymization/git_dags
 plugins:
   enabled: true
   repositories:
     - repository: "https://github.com/folio-org/folio-data-anonymization.git"
       branch: "main"
       name: "plugins"
-      path: /folio_data_anonymization/plugins
+      path: /folio_data_anonymization/git_plugins
 scheduler:
   resourcesPreset: "large"
   livenessProbe:

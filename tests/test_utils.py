@@ -2,7 +2,7 @@ import copy
 import json
 import pathlib
 
-from folio_data_anonymization.plugins.utils import fake_jsonb
+from folio_data_anonymization.git_plugins.utils import fake_jsonb
 
 
 def test_org_fake_jsonb(configurations):
