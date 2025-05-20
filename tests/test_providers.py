@@ -2,7 +2,7 @@ import pytest
 
 from faker import Faker
 
-from folio_data_anonymization.git_plugins.providers import Organizations
+from folio_data_anonymization.plugins.providers import Organizations
 
 
 @pytest.fixture

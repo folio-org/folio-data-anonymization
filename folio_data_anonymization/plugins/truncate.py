@@ -45,7 +45,7 @@ def truncate_db_objects(schemas_tables, **kwargs):
 def tables_json_file(**kwargs) -> Path:
     _path = (
         Path(kwargs.get("airflow", "/opt/bitnami/airflow"))
-        / "git_plugins/config/truncate_schemas_tables.json"
+        / "plugins/git_plugins/config/truncate_schemas_tables.json"
     )
 
     return _path
@@ -54,7 +54,7 @@ def tables_json_file(**kwargs) -> Path:
 def sql_file(**kwargs) -> Path:
     sql_path = (
         Path(kwargs.get("airflow", "/opt/bitnami/airflow"))
-        / "git_plugins/sql/truncate_schemas_tables.sql"
+        / "plugins/git_plugins/sql/truncate_schemas_tables.sql"
     )
 
     return sql_path

@@ -1,7 +1,7 @@
 import pydantic
 import pytest
 
-from folio_data_anonymization.git_plugins.truncate import tables_list, truncate_db_objects
+from folio_data_anonymization.plugins.truncate import tables_list, truncate_db_objects
 
 
 class MockSQLExecuteQueryOperator(pydantic.BaseModel):
@@ -25,23 +25,23 @@ def mock_get_current_context(monkeypatch, mocker):
         return context
 
     monkeypatch.setattr(
-        'folio_data_anonymization.git_plugins.truncate.get_current_context',
+        'folio_data_anonymization.plugins.truncate.get_current_context',
         _context,
     )
 
 
 def setup_tests(mocker):
     mocker.patch(
-        'folio_data_anonymization.git_plugins.truncate.SQLExecuteQueryOperator',
+        'folio_data_anonymization.plugins.truncate.SQLExecuteQueryOperator',
         return_value=MockSQLExecuteQueryOperator(),
     )
     mocker.patch(
-        'folio_data_anonymization.git_plugins.truncate.tables_json_file',
+        'folio_data_anonymization.plugins.truncate.tables_json_file',
         return_value='tests/fixtures/mock_truncate_schemas_tables.json',
     )
     mocker.patch(
-        'folio_data_anonymization.git_plugins.truncate.sql_file',
-        return_value='folio_data_anonymization/git_plugins/sql/truncate_schemas_tables.sql',
+        'folio_data_anonymization.plugins.truncate.sql_file',
+        return_value='folio_data_anonymization/plugins/sql/truncate_schemas_tables.sql',
     )
 
 
