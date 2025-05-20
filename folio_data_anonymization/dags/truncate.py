@@ -3,7 +3,7 @@ from datetime import timedelta
 from airflow import DAG
 from airflow.decorators import task
 
-from plugins.git_plugins.truncate import (
+from plugins.truncate import (
     tables_list,
     truncate_db_objects,
 )
