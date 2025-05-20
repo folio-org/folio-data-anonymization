@@ -1,7 +1,10 @@
 from faker import Faker
 from jsonpath_ng import parse
 
-from folio_data_anonymization.plugins.providers import Organizations
+try:
+    from folio_data_anonymization.git_plugins.providers import Organizations
+except (ImportError, ModuleNotFoundError):
+    from folio_data_anonymization.plugins.providers import Organizations
 
 faker = Faker()
 faker.add_provider(Organizations)
