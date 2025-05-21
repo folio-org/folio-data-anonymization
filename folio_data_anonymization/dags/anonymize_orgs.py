@@ -6,6 +6,10 @@ from datetime import datetime, timedelta
 from airflow.models.dag import DAG
 from airflow.decorators import task
 
+from folio_data_anonymization.plugins.utils import (
+    retreive_data,
+    update_tables
+)
 
 default_args = {
     "depends_on_past": False,
@@ -23,7 +27,6 @@ with DAG(
     catchup=False,
     params={
         "config": "/opt/airflow/folio_data_anonymization/plugins/config/anonymize_organization_tables.json",
-        "tenant": "sul"
     }
 ) as dag:
 
@@ -32,28 +35,31 @@ with DAG(
         """
         Setup task to prepare the environment for anonymization.
         """
-        task_instance = kwargs["ti"]
         params = kwargs["params"]
         config_path = params["config"]
-        tenant = params["tenant"]
-        task_instance.xcom_push(key="tenant", value=tenant)
+
         with open(config_path) as config_file:
             config = json.load(config_file)
         return config
 
     @task
-    def anonymize_table(table_info: dict, **kwargs):
+    def retrieve_data(table_info: dict) -> list:
         """
-        Anonymize a specific table based on the provided configuration.
+        Retrieves table data based on the provided configuration.
         """
-        task_instance = kwargs["ti"]
-        tenant = task_instance.xcom_pull(key="tenant")
+        return retreive_data(table_info)
+
+
+    @task
+    def anonymize_table(table_data: list):
+        """
+        Anonymize data from an organization table.
+        """
+        return update_tables(table_data)
+
+
 
 
     config = setup()
-    anonymize_table.expand(table_info=config)
-
-
-
-
-        
+    table_data = retrieve_data.expand(table_info=config)
+    anonymize_table(table_data)
