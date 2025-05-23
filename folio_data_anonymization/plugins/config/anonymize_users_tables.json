@@ -1,0 +1,86 @@
+[
+  {
+    "table_name": "mod_users.users",
+    "anonymize": {
+      "jsonb": [
+        [
+          "personal.addresses[*].addressLine1",
+          "street_address"
+        ],
+        [
+          "personal.addresses[*].addressLine2",
+          "street_address"
+        ],
+        [
+          "personal.addresses[*].city",
+          "city"
+        ],
+        [
+          "personal.addresses[*].region",
+          "state"
+        ],
+        [
+          "personal.addresses[*].countryId",
+          "country_code"
+        ],
+        [
+          "personal.addresses[*].postalCode",
+          "zipcode"
+        ],
+        [
+          "personal.pronouns",
+          "pronouns"
+        ],
+        [
+          "personal.lastName",
+          "last_name"
+        ],
+        [
+          "personal.firstName",
+          "first_name"
+        ],
+        [
+          "personal.middleName",
+          "first_name"
+        ],
+        [
+          "personal.preferredFirstName",
+          "first_name"
+        ],
+        [
+          "personal.email",
+          "email"
+        ],
+        [
+          "personal.phone",
+          "phone_number"
+        ],
+        [
+          "personal.mobilePhone",
+          "phone_number"
+        ],
+        [
+          "personal.dateOfBirth",
+          "birthdate"
+        ],
+        [
+          "username",
+          "user_name"
+        ],
+        [
+          "barcode",
+          "barcode"
+        ],
+        [
+          "externalSystemId",
+          "external_system_id"
+        ]
+      ]
+    },
+    "set_to_empty": {
+      "jsonb": [
+        "customFields"
+      ]
+    }
+  }
+]

@@ -1,0 +1,114 @@
+[
+  {
+    "table_name": "mod_audit.circulation_logs",
+    "anonymize": {
+      "jsonb": [
+        [
+          "linkToIds.userId",
+          "id"
+        ],
+        [
+          "source",
+          "personal.lastName, personal.firstName"
+        ],
+        [
+          "userBarcode",
+          "barcode"
+        ]
+      ]
+    }
+  },
+  {
+    "table_name": "mod_circulation_storage.request",
+    "anonymize": {
+      "jsonb": [
+        [
+          "requesterId",
+          "id"
+        ],
+        [
+          "requester.barcode",
+          "barcode"
+        ],
+        [
+          "requester.lastName",
+          "personal.lastName"
+        ],
+        [
+          "requester.firstName",
+          "personal.firstName"
+        ],
+        [
+          "requester.middleName",
+          "personal.middleName"
+        ],
+        [
+          "proxyUserId",
+          "id"
+        ],
+        [
+          "proxy.barcode",
+          "barcode"
+        ],
+        [
+          "proxy.lastName",
+          "personal.lastName"
+        ],
+        [
+          "proxy.firstName",
+          "personal.firstName"
+        ],
+        [
+          "proxy.middleName",
+          "personal.middleName"
+        ]
+      ]
+    },
+    "set_to_empty": {
+      "jsonb": [
+        "patronComments"
+      ]
+    }
+  },
+  {
+    "table_name": "mod_courses.coursereserves_courselistings",
+    "anonymize": {
+      "jsonb": [
+        [
+          "instructorObjects[*].userId",
+          "id"
+        ],
+        [
+          "instructorObjects[*].name",
+          "personal.firstName personal.lastName"
+        ],
+        [
+          "instructorObjects[*].barcode",
+          "barcode"
+        ],
+        [
+          "instructorObjects[*].userId"
+        ]
+      ]
+    }
+  },
+  {
+    "table_name": "mod_courses.coursereserves_instructors",
+    "anonymize": {
+      "jsonb": [
+        [
+          "userId",
+          "id"
+        ],
+        [
+          "name",
+          "personal.firstName personal.lastName"
+        ],
+        [
+          "barcode",
+          "barcode"
+        ]
+      ]
+    }
+  }
+]

@@ -27,3 +27,30 @@ class Organizations(BaseProvider):
                 continue
             fake_org_code.append(faker.random_uppercase_letter())
         return "".join(fake_org_code)
+
+
+class Users(BaseProvider):
+
+    def pronouns(self):
+        return "".join(
+            faker.words(
+                nb=1, ext_word_list=['she/her/hers', 'he/him/his', 'they/them/theirs']
+            )
+        )
+
+    def birthdate(self):
+        return faker.date_of_birth(minimum_age=18, maximum_age=90).strftime('%Y-%m-%d')
+
+    def barcode(self):
+        fake_barcode = []
+        for _ in range(10):
+            fake_barcode.append(str(faker.random_digit()))
+
+        return "".join(fake_barcode)
+
+    def external_system_id(self):
+        fake_external_system_id = []
+        for _ in range(9):
+            fake_external_system_id.append(str(faker.random_digit()))
+
+        return "".join(fake_external_system_id)

@@ -2,13 +2,14 @@ import pytest
 
 from faker import Faker
 
-from folio_data_anonymization.plugins.providers import Organizations
+from folio_data_anonymization.plugins.providers import Organizations, Users
 
 
 @pytest.fixture
 def custom_providers():
     faker = Faker()
     faker.add_provider(Organizations)
+    faker.add_provider(Users)
     return faker
 
 
@@ -26,3 +27,8 @@ def test_org_code(custom_providers):
     assert isinstance(fake_org_code, str)
     assert len(fake_org_code) >= 3
     assert all(c.isupper() or c == "-" for c in fake_org_code)
+
+
+def test_pronouns(custom_providers):
+    fake_pronoun = custom_providers.pronouns()
+    assert isinstance(fake_pronoun, str)

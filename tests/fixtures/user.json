@@ -1,0 +1,48 @@
+{
+  "username": "janestanford",
+  "id": "925329d6-3caa-4ae0-bea8-705d70b7a51c",
+  "externalSystemId": "012345678",
+  "barcode": "5550009999",
+  "active": true,
+  "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+  "departments": [
+      "e88216c6-b39e-477e-a094-de10b941837d"
+  ],
+  "proxyFor": [
+  ],
+  "personal": {
+      "lastName": "Stanford",
+      "firstName": "Jane",
+      "email": "janestanford@example.com",
+      "addresses": [
+          {
+              "countryId": "US",
+              "addressLine1": "557 Escondido Mall",
+              "city": "Stanford",
+              "region": "California",
+              "postalCode": "94305",
+              "addressTypeId": "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+              "primaryAddress": true
+          }
+      ],
+      "preferredContactTypeId": "002"
+  },
+  "enrollmentDate": "1000-01-01T00:00:00.000+00:00",
+  "expirationDate": "2026-01-05T00:00:00.000+00:00",
+  "createdDate": "2025-05-07T00:59:25.358+00:00",
+  "updatedDate": "2025-05-07T00:59:25.358+00:00",
+  "metadata": {
+      "createdDate": "2023-08-11T01:20:24.207+00:00",
+      "createdByUserId": "58d0aaf6-dcda-4d5e-92da-012e6b7dd766",
+      "updatedDate": "2025-05-07T00:59:25.352+00:00",
+      "updatedByUserId": "07e8be0e-1cf5-5061-b5b3-4517d9a74d77"
+  },
+  "customFields": {
+      "mobileid": "7777777",
+      "affiliation": "student",
+      "proximitychipid": "0004444",
+      "departmentcode": "LIBR",
+      "department": "Library"
+  }
+}
+
