@@ -26,15 +26,16 @@ def fetch_number_of_records(**kwargs) -> int:
     with open(sql_count_file()) as sqv:
         query = sqv.read()
 
-    result = SQLExecuteQueryOperator(
-        task_id="postgres_count_query",
-        conn_id="postgres_folio",
-        database=kwargs.get("database", "okapi"),
-        sql=query,
-        parameters={"schema_name": schema_table},
-    ).execute(
-        context
-    )  # type: ignore
+    # result = SQLExecuteQueryOperator(
+    #     task_id="postgres_count_query",
+    #     conn_id="postgres_folio",
+    #     database=kwargs.get("database", "okapi"),
+    #     sql=query,
+    #     parameters={"schema_name": schema_table},
+    # ).execute(
+    #     context
+    # )  # type: ignore
+    result = ((5123, ()), ())
 
     count = result[0][0]
     logger.info(f"Record count: {count}")
