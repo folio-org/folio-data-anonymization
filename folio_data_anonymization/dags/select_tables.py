@@ -4,7 +4,7 @@ import pathlib
 from datetime import timedelta
 
 from airflow import DAG
-from airflow.decorators import task
+from airflow.decorators import task, task_group
 from airflow.models.param import Param
 from airflow.operators.python import get_current_context
 
@@ -99,37 +99,56 @@ with DAG(
     def select_schemas_tables(config):
         return schemas_tables(config)
 
-    @task(map_index_template="{{ schema_name }}")
-    def number_of_records(schema_table):
-        context = get_current_context()
-        context["schema_name"] = schema_table
-        return fetch_number_of_records(schema=schema_table)
+    @task_group(group_id="kick_off_anonymize")
+    def anonymize_batches(schemas_tables_selected):
 
-    @task
-    def calculate_div(**kwargs):
-        total = kwargs["number_of_records"]
-        batch_size = kwargs["number_in_batch"]
+        @task(map_index_template="{{ schema_name }}")
+        def number_of_records(schema_table):
+            context = get_current_context()
+            context["schema_name"] = schema_table
+            return fetch_number_of_records(schema=schema_table)
 
-        return math.ceil(total / batch_size)
+        @task
+        def calculate_div(**kwargs):
+            total = kwargs["number_of_records"]
+            batch_size = kwargs["number_in_batch"]
 
-    @task(multiple_outputs=True)
-    def calculate_start_stop(**kwargs):
-        output = {}
-        div = kwargs["div"]
-        batch_size = kwargs["batch_size"]
-        total = kwargs["number_of_records"]
+            return math.ceil(total / batch_size)
 
-        output["start"] = int((div * batch_size) - batch_size + 1)
-        stop = int(div * batch_size)
-        output["stop"] = stop
-        if stop > total:
-            output["stop"] = total
+        @task(multiple_outputs=True)
+        def calculate_start_stop(**kwargs):
+            output = {}
+            div = kwargs["div"]
+            batch_size = kwargs["batch_size"]
+            total = kwargs["number_of_records"]
 
-        return output
+            output["start"] = int((div * batch_size) - batch_size + 1)
+            stop = int(div * batch_size)
+            output["stop"] = stop
+            if stop > total:
+                output["stop"] = total
 
-    @task
-    def anonymize_for_batch(div, start, stop):
-        do_anonymize(div, start, stop)
+            return output
+
+        @task
+        def anonymize_for_batch(div, start, stop):
+            do_anonymize(div, start, stop)
+
+        total_records_per_table = number_of_records.expand(
+            schema_table=schemas_tables_selected
+        )
+        record_div = calculate_div.expand(
+            number_of_records=total_records_per_table,
+            number_in_batch=batch_size,
+        )
+
+        start_stop = calculate_start_stop.partial(div=record_div).expand(
+            batch_size=batch_size, number_of_records=total_records_per_table
+        )
+
+        anonymize = anonymize_for_batch.partial(div=record_div).expand_kwargs(start_stop)
+
+        (total_records_per_table >> record_div >> start_stop >> anonymize)
 
     batch_size = do_batch_size()
 
@@ -137,27 +156,4 @@ with DAG(
 
     schemas_tables_selected = select_schemas_tables(configuration)
 
-    total_records_per_table = number_of_records.expand(
-        schema_table=schemas_tables_selected
-    )
-
-    record_div = calculate_div.expand(
-        number_of_records=total_records_per_table,
-        number_in_batch=batch_size,
-    )
-
-    start_stop = calculate_start_stop.partial(div=record_div).expand(
-        batch_size=batch_size, number_of_records=total_records_per_table
-    )
-
-    anonymize = anonymize_for_batch.partial(div=record_div).expand_kwargs(start_stop)
-
-
-(
-    configuration
-    >> schemas_tables_selected
-    >> total_records_per_table
-    >> record_div
-    >> start_stop
-    >> anonymize
-)
+    configuration >> schemas_tables_selected
