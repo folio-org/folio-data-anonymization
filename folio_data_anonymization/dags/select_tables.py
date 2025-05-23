@@ -157,6 +157,7 @@ with DAG(
     configuration
     >> schemas_tables_selected
     >> total_records_per_table
+    >> record_div
     >> start_stop
     >> anonymize
 )
