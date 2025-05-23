@@ -141,7 +141,7 @@ with DAG(
         schema_table=schemas_tables_selected
     )
 
-    record_div = calculate_div.partial(
+    record_div = calculate_div.expand(
         number_of_records=total_records_per_table,
         number_in_batch=batch_size,
     )
