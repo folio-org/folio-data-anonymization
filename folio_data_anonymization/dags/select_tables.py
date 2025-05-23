@@ -67,11 +67,6 @@ with DAG(
             type="integer",
             description="Number of table records to anonymize for a given run.",
         ),
-        "concurrent_jobs": Param(
-            5,
-            type="integer",
-            description="Number of batch processing jobs to run in parallel.",
-        ),
         "configuration_files": Param(
             "Choose a configuration",
             type="string",
