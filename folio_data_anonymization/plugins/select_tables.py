@@ -9,7 +9,7 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 logger = logging.getLogger(__name__)
 
 
-def schemas_tables(config):
+def schemas_tables(config) -> list:
     schemas_tables = []
     config_key = list(config.keys())[0]
     tenant_id = Variable.get("TENANT_ID", "diku")
@@ -41,7 +41,15 @@ def fetch_number_of_records(**kwargs) -> int:
     return int(count)
 
 
-def sql_count_file():
+def sql_count_file() -> Path:
     sql_path = Path("/opt/bitnami/airflow") / "plugins/git_plugins/sql/counts.sql"
 
     return sql_path
+
+
+def do_anonymize(div, start, stop) -> None:
+    logger.info(f"DIV: {div}")
+    logger.info(f"START: {start}")
+    logger.info(f"STOP: {stop}")
+
+    return None

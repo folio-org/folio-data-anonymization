@@ -1,3 +1,4 @@
+import math
 import pathlib
 
 from datetime import timedelta
@@ -21,11 +22,13 @@ except (ImportError, ModuleNotFoundError):
 
 try:
     from plugins.git_plugins.select_tables import (
+        do_anonymize,
         fetch_number_of_records,
         schemas_tables,
     )
 except (ImportError, ModuleNotFoundError):
     from folio_data_anonymization.plugins.select_tables import (
+        do_anonymize,
         fetch_number_of_records,
         schemas_tables,
     )
@@ -60,9 +63,9 @@ with DAG(
     tags=["select"],
     params={
         "batch_size": Param(
-            5000,
+            1000,
             type="integer",
-            description="Number of MARC records to process per file.",
+            description="Number of table records to anonymize for a given run.",
         ),
         "concurrent_jobs": Param(
             5,
@@ -79,6 +82,14 @@ with DAG(
 ) as dag:
 
     @task
+    def do_batch_size() -> int:
+        context = get_current_context()
+        params = context.get("params", {})  # type: ignore
+        batch = params.get("batch_size", 5000)
+
+        return int(batch)
+
+    @task
     def fetch_configuration():
         context = get_current_context()
         params = context.get("params", {})  # type: ignore
@@ -89,23 +100,68 @@ with DAG(
             config_file,
         )
 
-    
     @task
     def select_schemas_tables(config):
         return schemas_tables(config)
 
-    
     @task(map_index_template="{{ schema_name }}")
     def number_of_records(schema_table):
         context = get_current_context()
         context["schema_name"] = schema_table
         return fetch_number_of_records(schema=schema_table)
 
+    @task
+    def calculate_div(**kwargs):
+        total = kwargs["number_of_records"]
+        batch_size = kwargs["number_in_batch"]
+
+        return math.ceil(total / batch_size)
+
+    @task(multiple_outputs=True)
+    def calculate_start_stop(**kwargs):
+        output = {}
+        div = kwargs["div"]
+        batch_size = kwargs["batch_size"]
+        total = kwargs["number_of_records"]
+
+        output["start"] = int((div * batch_size) - batch_size + 1)
+        stop = int(div * batch_size)
+        output["stop"] = stop
+        if stop > total:
+            output["stop"] = total
+
+        return output
+
+    @task(multiple_outputs=True)
+    def anonymize_for_batch(div, start, stop):
+        do_anonymize(div, start, stop)
+
+    batch_size = do_batch_size()
+
     configuration = fetch_configuration()
 
     schemas_tables_selected = select_schemas_tables(configuration)
 
-    total_records = number_of_records.expand(schema_table=schemas_tables_selected)
+    total_records_per_table = number_of_records.expand(
+        schema_table=schemas_tables_selected
+    )
+
+    record_div = calculate_div(
+        number_of_records=total_records_per_table,
+        number_in_batch=batch_size,
+    )
+
+    start_stop = calculate_start_stop.partial(div=record_div).expand(
+        batch_size=batch_size, number_of_records=total_records_per_table
+    )
+
+    anonymize = anonymize_for_batch.partial(div=record_div).expand_kwargs(start_stop)
 
 
-(configuration >> schemas_tables >> total_records)
+(
+    configuration
+    >> schemas_tables_selected
+    >> total_records_per_table
+    >> start_stop
+    >> anonymize
+)
