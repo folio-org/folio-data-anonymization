@@ -80,7 +80,7 @@ with DAG(
     def do_batch_size() -> int:
         context = get_current_context()
         params = context.get("params", {})  # type: ignore
-        batch = params.get("batch_size", 5000)
+        batch = params["batch_size"]
 
         return int(batch)
 
