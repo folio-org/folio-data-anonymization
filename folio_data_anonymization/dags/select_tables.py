@@ -92,8 +92,10 @@ with DAG(
 
         return schemas_tables
 
-    @task
+    @task(map_index_template="{{ schema_name }}")
     def number_of_records(schema_table):
+        context = get_current_context()
+        context["schema_name"] = schema_table
         return fetch_number_of_records(schema=schema_table)
 
     configuration = fetch_configuration()
