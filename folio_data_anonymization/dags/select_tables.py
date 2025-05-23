@@ -127,7 +127,7 @@ with DAG(
 
         return output
 
-    @task(multiple_outputs=True)
+    @task
     def anonymize_for_batch(div, start, stop):
         do_anonymize(div, start, stop)
 
@@ -157,7 +157,5 @@ with DAG(
     configuration
     >> schemas_tables_selected
     >> total_records_per_table
-    >> record_div
-    >> start_stop
     >> anonymize
 )
