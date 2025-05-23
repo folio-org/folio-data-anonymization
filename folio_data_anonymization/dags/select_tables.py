@@ -20,9 +20,15 @@ except (ImportError, ModuleNotFoundError):
     )
 
 try:
-    from plugins.git_plugins.select_tables import fetch_number_of_records
+    from plugins.git_plugins.select_tables import (
+        fetch_number_of_records,
+        schemas_tables,
+    )
 except (ImportError, ModuleNotFoundError):
-    from folio_data_anonymization.plugins.select_tables import fetch_number_of_records
+    from folio_data_anonymization.plugins.select_tables import (
+        fetch_number_of_records,
+        schemas_tables,
+    )
 
 
 default_args = {
@@ -83,15 +89,12 @@ with DAG(
             config_file,
         )
 
+    
     @task
     def select_schemas_tables(config):
-        schemas_tables = []
-        config_key = list(config.keys())[0]
-        for table in config[config_key]:
-            schemas_tables.append(table["table_name"])
+        return schemas_tables(config)
 
-        return schemas_tables
-
+    
     @task(map_index_template="{{ schema_name }}")
     def number_of_records(schema_table):
         context = get_current_context()
@@ -100,9 +103,9 @@ with DAG(
 
     configuration = fetch_configuration()
 
-    schemas_tables = select_schemas_tables(configuration)
+    schemas_tables_selected = select_schemas_tables(configuration)
 
-    total_records = number_of_records.expand(schema_table=schemas_tables)
+    total_records = number_of_records.expand(schema_table=schemas_tables_selected)
 
 
 (configuration >> schemas_tables >> total_records)
