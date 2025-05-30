@@ -32,6 +32,7 @@ with DAG(
     tags=["anonymize"],
     render_template_as_native_obj=True,
     max_active_runs=3,
+    max_active_tasks=5,
 ) as dag:
 
     @task
