@@ -15,6 +15,7 @@ configuration:
     executor: KubernetesExecutor
   kubernetes_executor:
     in_cluster: true
+    namespace: airflow
 auth:
   username: airflow
   existingSecret: airflow-user
