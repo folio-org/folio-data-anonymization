@@ -1,16 +1,20 @@
-executor: LocalExecutor
+executor: KubernetesExecutor
 redis:
   enabled: false
 rbac:
   create: true
 serviceAccount:
   create: true
+  automountServiceAccountToken: true
 configuration:
   core:
     dags_folder: "/opt/bitnami/airflow/dags/git_dags"
     plugins_folder: "/opt/bitnami/airflow/plugins/git_plugins"
     load_examples: "False"
     hostname_callable: "airflow.utils.net.get_host_ip_address"
+    executor: KubernetesExecutor
+  kubernetes_executor:
+    in_cluster: true
 auth:
   username: airflow
   existingSecret: airflow-user
@@ -32,7 +36,7 @@ postgresql:
   primary:
     resourcesPreset: "medium"
 web:
-  replicaCount: 2
+  automountServiceAccountToken: true
   extraVolumeMounts:
   - name: requirements
     mountPath: /opt/bitnami/airflow/requirements.txt
@@ -77,7 +81,7 @@ web:
     failureThreshold: 10
     successThreshold: 1
 scheduler:
-  replicaCount: 2
+  automountServiceAccountToken: true
   extraVolumeMounts:
   - name: requirements
     mountPath: /opt/bitnami/airflow/requirements.txt
