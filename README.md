@@ -5,6 +5,10 @@ Copyright (C) 2025 The Open Library Foundation
 This software is distributed under the terms of the Apache License,
 Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
+These software library dependencies have non-permissive licenses:
+* psycopg2: LGPL-3.0-or-later
+* text-unidecode: Artistic-1.0-Perl OR GPL-1.0-only OR GPL-2.0-or-later
+
 ## Introduction
 Folio Data Anonymization is a service that anonymizes or masks patron data in library records to ensure privacy protection.
 
