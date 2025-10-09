@@ -22,6 +22,15 @@ faker.add_provider(Organizations)
 faker.add_provider(Users)
 
 
+def _data_type(data) -> Union[str, list, dict]:
+    if isinstance(data, list):
+        return []
+    elif isinstance(data, dict):
+        return {}
+    else:
+        return ""
+
+
 def fake_jsonb(jsonb: dict, config: dict) -> dict:
     """
     Fake the jsonb data based on the provided config.
@@ -32,7 +41,12 @@ def fake_jsonb(jsonb: dict, config: dict) -> dict:
         expr.update(jsonb, faker_function())
     for row in config.get("set_to_empty", {}).get("jsonb", []):
         expr = parse(row)
-        expr.update(jsonb, "")
+        data = [match.value for match in expr.find(jsonb)]
+        if len(data) > 0:
+            replacement_char = _data_type(data.pop())
+        else:
+            replacement_char = ""
+        expr.update(jsonb, replacement_char)
     return jsonb
 
 

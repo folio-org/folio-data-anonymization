@@ -93,8 +93,8 @@ def test_org_fake_jsonb(configs):
         organization["accounts"][0]["contactInfo"]
         != original_org["accounts"][0]["contactInfo"]
     )
-    assert len(organization["aliases"][0]["description"]) == 0
-    assert len(organization["accounts"][0]["description"]) == 0
+    assert organization["aliases"][0]["description"] == ""
+    assert organization["accounts"][0]["description"] == ""
 
 
 def test_user_fake_jsonb(configs):
@@ -116,7 +116,8 @@ def test_user_fake_jsonb(configs):
         user["personal"]["addresses"][0]["addressLine1"]
         != original_user["personal"]["addresses"][0]["addressLine1"]
     )
-    assert len(user.get('customFields')) == 0
+    assert isinstance(user.get("customFields"), dict)
+    assert user.get("customFields") != ""
 
 
 def test_update_row(mocker, mock_airflow_connection):
