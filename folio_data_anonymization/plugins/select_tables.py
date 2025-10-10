@@ -16,7 +16,7 @@ def schemas_tables(config, tenant_id) -> list:
     schemas_tables = []
     config_key = list(config.keys())[0]
     for schema_table in config[config_key]:
-        schemas_tables.append(f"{tenant_id}_{schema_table["table_name"]}")
+        schemas_tables.append(f"{tenant_id}_{schema_table['table_name']}")
 
     return schemas_tables
 
