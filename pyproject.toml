@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Anonymize folio data"
 authors = ["Jeremy Nelson <jpnelson@stanford.edu>", "Joshua Greben <jgreben@stanford.edu>", "Shelley Doljack <sdoljack@stanford.edu>"]
 readme = "README.md"
+license = "Apache-2.0"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
