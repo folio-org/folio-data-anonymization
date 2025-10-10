@@ -129,3 +129,12 @@ Here is a short example of the JSON configuration file format:
   }
 ]
 ```
+
+## Additional information
+
+FOLIO Developer documentation is at [dev.folio.org](https://dev.folio.org/)
+
+### Issue tracker
+
+See project [DANON](https://folio-org.atlassian.net/browse/DANON)
+at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
