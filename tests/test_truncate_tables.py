@@ -51,10 +51,10 @@ def setup_tests(mocker):
 def test_truncate_tables(mocker, mock_get_current_context, caplog):
     setup_tests(mocker)
 
-    tables = tables_list()
+    tables = tables_list(params={"tenant_id": "sul"})
     results = truncate_db_objects(schemas_tables=tables)
     assert (
-        "Will truncate diku_mod_schema_one.table,diku_mod_schema_two.table,diku_mod_schema_tree.table"  # noqa
+        "Will truncate sul_mod_schema_one.table,sul_mod_schema_two.table,sul_mod_schema_tree.table"  # noqa
         in caplog.text
     )
     assert "TRUNCATE" in results

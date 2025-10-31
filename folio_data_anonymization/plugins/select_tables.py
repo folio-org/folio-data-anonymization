@@ -1,12 +1,12 @@
 import logging
+import math
 
 from pathlib import Path
 from psycopg2.extensions import AsIs
 
-from airflow.models import DagBag
-from airflow.sdk import get_current_context, timezone
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.sdk import get_current_context
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from airflow.utils.state import State
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +18,35 @@ def schemas_tables(config, tenant_id) -> list:
         schemas_tables.append(f"{tenant_id}_{schema_table['table_name']}")
 
     return schemas_tables
+
+
+def combine_table_counts(**kwargs) -> dict:
+    totals = kwargs["record_counts_per_table"]
+    tables = kwargs["schema_table"]
+    list_totals = list(totals)
+
+    return dict(zip(tables, list_totals))
+
+
+def calculate_table_ranges(**kwargs) -> list:
+    output = []
+    counts = kwargs["counts"]
+    batch_size = kwargs["batch_size"]
+    tables = kwargs["schemas_tables"]
+
+    for table in tables:
+        payload = {}
+        payload["table"] = table
+        payload["ranges"] = []
+        records_in_table = counts[table]
+        div = math.ceil(int(records_in_table) / int(batch_size))
+        step = math.ceil(records_in_table / div)
+        for i in range(0, records_in_table, step):
+            payload["ranges"].append((i, i + step))
+
+        output.append(payload)
+
+    return output
 
 
 def fetch_record_counts_per_table(**kwargs) -> int:
@@ -51,6 +80,10 @@ def sql_count_file() -> Path:
 def fetch_records_batch_for_table(table, offset, limit, **kwargs) -> list:
     context = get_current_context()
 
+    logger.info(
+        f"Selecting records batch for table: {table}, offset: {offset}, limit: {limit}"
+    )
+
     with open(sql_selections_file()) as sqv:
         query = sqv.read()
 
@@ -77,66 +110,29 @@ def sql_selections_file() -> Path:
     return sql_path
 
 
-def do_anonymize(tables_and_ranges, configuration, tenant_id) -> None:
+def trigger_anonymize_dag(data, config, tenant_id) -> TriggerDagRunOperator:
     """
-    [
-        {
-            'table': 'diku_mod_organizations_storage.contacts',
-            'ranges': [(0, 38)]
-        },
-        {
-            'table': 'diku_mod_organizations_storage.interface_credentials',
-            'ranges': [(0, 74)]
-        },
-        {
-            'table': 'diku_mod_organizations_storage.interfaces',
-            'ranges': [(0, 76)]
-        },
-        {
-            'table': 'diku_mod_organizations_storage.organizations',
-            'ranges': [(0, 100), (100, 200), .. (2400, 2500), (2500, 2600)]
-        }
-    ]
+    Triggers anonymize_data DAG with data, anonymize config, and tenant ID
+    {
+        'table': 'diku_mod_organizations_storage.contacts',
+        'ranges': [(0, 38)]
+    }
     """
+    trigger_dag = TriggerDagRunOperator(
+        task_id="trigger_anonymize_data_dag",
+        trigger_dag_id="anonymize_data",
+        conf={
+            "tenant": tenant_id,
+            "table_config": config,
+            "data": data,
+        },
+    )
+    logger.info(f"Triggered anonymize_data DAG for {config['table_name']}")
 
-    for table_ranges in tables_and_ranges:
-        table = table_ranges["table"]
-        logger.info(f"TABLE: {table}")
-        config = constuct_anon_config(configuration, table)
-
-        logger.info(f"CONFIG: {config}")
-        for range in table_ranges["ranges"]:
-            offset = range[0]
-            limit = range[1] - offset
-
-            logger.info(
-                f"Selecting records batch for table: {table}, \
-                    offset: {offset}, limit {limit}"
-            )
-            data = fetch_records_batch_for_table(table, offset, limit)
-            execution_date = timezone.utcnow()
-
-            dagbag = DagBag("/opt/bitnami/airflow/dags/git_dags")
-            dag = dagbag.get_dag("anonymize_data")
-            dag_run_id = f"manual__{execution_date.isoformat()}"
-
-            dag.create_dagrun(
-                run_id=dag_run_id,
-                execution_date=execution_date,
-                state=State.QUEUED,
-                conf={
-                    "tenant": tenant_id,
-                    "table_config": config,
-                    "data": data,
-                },
-                external_trigger=True,
-            )
-            logger.info(f"Anonymizing {table} with OFFSET: {offset} LIMIT: {limit};")
-
-    return None
+    return trigger_dag
 
 
-def constuct_anon_config(configuration, table) -> dict:
+def construct_anon_config(configuration, table) -> dict:
     config: dict = {}
     table_no_tenant = table.split('_', 1)[1]
     conf_key = list(configuration.keys())[0]
