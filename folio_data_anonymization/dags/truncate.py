@@ -22,6 +22,7 @@ default_args = {
     "retry_delay": timedelta(minutes=1),
 }
 
+
 @dag(
     schedule=None,
     default_args=default_args,
