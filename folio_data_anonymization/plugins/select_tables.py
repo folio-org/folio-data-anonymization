@@ -4,9 +4,8 @@ from pathlib import Path
 from psycopg2.extensions import AsIs
 
 from airflow.models import DagBag
-from airflow.operators.python import get_current_context
+from airflow.sdk import get_current_context, timezone
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from airflow.utils import timezone
 from airflow.utils.state import State
 
 logger = logging.getLogger(__name__)

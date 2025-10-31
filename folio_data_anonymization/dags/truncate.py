@@ -1,7 +1,6 @@
 from datetime import timedelta
 
-from airflow import DAG
-from airflow.decorators import task
+from airflow.sdk import DAG, task
 
 try:
     from plugins.git_plugins.truncate.truncate import (

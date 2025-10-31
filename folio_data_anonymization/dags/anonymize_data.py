@@ -3,8 +3,8 @@
 import logging
 from datetime import timedelta
 
-from airflow.decorators import dag
-from airflow.operators.empty import EmptyOperator
+from airflow.sdk import dag
+from airflow.providers.standard.operators.empty import EmptyOperator
 
 
 try:

@@ -1,0 +1,1 @@
+SELECT jsonb FROM %(schema_name)s WHERE id=%(uuid)s;

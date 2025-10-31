@@ -1,6 +1,6 @@
 import logging
 
-from airflow.decorators import task
+from airflow.sdk import task
 
 try:
     from plugins.git_plugins.utils import fake_jsonb, update_row

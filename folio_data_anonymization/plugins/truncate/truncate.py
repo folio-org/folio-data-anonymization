@@ -4,8 +4,7 @@ import psycopg2
 
 from pathlib import Path
 
-from airflow.models import Variable
-from airflow.operators.python import get_current_context
+from airflow.sdk import get_current_context, Variable
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 logger = logging.getLogger(__name__)

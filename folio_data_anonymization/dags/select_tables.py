@@ -4,10 +4,7 @@ import pathlib
 
 from datetime import timedelta
 
-from airflow import DAG
-from airflow.decorators import task
-from airflow.models.param import Param
-from airflow.operators.python import get_current_context
+from airflow.sdk import DAG, Param, get_current_context, task
 
 
 logger = logging.getLogger(__name__)
