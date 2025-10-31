@@ -43,10 +43,21 @@ Instructions on generating a Fernet key can be found at [How-to Guides: Securing
 Example:
 ```
 poetry run python3
->>> from cryptography.fernet import Fernet
->>> fernet_key= Fernet.generate_key()
->>> decoded_fernet_key = fernet_key.decode()
+from cryptography.fernet import Fernet
+fernet_key= Fernet.generate_key()
+decoded_fernet_key = fernet_key.decode()
+quit()
 echo -n $decoded_fernet_key | base64
+```
+
+Airflow 3 uses a secret key to encode and decode JWTs to authenticate to public and private APIs. To generate the airflow-jwt-secret-key, you can do:
+```
+poetry run python3
+import secrets
+jwt_key = secrets.token_urlsafe(16)
+print(jwt_key)
+quit()
+echo -n $jwt_key | base64
 ```
 
 Once you have generated the desired keys and password apply it to your Kubernetes cluster using:
@@ -64,7 +75,7 @@ With [Docker Desktop](https://docs.docker.com/desktop/), [Helm](https://helm.sh/
 export NAMESPACE=<my-namespace>
 kubectl -n $NAMESPACE apply -f pv-volume.yaml
 envsubst < airflow-values.yaml > ns-airflow-values.yaml
-helm -n $NAMESPACE install --version 22.7.3 -f ns-airflow-values.yaml airflow oci://registry-1.docker.io/bitnamicharts/airflow
+helm -n $NAMESPACE install --version=25.0.2 -f ns-airflow-values.yaml airflow oci://registry-1.docker.io/bitnamicharts/airflow
 ```
 
 Note: in the `pv-volume.yaml` file you must use a storageClass that supports ReadWriteMany. If you do not specify a storageClassName, the default storageClass for your cluster will be used.
@@ -74,11 +85,11 @@ To upgrade or to reinitialize the airflow release when configuration changes are
 ```
 envsubst < airflow-values.yaml > ns-airflow-values.yaml
 export PASSWORD=$(kubectl get secret -n $NAMESPACE airflow-postgresql -o jsonpath="{.data.password}" | base64 -d)
-helm -n $NAMESPACE upgrade --install --version 22.7.3 --set global.postgresql.auth.password=$PASSWORD -f ns-airflow-values.yaml airflow oci://registry-1.docker.io/bitnamicharts/airflow
+helm -n $NAMESPACE upgrade --install --version=25.0.2 --set global.postgresql.auth.password=$PASSWORD -f ns-airflow-values.yaml airflow oci://registry-1.docker.io/bitnamicharts/airflow
 ```
 
 ## Run the DAGs to Anonymize Data
-1. Either create an ingress for the airflow service that resolves to a hostname, or simply port-forward the airflow service to your local browser: `kubectl -n $NAMESPACE port-forward svc/airflow 8080:8080`
+1. Either create an ingress for the airflow service that resolves to a hostname, or simply port-forward the airflow service to your local browser: `kubectl -n $NAMESPACE port-forward svc/airflow-web 8080:8080`
 1. Open your browser and go to localhost:8080 (or the URL if you created a hostname and ingress).
 1. Login with the user airflow and the airflow-password created with the secret.yaml file.
 1. Create a new Connection under Admin > Connections.

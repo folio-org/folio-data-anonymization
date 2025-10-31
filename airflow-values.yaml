@@ -21,6 +21,11 @@ configuration:
 auth:
   username: airflow
   existingSecret: airflow-user
+image:
+  repository: bitnamilegacy/airflow
+global:
+  security:
+    allowInsecureImages: true
 dags:
   enabled: true
   repositories:
@@ -36,10 +41,14 @@ plugins:
       name: "plugins"
       path: /folio_data_anonymization/plugins
 postgresql:
+  image:
+    repository: bitnamilegacy/postgresql
+    tag: 17.6.0-debian-12-r2
   primary:
     resourcesPreset: "medium"
 setupDBJob:
   resourcesPreset: "medium"
+  automountServiceAccountToken: true
   extraVolumes:
   - name: airflow-dependencies
     persistentVolumeClaim:
@@ -59,7 +68,7 @@ setupDBJob:
   initContainers:
   - name: install-dependencies
     image: "{{ include \"airflow.image\" . }}"
-    imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+    imagePullPolicy: IfNotPresent
     env:
     - name: PYTHONPATH
       value: "/opt/bitnami/airflow:/opt/bitnami/airflow/lib"
@@ -76,7 +85,7 @@ setupDBJob:
         subPath: requirements.txt
       - name: airflow-dependencies
         mountPath: /opt/bitnami/airflow/lib
-worker:
+dagProcessor:
   automountServiceAccountToken: true
   extraVolumeMounts:
   - name: airflow-dependencies
@@ -84,42 +93,34 @@ worker:
   - name: airflow-logs
     mountPath: "/opt/bitnami/airflow_logs"
   extraVolumes:
-  - name: airflow-dependencies
-    persistentVolumeClaim:
-      claimName: airflow-dependencies
-  - name: airflow-logs
-    persistentVolumeClaim:
-      claimName: airflow-logs
-  extraEnvVars:
-  - name: PYTHONPATH
-    value: "/opt/bitnami/airflow:/opt/bitnami/airflow/lib"
-  resourcesPreset: "large"
-web:
-  replicaCount: 1
-  automountServiceAccountToken: true
-  extraVolumeMounts:
-  - name: airflow-dependencies
-    mountPath: "/opt/bitnami/airflow/lib"
-  - name: airflow-logs
-    mountPath: "/opt/bitnami/airflow_logs"
-  extraVolumes:
-  - name: airflow-dependencies
-    persistentVolumeClaim:
-      claimName: airflow-dependencies
-  - name: airflow-logs
-    persistentVolumeClaim:
-      claimName: airflow-logs
+    - name: airflow-dependencies
+      persistentVolumeClaim:
+        claimName: airflow-dependencies
+    - name: airflow-logs
+      persistentVolumeClaim:
+        claimName: airflow-logs
   extraEnvVars:
     - name: PYTHONPATH
       value: "/opt/bitnami/airflow:/opt/bitnami/airflow/lib"
-  resourcesPreset: "xlarge"
+  resources:
+    requests:
+      cpu: 2.5
+      memory: 5376Mi
+      ephemeral-storage: 50Mi
+    limits:
+      cpu: 3.5
+      memory: 6144Mi
+      ephemeral-storage: 2Gi
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 180
+    periodSeconds: 20
+    timeoutSeconds: 60
+    failureThreshold: 300
+    successThreshold: 1
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 35
-    periodSeconds: 15
-    timeoutSeconds: 5
-    failureThreshold: 10
-    successThreshold: 1
+    failureThreshold: 20
 scheduler:
   replicaCount: 1
   automountServiceAccountToken: true
@@ -157,6 +158,76 @@ scheduler:
   readinessProbe:
     enabled: true
     failureThreshold: 20
+triggerer:
+  replicaCount: 1
+  automountServiceAccountToken: true
+  extraVolumeMounts:
+  - name: airflow-dependencies
+    mountPath: "/opt/bitnami/airflow/lib"
+  - name: airflow-logs
+    mountPath: "/opt/bitnami/airflow_logs"
+  extraVolumes:
+    - name: airflow-dependencies
+      persistentVolumeClaim:
+        claimName: airflow-dependencies
+    - name: airflow-logs
+      persistentVolumeClaim:
+        claimName: airflow-logs
+  extraEnvVars:
+    - name: PYTHONPATH
+      value: "/opt/bitnami/airflow:/opt/bitnami/airflow/lib"
+  resourcesPreset: "xlarge"
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 35
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 10
+    successThreshold: 1
+web:
+  replicaCount: 1
+  automountServiceAccountToken: true
+  extraVolumeMounts:
+  - name: airflow-dependencies
+    mountPath: "/opt/bitnami/airflow/lib"
+  - name: airflow-logs
+    mountPath: "/opt/bitnami/airflow_logs"
+  extraVolumes:
+    - name: airflow-dependencies
+      persistentVolumeClaim:
+        claimName: airflow-dependencies
+    - name: airflow-logs
+      persistentVolumeClaim:
+        claimName: airflow-logs
+  extraEnvVars:
+    - name: PYTHONPATH
+      value: "/opt/bitnami/airflow:/opt/bitnami/airflow/lib"
+  resourcesPreset: "xlarge"
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 35
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 10
+    successThreshold: 1
+worker:
+  automountServiceAccountToken: true
+  extraVolumeMounts:
+  - name: airflow-dependencies
+    mountPath: "/opt/bitnami/airflow/lib"
+  - name: airflow-logs
+    mountPath: "/opt/bitnami/airflow_logs"
+  extraVolumes:
+    - name: airflow-dependencies
+      persistentVolumeClaim:
+        claimName: airflow-dependencies
+    - name: airflow-logs
+      persistentVolumeClaim:
+        claimName: airflow-logs
+  extraEnvVars:
+  - name: PYTHONPATH
+    value: "/opt/bitnami/airflow:/opt/bitnami/airflow/lib"
+  resourcesPreset: "large"
 extraDeploy:
   - apiVersion: v1
     kind: ConfigMap
