@@ -2,12 +2,18 @@ import json
 import pathlib
 import pydantic
 import pytest
+from unittest.mock import MagicMock
 
 
+from airflow.sdk import Connection
+from airflow.models import Variable
 from folio_data_anonymization.plugins.anonymize import (
     anonymize_payload,
     anonymize_row_update_table,
     payload_tuples,
+)
+from folio_data_anonymization.plugins.sql_pool import (
+    SQLPool,
 )
 
 
@@ -31,6 +37,39 @@ class MockPool(pydantic.BaseModel):
 
     def putconn(self, conn):
         return True
+
+
+@pytest.fixture
+def psycopg2_conn(mocker):
+    mock_conn = mocker.patch("psycopg2.connect")
+    mock_conn.connect.return_value = MagicMock()
+    return mock_conn
+
+
+@pytest.fixture
+def mock_sqlpool_variable(monkeypatch):
+    def mock_get(key, *args):
+        value = None
+        match key:
+            case "max_pool_size":
+                value = 16
+            case _:
+                raise ValueError("")
+        return value
+
+    monkeypatch.setattr(Variable, "get", mock_get)
+
+
+@pytest.fixture
+def mock_postgres_connection():
+    return Connection(
+        conn_id="postgres_folio",
+        conn_type="postgres",
+        host="postgresdb.example.com",
+        login="admin",
+        password="admin123",
+        port=5432,
+    )
 
 
 @pytest.fixture
@@ -58,6 +97,26 @@ def mock_dag_run(mocker, configs, mock_data):
     }
 
     return dag_run
+
+
+def test_connection_pool(
+    mocker, mock_postgres_connection, psycopg2_conn, mock_sqlpool_variable, caplog
+):
+    mocker.patch(
+        "folio_data_anonymization.plugins.sql_pool.Connection",
+        return_value=mock_postgres_connection,
+    )
+    mocker.patch(
+        "folio_data_anonymization.plugins.sql_pool.SQLPool.connection",
+        return_value=mock_postgres_connection,
+    )
+    mocker.patch(
+        "folio_data_anonymization.plugins.sql_pool.SQLPool", return_value=psycopg2_conn
+    )
+    connection_pool = SQLPool().pool()
+    assert "SQL max pool size: 16" in caplog.text
+    assert connection_pool.minconn == 12
+    assert connection_pool.maxconn == 16
 
 
 def test_anonymize(mocker, mock_dag_run, caplog):
