@@ -130,7 +130,7 @@ def select_table_objects(*args, **kwargs):
         )
 
     @task
-    def table_ranges() -> list:
+    def table_ranges(*args) -> list:
         return calculate_table_ranges(
             batch_size=batch_size,
             schemas_tables=schemas_tables,
