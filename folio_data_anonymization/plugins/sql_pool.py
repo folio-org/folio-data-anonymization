@@ -3,6 +3,7 @@ from airflow.models import Variable
 from psycopg2.pool import SimpleConnectionPool
 import logging
 
+
 class SQLPool:
     def __init__(self, **kwargs):
         self.conn = self.connection()
