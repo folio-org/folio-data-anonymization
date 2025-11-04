@@ -1,13 +1,9 @@
 import logging
-import math
 import pathlib
 
 from datetime import timedelta
 
-from airflow import DAG
-from airflow.decorators import task
-from airflow.models.param import Param
-from airflow.operators.python import get_current_context
+from airflow.sdk import dag, Param, get_current_context, task
 
 
 logger = logging.getLogger(__name__)
@@ -26,13 +22,21 @@ except (ImportError, ModuleNotFoundError):
 
 try:
     from plugins.git_plugins.select_tables import (
-        do_anonymize,
+        construct_anon_config,
+        combine_table_counts,
+        calculate_table_ranges,
+        fetch_records_batch_for_table,
+        trigger_anonymize_dag,
         fetch_record_counts_per_table,
         schemas_tables,
     )
 except (ImportError, ModuleNotFoundError):
     from folio_data_anonymization.plugins.select_tables import (
-        do_anonymize,
+        construct_anon_config,
+        combine_table_counts,
+        calculate_table_ranges,
+        fetch_records_batch_for_table,
+        trigger_anonymize_dag,
         fetch_record_counts_per_table,
         schemas_tables,
     )
@@ -59,8 +63,7 @@ def config_file_names() -> list:
     return config_names
 
 
-with DAG(
-    "select_table_objects",
+@dag(
     schedule=None,
     default_args=default_args,
     catchup=False,
@@ -83,7 +86,8 @@ with DAG(
             type="string",
         ),
     },
-) as dag:
+)
+def select_table_objects(*args, **kwargs):
 
     @task
     def do_batch_size() -> int:
@@ -118,41 +122,44 @@ with DAG(
         return fetch_record_counts_per_table(schema=schema_table)
 
     @task
-    def combine_table_counts(**kwargs) -> dict:
-        totals = kwargs["record_counts_per_table"]
-        tables = kwargs["schema_table"]
-        list_totals = list(totals)
-
-        return dict(zip(tables, list_totals))
-
-    @task
-    def calculate_table_ranges(**kwargs) -> list:
-        output = []
-        counts = kwargs["counts"]
-        batch_size = kwargs["batch_size"]
-        tables = kwargs["schemas_tables"]
-
-        for table in tables:
-            payload = {}
-            payload["table"] = table
-            payload["ranges"] = []
-            records_in_table = counts[table]
-            div = math.ceil(int(records_in_table) / int(batch_size))
-            step = math.ceil(records_in_table / div)
-            for i in range(0, records_in_table, step):
-                payload["ranges"].append((i, i + step))
-
-            output.append(payload)
-
-        return output
+    def record_counts(batch_size, schemas_tables, total_records_per_table) -> dict:
+        return combine_table_counts(
+            number_in_batch=batch_size,
+            schema_table=schemas_tables,
+            record_counts_per_table=total_records_per_table,
+        )
 
     @task
-    def anonymize_batches(table_ranges, configuration) -> None:
+    def table_ranges(*args) -> list:
+        return calculate_table_ranges(
+            batch_size=batch_size,
+            schemas_tables=schemas_tables,
+            counts=record_counts,
+        )
+
+    @task
+    def anonymize_batches(*args, **kwargs):
+        """
+        Creates batches to anonymize from list item of calculate_table_ranges
+        {
+            'table': 'diku_mod_organizations_storage.contacts',
+            'ranges': [(0, 38)]
+        }
+        """
         context = get_current_context()
         params = context.get("params", {})  # type: ignore
         tenant_id = params["tenant_id"]
+        table = kwargs["table_ranges"]["table"]
+        logger.info(f"TABLE: {table}")
+        config = construct_anon_config(kwargs["config"], table)
+        logger.info(f"CONFIG: {config}")
+        for range in kwargs["table_ranges"]["ranges"]:
+            offset = range[0]
+            limit = range[1] - offset
 
-        do_anonymize(table_ranges, configuration, tenant_id)
+            data = fetch_records_batch_for_table(table, offset, limit)
+            dag_run = trigger_anonymize_dag(data, config, tenant_id)
+            dag_run.execute(context)
 
     batch_size = do_batch_size()
 
@@ -164,26 +171,11 @@ with DAG(
         schema_table=schemas_tables_selected
     )
 
-    record_counts = combine_table_counts(
-        number_in_batch=batch_size,
-        schema_table=schemas_tables_selected,
-        record_counts_per_table=total_records_per_table,
-    )
+    counts = record_counts(batch_size, schemas_tables_selected, total_records_per_table)
 
-    table_ranges = calculate_table_ranges(
-        batch_size=batch_size,
-        schemas_tables=schemas_tables_selected,
-        counts=record_counts,
-    )
+    table_ranges(batch_size, schemas_tables_selected, counts)
 
-    anonymize = anonymize_batches(table_ranges, configuration)
+    anonymize_batches.expand(table_ranges=table_ranges, config=configuration)
 
 
-(
-    configuration
-    >> schemas_tables_selected
-    >> total_records_per_table
-    >> record_counts
-    >> table_ranges
-    >> anonymize
-)
+select_table_objects()

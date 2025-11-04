@@ -8,14 +8,14 @@ license = "Apache-2.0"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
-apache-airflow = "^2.10.5"
+apache-airflow = "^3.1.0"
 faker = "^37.1.0"
 jsonpath-ng = "^1.7.0"
 pydantic = "^2.11.4"
 psycopg2 = "^2.9.10"
 
 [tool.poetry.group.test.dependencies]
-apache-airflow = "^2.10.5"
+apache-airflow = "^3.1.0"
 black = "^24.10.0"
 mypy = "^1.13.0"
 flake8 = "^7.1.1"

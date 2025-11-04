@@ -1,13 +1,12 @@
 import pydantic
 import pytest
 
-from folio_data_anonymization.dags.select_tables import (
+from folio_data_anonymization.plugins.select_tables import (
     calculate_table_ranges,
     combine_table_counts,
-)
-
-from folio_data_anonymization.plugins.select_tables import (
-    do_anonymize,
+    construct_anon_config,
+    fetch_records_batch_for_table,
+    trigger_anonymize_dag,
     fetch_record_counts_per_table,
     schemas_tables,
 )
@@ -67,16 +66,6 @@ def config():
     }
 
 
-@pytest.fixture
-def mock_dag_bag(mocker):
-    def mock_get_dag(dag_id: str):
-        return mocker.MagicMock()
-
-    dag_bag = mocker.MagicMock()
-    dag_bag.get_dag = mock_get_dag
-    return dag_bag
-
-
 def test_fetch_record_counts(mocker, mock_get_current_context, config):
     mocker.patch(
         'folio_data_anonymization.plugins.select_tables.SQLExecuteQueryOperator',
@@ -92,9 +81,7 @@ def test_fetch_record_counts(mocker, mock_get_current_context, config):
     assert count == 76
 
 
-def test_anonymize_selections(
-    mocker, mock_get_current_context, mock_dag_bag, config, caplog
-):
+def test_anonymize_selections(mocker, mock_get_current_context, config, caplog):
     mocker.patch(
         'folio_data_anonymization.plugins.select_tables.SQLExecuteQueryOperator',
         return_value=MockSQLExecuteQueryOperator(result_type="selections"),
@@ -103,31 +90,29 @@ def test_anonymize_selections(
         'folio_data_anonymization.plugins.select_tables.sql_selections_file',
         return_value='folio_data_anonymization/plugins/sql/selections.sql',
     )
-    dag_bag = mocker.patch(
-        "folio_data_anonymization.plugins.select_tables.DagBag",
-        return_value=mock_dag_bag,
-    )
 
     tables = schemas_tables(config, "diku")
     assert "diku_mod_table_c.three" in tables
 
-    counts = combine_table_counts.function(
+    counts = combine_table_counts(
         schema_table=tables, record_counts_per_table=[38, 74, 76]
     )
     assert counts["diku_mod_table_a.one"] == 38
 
-    ranges = calculate_table_ranges.function(
-        batch_size=10, counts=counts, schemas_tables=tables
-    )
+    ranges = calculate_table_ranges(batch_size=10, counts=counts, schemas_tables=tables)
 
     assert ranges[0]["table"] == "diku_mod_table_a.one"
     assert ranges[0]["ranges"][0] == (0, 10)
     assert ranges[0]["ranges"][3] == (30, 40)
 
-    do_anonymize(ranges, config, "diku")
-    assert ("Selecting records batch") in caplog.text
-    assert dag_bag.called
-    assert ("Anonymizing diku_mod_table_a.one with OFFSET: 0 LIMIT: 10") in caplog.text
-    assert (
-        "{'table_name': 'diku_mod_table_c.three', 'anonymize': {'jsonb': []}, 'set_to_empty': {'jsonb': []}}"  # noqa
-    ) in caplog.text
+    for ranges_li in ranges:
+        table = ranges_li["table"]
+        table_config = construct_anon_config(config, table)
+        data = fetch_records_batch_for_table(table, 0, 10)
+        operator = trigger_anonymize_dag(data, table_config, "diku")
+        assert operator.trigger_dag_id == "anonymize_data"
+        assert operator.task_id == "trigger_anonymize_data_dag"
+        assert (
+            "Selecting records batch for table: diku_mod_table_a.one, offset: 0, limit: 10"  # noqa
+        ) in caplog.text
+        assert ("Triggered anonymize_data DAG for diku_mod_table_a.one") in caplog.text

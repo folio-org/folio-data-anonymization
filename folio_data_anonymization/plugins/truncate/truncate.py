@@ -4,18 +4,18 @@ import psycopg2
 
 from pathlib import Path
 
-from airflow.models import Variable
-from airflow.operators.python import get_current_context
+from airflow.sdk import get_current_context
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 logger = logging.getLogger(__name__)
 
 
-def tables_list():
+def tables_list(**kwargs):
     with open(tables_json_file(), 'r') as file:
         json_list = json.load(file)
 
-    tenant_id = Variable.get("TENANT_ID", "diku")
+    params = kwargs.get("params", {})
+    tenant_id = params.get("tenant_id", "diku")
     tenant_json_list = [f"{tenant_id}_" + item for item in json_list]
 
     return ','.join(tenant_json_list)

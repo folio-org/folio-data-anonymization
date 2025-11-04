@@ -1,7 +1,6 @@
 from datetime import timedelta
 
-from airflow import DAG
-from airflow.decorators import task
+from airflow.sdk import dag, task, Param
 
 try:
     from plugins.git_plugins.truncate.truncate import (
@@ -23,14 +22,21 @@ default_args = {
     "retry_delay": timedelta(minutes=1),
 }
 
-with DAG(
-    "truncate_tables",
+
+@dag(
     schedule=None,
     default_args=default_args,
     catchup=False,
     tags=["truncate"],
-    params={},
-) as dag:
+    params={
+        "tenant_id": Param(
+            "diku",
+            description="Tenant ID",
+            type="string",
+        ),
+    },
+)
+def truncate_tables():
 
     @task
     def fetch_schemas_tables():
@@ -42,7 +48,7 @@ with DAG(
 
     schemas_tables = fetch_schemas_tables()
 
-    truncate_database_objects = truncate_schemas_tables(schemas_tables)
+    truncate_schemas_tables(schemas_tables)
 
 
-(schemas_tables >> truncate_database_objects)
+truncate_tables()

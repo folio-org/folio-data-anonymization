@@ -8,7 +8,7 @@ import pytest
 from psycopg2 import Error
 
 from airflow.exceptions import AirflowFailException
-from airflow.models import Connection
+from airflow.sdk import Connection
 
 from folio_data_anonymization.plugins.utils import fake_jsonb, update_row
 
@@ -44,7 +44,7 @@ class MockConnection(pydantic.BaseModel):
 
 
 class MockAirflowConnection(pydantic.BaseModel):
-    def get_connection_from_secrets(self):
+    def get(self):
         return Connection(  # noqa
             conn_id="postgres-folio",
             conn_type="postgres",
@@ -122,7 +122,7 @@ def test_user_fake_jsonb(configs):
 
 def test_update_row(mocker, mock_airflow_connection):
     mocker.patch(
-        'folio_data_anonymization.plugins.sql_pool.Connection.get_connection_from_secrets',  # noqa
+        'folio_data_anonymization.plugins.sql_pool.Connection.get',  # noqa
         return_value=mock_airflow_connection,
     )
 
@@ -136,7 +136,7 @@ def test_update_row(mocker, mock_airflow_connection):
 
 def test_failed_update_row(mocker, mock_airflow_connection):
     mocker.patch(
-        'folio_data_anonymization.plugins.sql_pool.Connection.get_connection_from_secrets',  # noqa
+        'folio_data_anonymization.plugins.sql_pool.Connection.get',  # noqa
         return_value=mock_airflow_connection,
     )
 
