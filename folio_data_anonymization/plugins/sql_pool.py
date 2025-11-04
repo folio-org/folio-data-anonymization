@@ -13,11 +13,11 @@ class SQLPool:
 
     def pool(self):
         conn = self.conn
-        max_pool_size = Variable.get("max_pool_size", 48)
+        max_pool_size = Variable.get("max_pool_size", "48")
         logging.getLogger(__name__).info(f"SQL max pool size: {max_pool_size}")
         return SimpleConnectionPool(
             12,
-            max_pool_size,
+            int(max_pool_size),
             database='okapi',
             host=conn.host,
             password=conn.password,

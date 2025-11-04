@@ -52,7 +52,7 @@ def mock_sqlpool_variable(monkeypatch):
         value = None
         match key:
             case "max_pool_size":
-                value = 16
+                value = "16"
             case _:
                 raise ValueError("")
         return value
