@@ -11,7 +11,7 @@ class SQLPool:
     def connection(self):
         return Connection.get('postgres_folio')
 
-    def pool(self, **kwargs):
+    def pool(self):
         conn = self.conn
         max_pool_size = Variable.get("max_pool_size", 48)
         logging.getLogger(__name__).info(f"SQL max pool size: {max_pool_size}")
