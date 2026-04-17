@@ -12,6 +12,7 @@
 	<groupId>org.folio</groupId>
 	<artifactId>anonymization</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
 	<name>FOLIO Data Anonymization</name>
 	<description />
 	<url>https://github.com/folio-org/folio-data-anonymization</url>
@@ -29,6 +30,23 @@
 		<developerConnection>scm:git:git@github.com:folio-org/folio-data-anonymization.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
+
+	<distributionManagement>
+		<repository>
+			<id>folio-nexus</id>
+			<name>FOLIO Release Repository</name>
+			<url>https://repository.folio.org/repository/maven-releases/</url>
+			<uniqueVersion>false</uniqueVersion>
+			<layout>default</layout>
+		</repository>
+		<snapshotRepository>
+			<id>folio-nexus</id>
+			<name>FOLIO Snapshot Repository</name>
+			<uniqueVersion>true</uniqueVersion>
+			<url>https://repository.folio.org/repository/maven-snapshots/</url>
+			<layout>default</layout>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<properties>
 		<java.version>21</java.version>
@@ -71,6 +89,14 @@
 			<version>1.0.2</version>
 		</dependency>
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>folio-nexus</id>
+			<name>FOLIO Maven repository</name>
+			<url>https://repository.folio.org/repository/maven-folio</url>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>
