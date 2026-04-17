@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: data-anon
+  datasource:
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_DATABASE:okapi_modules}
+  sql:
+    init:
+      # to boot up application despite of any DB connection issues
+      continue-on-error: false
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
