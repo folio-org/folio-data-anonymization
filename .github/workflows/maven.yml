@@ -14,7 +14,7 @@ jobs:
     # Only handle push events from the main branch or tags, to decrease PR noise
     if: github.ref_name == github.event.repository.default_branch ||
       github.event_name != 'push' || github.ref_type == 'tag'
-    secrets: inherit
+    secrets: inherit # NOSONAR
     with:
       publish-module-descriptor: false
       do-docker: false
