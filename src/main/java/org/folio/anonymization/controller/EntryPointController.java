@@ -1,6 +1,8 @@
 package org.folio.anonymization.controller;
 
 import lombok.extern.log4j.Log4j2;
+import org.folio.anonymization.repository.TenantRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -9,10 +11,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class EntryPointController {
 
+  @Autowired
+  TenantRepository tenantRepository;
+
   @EventListener(ApplicationReadyEvent.class)
   public void entryPoint() throws InterruptedException {
-    log.info("Doing something after startup");
-    Thread.sleep(10000);
-    log.info("Finished doing something after startup");
+    log.info("============================");
+    tenantRepository.getModuleTablesWithSizes("fs09000000").forEach(log::info);
+    log.info("============================");
   }
 }
