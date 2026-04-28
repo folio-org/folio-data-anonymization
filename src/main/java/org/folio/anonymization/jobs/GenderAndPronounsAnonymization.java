@@ -1,5 +1,7 @@
 package org.folio.anonymization.jobs;
 
+import static org.jooq.impl.DSL.field;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -10,7 +12,8 @@ import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
-import org.folio.anonymization.jobs.templates.ReplaceJSONBWithSQLPart;
+import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
+import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -58,13 +61,13 @@ public class GenderAndPronounsAnonymization implements JobFactory {
               JobConfigurationProperty
                 .getEnabledFields(ctx.settings())
                 .map(field ->
-                  new ReplaceJSONBWithSQLPart(
+                  new ReplaceJSONBValuePart(
                     "replace " + field.jsonPath(),
-                          field,
-                          REPLACEMENT_SQL_BY_JSON_PATH.get(field.jsonPath())
+                    field,
+                    field(REPLACEMENT_SQL_BY_JSON_PATH.get(field.jsonPath()), JSONB.class)
                   )
                 )
-                 .toList()
+                .toList()
             )
       )
     );

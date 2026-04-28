@@ -1,5 +1,7 @@
 package org.folio.anonymization.jobs;
 
+import static org.jooq.impl.DSL.field;
+
 import java.util.List;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
@@ -8,7 +10,8 @@ import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
-import org.folio.anonymization.jobs.templates.ReplaceJSONBWithSQLPart;
+import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
+import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -56,13 +59,14 @@ public class PhoneNumberAnonymization implements JobFactory {
               JobConfigurationProperty
                 .getEnabledFields(ctx.settings())
                 .map(field ->
-                  new ReplaceJSONBWithSQLPart(
+                  new ReplaceJSONBValuePart(
                     "replace phone number in " + field.toString(),
                     field,
                     // 978 = Ipswich, MA
                     // 919 = Durham, NC
                     // 512 = Austin, TX
-                    """
+                    field(
+                      """
                       concat(
                         '\"(',
                         ('{978,919,512}'::text[])[floor(random() * 3 + 1)],
@@ -73,7 +77,9 @@ public class PhoneNumberAnonymization implements JobFactory {
                         trunc(random() * 10),
                         '\"'
                       )::jsonb
-                    """
+                      """,
+                      JSONB.class
+                    )
                   )
                 )
                 .toList()
