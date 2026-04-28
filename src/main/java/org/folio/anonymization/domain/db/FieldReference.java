@@ -47,7 +47,7 @@ public record FieldReference(String schema, String table, String column, String 
     return DSL.field(DSL.name(DBUtils.getSchemaName(tenant.id(), schema), table, column), clazz);
   }
 
-  public Field<JSONB> jsonbSet(Tenant tenant, String replacementSqlValue) {
+  public Field<JSONB> jsonbSet(Tenant tenant, Field<JSONB> replacement) {
     if (jsonPath == null) {
       throw new UnsupportedOperationException("Cannot use jsonb_set for a non-JSONB field");
     }
@@ -65,7 +65,7 @@ public record FieldReference(String schema, String table, String column, String 
     bindings.add(parts.get(0).toArray(new String[0]));
     return DSL.field(
       "jsonb_set_lax({0}, {1}, %s, false, 'return_target')".formatted(
-          getReplacement(parts.subList(1, parts.size()), parentColumn, parts.get(0), replacementSqlValue, bindings)
+          getReplacement(parts.subList(1, parts.size()), parentColumn, parts.get(0), replacement, bindings)
         ),
       JSONB.class,
       bindings.toArray()
@@ -79,11 +79,11 @@ public record FieldReference(String schema, String table, String column, String 
     List<List<String>> remainingParts,
     Field<JSONB> parentColumn,
     List<String> parentPath,
-    String replacementSqlValue,
+    Field<JSONB> replacement,
     List<Object> bindings
   ) {
     if (remainingParts.isEmpty()) {
-      return replacementSqlValue;
+      return "{" + ListUtils.addAndGetIndex(bindings, replacement) + "}";
     }
     int parentIndex = ListUtils.addAndGetIndex(bindings, DBUtils.resolveFieldProperties(parentColumn, parentPath));
     int parentAsTextIndex = ListUtils.addAndGetIndex(
@@ -104,7 +104,7 @@ public record FieldReference(String schema, String table, String column, String 
       remainingParts.subList(1, remainingParts.size()),
       innerElement,
       remainingParts.get(0),
-      replacementSqlValue,
+      replacement,
       bindings
     );
     return new StringSubstitutor(

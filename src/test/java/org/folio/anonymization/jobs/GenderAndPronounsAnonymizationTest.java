@@ -12,7 +12,7 @@ import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
-import org.folio.anonymization.jobs.templates.ReplaceJSONBWithSQLPart;
+import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
@@ -23,18 +23,18 @@ class GenderAndPronounsAnonymizationTest {
   @Test
   void buildSchedulesGenderAndPronounsReplacementParts() throws Exception {
     Job job = buildJobWithTables(new ModuleTable("users", "users", 100));
-    List<ReplaceJSONBWithSQLPart> parts = getOverwriteParts(job);
+    List<ReplaceJSONBValuePart> parts = getOverwriteParts(job);
     assertEquals(2, parts.size());
 
-    ReplaceJSONBWithSQLPart genderPart = findPart(parts, "$.personal.gender");
-    String genderSql = getReplacementSql(genderPart);
+    ReplaceJSONBValuePart genderPart = findPart(parts, "$.personal.gender");
+    String genderSql = genderPart.getReplacement().toString();
     assertTrue(genderSql.contains("Female"));
     assertTrue(genderSql.contains("Male"));
     assertTrue(genderSql.contains("Non-binary"));
     assertTrue(genderSql.contains("Prefer not to say"));
 
-    ReplaceJSONBWithSQLPart pronounsPart = findPart(parts, "$.personal.pronouns");
-    String pronounsSql = getReplacementSql(pronounsPart);
+    ReplaceJSONBValuePart pronounsPart = findPart(parts, "$.personal.pronouns");
+    String pronounsSql = pronounsPart.getReplacement().toString();
     assertTrue(pronounsSql.contains("she/her"));
     assertTrue(pronounsSql.contains("he/him"));
     assertTrue(pronounsSql.contains("they/them"));
@@ -61,23 +61,17 @@ class GenderAndPronounsAnonymizationTest {
     return anonymization;
   }
 
-  private static List<ReplaceJSONBWithSQLPart> getOverwriteParts(Job job) {
+  private static List<ReplaceJSONBValuePart> getOverwriteParts(Job job) {
     ConcurrentLinkedQueue<?> overwriteParts = job.getParts().get("overwrite");
     assertNotNull(overwriteParts);
-    return overwriteParts.stream().map(ReplaceJSONBWithSQLPart.class::cast).toList();
+    return overwriteParts.stream().map(ReplaceJSONBValuePart.class::cast).toList();
   }
 
-  private static ReplaceJSONBWithSQLPart findPart(List<ReplaceJSONBWithSQLPart> parts, String jsonPath) {
+  private static ReplaceJSONBValuePart findPart(List<ReplaceJSONBValuePart> parts, String jsonPath) {
     return parts
       .stream()
       .filter(part -> part.getLabel().contains(jsonPath))
       .findFirst()
       .orElseThrow(() -> new AssertionError("No part found for json path " + jsonPath));
-  }
-
-  private static String getReplacementSql(ReplaceJSONBWithSQLPart part) throws Exception {
-    Field replacementSqlField = ReplaceJSONBWithSQLPart.class.getDeclaredField("replacementSql");
-    replacementSqlField.setAccessible(true);
-    return (String) replacementSqlField.get(part);
   }
 }

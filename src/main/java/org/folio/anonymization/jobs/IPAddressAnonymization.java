@@ -1,5 +1,7 @@
 package org.folio.anonymization.jobs;
 
+import static org.jooq.impl.DSL.field;
+
 import java.util.List;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
@@ -8,7 +10,8 @@ import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
-import org.folio.anonymization.jobs.templates.ReplaceJSONBWithSQLPart;
+import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
+import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -38,11 +41,14 @@ public class IPAddressAnonymization implements JobFactory {
               JobConfigurationProperty
                 .getEnabledFields(ctx.settings())
                 .map(field ->
-                  new ReplaceJSONBWithSQLPart(
+                  new ReplaceJSONBValuePart(
                     "replace IP",
                     field,
                     // 169.254.X.X, reserved block of link-local IPs to ensure we don't accidentally point to a real IP
-                    "concat('\"169.254.', trunc(random() * 256), '.', trunc(random() * 256), '\"')::jsonb"
+                    field(
+                      "concat('\"169.254.', trunc(random() * 256), '.', trunc(random() * 256), '\"')::jsonb",
+                      JSONB.class
+                    )
                   )
                 )
                 .toList()
