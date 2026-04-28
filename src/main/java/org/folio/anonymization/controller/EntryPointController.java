@@ -38,7 +38,7 @@ public class EntryPointController {
     log.info("Created {} jobs", jobs.size());
 
     log.info("Running jobs based on temporary filter...");
-    jobs.stream().filter(job -> job.getName().contains("Date of birth")).forEach(Job::execute);
+    jobs.stream().filter(job -> job.getName().contains("User agent anonymization")).forEach(Job::execute);
 
     log.info("========== finished launching jobs ==========");
 
