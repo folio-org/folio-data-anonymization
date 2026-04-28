@@ -8,7 +8,7 @@ import org.folio.anonymization.domain.job.JobPart;
  * a valid JSONB expression.
  *
  * @example
- * new PartReplaceJSONBWithSQL("hardcode value", field, "\"hardcoded_value\"::jsonb")
+ * new ReplaceJSONBWithSQLPart("hardcode value", field, "\"hardcoded_value\"::jsonb")
  */
 public class ReplaceJSONBWithSQLPart extends JobPart {
 

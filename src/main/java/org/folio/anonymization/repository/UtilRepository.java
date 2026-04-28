@@ -8,6 +8,7 @@ import static org.jooq.impl.DSL.table;
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.domain.db.ModuleTable;
+import org.folio.anonymization.util.DBUtils;
 import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.jooq.impl.SQLDataType;
@@ -19,7 +20,6 @@ import org.springframework.stereotype.Repository;
 public class UtilRepository {
 
   private static final Table<?> INFORMATION_SCHEMA_SCHEMATA = table(name("information_schema", "schemata"));
-  private static final String MODULE_SCHEMA_NAME_FORMAT = "%s_mod_%s";
 
   @Autowired
   private DSLContext create;
@@ -36,11 +36,7 @@ public class UtilRepository {
   }
 
   public boolean doesSchemaExist(String tenantName, String normalizedModuleName) {
-    return doesSchemaExist(MODULE_SCHEMA_NAME_FORMAT.formatted(tenantName, normalizedModuleName));
-  }
-
-  public static String getSchemaName(String tenantName, String normalizedModuleName) {
-    return MODULE_SCHEMA_NAME_FORMAT.formatted(tenantName, normalizedModuleName);
+    return doesSchemaExist(DBUtils.getSchemaName(tenantName, normalizedModuleName));
   }
 
   /**
