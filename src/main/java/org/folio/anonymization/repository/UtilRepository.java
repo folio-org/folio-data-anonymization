@@ -19,14 +19,14 @@ import org.springframework.stereotype.Repository;
 public class UtilRepository {
 
   private static final Table<?> INFORMATION_SCHEMA_SCHEMATA = table(name("information_schema", "schemata"));
-  private static final String MODULE_SCHEMA_NAME_FORMAT = "%s_%s";
+  private static final String MODULE_SCHEMA_NAME_FORMAT = "%s_mod_%s";
 
   @Autowired
-  private DSLContext dslContext;
+  private DSLContext create;
 
   public boolean doesSchemaExist(String schemaName) {
     return (
-      dslContext
+      create
         .selectOne()
         .from(INFORMATION_SCHEMA_SCHEMATA)
         .where(field("schema_name", String.class).eq(schemaName))
@@ -49,7 +49,7 @@ public class UtilRepository {
    * in which case a full COUNT(*) will occur.
    */
   public List<ModuleTable> getTablesSizesBySchemaPrefix(String prefix) {
-    return dslContext
+    return create
       .select(field("table_schema"), field("table_name"), field("size"))
       .from(table(name("information_schema", "tables")))
       .leftJoin(
@@ -83,7 +83,7 @@ public class UtilRepository {
       .map(table -> {
         if (table.size() == -1) {
           log.info("Performing manual COUNT(*) for table {}.{}", prefix + table.schema(), table.table());
-          return table.withSize(dslContext.fetchCount(table(name(prefix + table.schema(), table.table()))));
+          return table.withSize(create.fetchCount(table(name(prefix + table.schema(), table.table()))));
         }
         return table;
       })

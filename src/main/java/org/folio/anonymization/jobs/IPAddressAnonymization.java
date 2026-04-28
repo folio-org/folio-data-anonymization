@@ -1,0 +1,53 @@
+package org.folio.anonymization.jobs;
+
+import java.util.List;
+import org.folio.anonymization.domain.db.FieldReference;
+import org.folio.anonymization.domain.job.Job;
+import org.folio.anonymization.domain.job.JobBuilder;
+import org.folio.anonymization.domain.job.JobConfigurationProperty;
+import org.folio.anonymization.domain.job.JobFactory;
+import org.folio.anonymization.domain.job.SharedExecutionContext;
+import org.folio.anonymization.domain.job.TenantExecutionContext;
+import org.folio.anonymization.jobs.templates.ReplaceJSONBWithSQLPart;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+public class IPAddressAnonymization implements JobFactory {
+
+  private static final List<FieldReference> IP_FIELDS = List.of(
+    new FieldReference("login", "event_logs", "jsonb", "$.ip")
+  );
+
+  @Autowired
+  private SharedExecutionContext context;
+
+  @Override
+  public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
+    return List.of(
+      new JobBuilder(
+        "IP address anonymization",
+        "Replaces user's IP addresses with randomized values",
+        tenant,
+        context,
+        JobConfigurationProperty.fromFieldList(IP_FIELDS, tenant),
+        ctx ->
+          new Job(ctx, List.of("overwrite"))
+            .scheduleParts(
+              "overwrite",
+              JobConfigurationProperty
+                .getEnabledFields(ctx.settings())
+                .map(field ->
+                  new ReplaceJSONBWithSQLPart(
+                    "replace IP",
+                    field,
+                    // 169.254.X.X, reserved block of link-local IPs to ensure we don't accidentally point to a real IP
+                    "concat('\"169.254.', trunc(random() * 256), '.', trunc(random() * 256), '\"')::jsonb"
+                  )
+                )
+                .toList()
+            )
+      )
+    );
+  }
+}
