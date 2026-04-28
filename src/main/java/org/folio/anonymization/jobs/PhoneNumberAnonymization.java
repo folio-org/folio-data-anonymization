@@ -16,7 +16,25 @@ import org.springframework.stereotype.Component;
 public class PhoneNumberAnonymization implements JobFactory {
 
   private static final List<FieldReference> PHONE_NUMBER_FIELDS = List.of(
-    new FieldReference("organizations_storage", "organizations", "jsonb", "$.phoneNumbers[*].phoneNumber")
+    new FieldReference("inn_reach", "transaction_local_hold", "patron_phone"),
+    new FieldReference("oa", "party", "p_phone"),
+    new FieldReference("oa", "party", "p_mobile"),
+    new FieldReference("organizations_storage", "contacts", "jsonb", "$.phoneNumbers[*].phoneNumber"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.contacts.phoneNumbers[*].phoneNumber"),
+    new FieldReference(
+      "organizations_storage",
+      "organizations",
+      "jsonb",
+      "$.privilegedContacts.phoneNumbers[*].phoneNumber"
+    ),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.phoneNumbers[*].phoneNumber"),
+    new FieldReference("organizations_storage", "privileged_contacts", "jsonb", "$.phoneNumbers[*].phoneNumber"),
+    new FieldReference("users", "staging_users", "jsonb", "$.contactInfo.phone"),
+    new FieldReference("users", "staging_users", "jsonb", "$.contactInfo.mobilePhone"),
+    new FieldReference("users", "user_tenant", "phone_number"),
+    new FieldReference("users", "user_tenant", "mobile_phone_number"),
+    new FieldReference("users", "users", "jsonb", "$.personal.phone"),
+    new FieldReference("users", "users", "jsonb", "$.personal.mobilePhone")
   );
 
   @Autowired
@@ -39,7 +57,7 @@ public class PhoneNumberAnonymization implements JobFactory {
                 .getEnabledFields(ctx.settings())
                 .map(field ->
                   new ReplaceJSONBWithSQLPart(
-                    "replace phone number",
+                    "replace phone number in " + field.toString(),
                     field,
                     // 978 = Ipswich, MA
                     // 919 = Durham, NC
