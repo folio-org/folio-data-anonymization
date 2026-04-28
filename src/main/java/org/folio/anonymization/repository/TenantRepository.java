@@ -12,6 +12,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.domain.db.ModuleTable;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
+import org.folio.anonymization.util.DBUtils;
 import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +81,7 @@ public class TenantRepository {
   }
 
   protected List<TenantConsortiumInfo> getConsortiumInformationFromTenant(String tenantName) {
-    String schemaName = UtilRepository.getSchemaName(tenantName, MOD_CONSORTIA_KEYCLOAK_SCHEMA);
+    String schemaName = DBUtils.getSchemaName(tenantName, MOD_CONSORTIA_KEYCLOAK_SCHEMA);
 
     if (!utilRepository.doesSchemaExist(tenantName, MOD_CONSORTIA_KEYCLOAK_SCHEMA)) {
       return List.of();
