@@ -1,0 +1,25 @@
+Apt 1A
+Apt 2A
+Apt 3C
+Unit 5
+Unit 8B
+Suite 100
+Suite 200
+Suite 300
+Floor 2
+Floor 4
+Building A
+Building B
+Building C
+Room 12
+Room 24
+Wing North
+Wing South
+Tower East
+Tower West
+Rear Entrance
+Front Desk
+Mailbox 14
+Loft 6
+Penthouse
+Annex

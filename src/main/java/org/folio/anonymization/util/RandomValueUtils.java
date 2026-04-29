@@ -1,6 +1,11 @@
 package org.folio.anonymization.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.Function;
@@ -52,6 +57,29 @@ public class RandomValueUtils {
       .range(0, qty)
       .mapToObj(i -> FAKER.credentials().username() + EMAIL_DOMAINS.get(FAKER.random().nextInt(EMAIL_DOMAINS.size())))
       .toList();
+  }
+
+  public static List<String> loadValuesFromResource(String resourcePath) {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    InputStream stream = classLoader.getResourceAsStream(resourcePath);
+    if (stream == null) {
+      throw new IllegalStateException("Resource file not found: " + resourcePath);
+    }
+
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+      List<String> values = reader
+        .lines()
+        .map(String::trim)
+        .filter(line -> !line.isEmpty())
+        .filter(line -> !line.startsWith("#"))
+        .toList();
+      if (values.isEmpty()) {
+        throw new IllegalStateException("Resource file is empty: " + resourcePath);
+      }
+      return values;
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to read resource file: " + resourcePath, e);
+    }
   }
 
   public static List<String> userAgents(int qty) {
