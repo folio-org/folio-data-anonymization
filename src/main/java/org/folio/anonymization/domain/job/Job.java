@@ -75,7 +75,13 @@ public final class Job {
   public void executePart(JobPart part) {
     part.setJob(this);
     CompletableFuture<JobPart> future = CompletableFuture.supplyAsync(part, this.context.executionContext().executor());
-    this.currentlyExecuting.put(part.getLabel(), Pair.of(part, future));
+
+    if (this.currentlyExecuting.put(part.getLabel(), Pair.of(part, future)) != null) {
+      log.throwing(
+        new IllegalStateException("Job '%s': part '%s' was found more than once".formatted(name, part.getLabel()))
+      );
+    }
+
     future.handle((r, e) -> {
       if (e == null) {
         log.info("Job '{}': completed part '{}'.", name, r.getLabel());

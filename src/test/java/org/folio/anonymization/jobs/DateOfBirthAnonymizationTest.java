@@ -29,7 +29,7 @@ class DateOfBirthAnonymizationTest {
     ReplaceJSONBValuePart dobPart = parts.getFirst();
     assertTrue(dobPart.getLabel().contains("$.personal.dateOfBirth"));
 
-    String dobSql = dobPart.getReplacement().toString();
+    String dobSql = dobPart.getReplacement().apply(null).toString();
     assertTrue(dobSql.contains("1940-01-01"));
     assertTrue(dobSql.contains("2007-12-31"));
     assertTrue(dobSql.contains("YYYY-MM-DD"));

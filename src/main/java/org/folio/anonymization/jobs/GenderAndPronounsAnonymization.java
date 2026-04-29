@@ -4,7 +4,6 @@ import static org.jooq.impl.DSL.field;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -13,6 +12,7 @@ import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
+import org.folio.anonymization.util.RandomValueUtils;
 import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,9 +37,9 @@ public class GenderAndPronounsAnonymization implements JobFactory {
 
   private static final Map<String, String> REPLACEMENT_SQL_BY_JSON_PATH = Map.of(
     USER_GENDER_FIELD.jsonPath(),
-    randomJsonbValueFromSetSql(List.of("Female", "Male", "Non-binary", "Prefer not to say")),
+    RandomValueUtils.randomArrayEntryToJsonbSql("Female", "Male", "Non-binary", "Prefer not to say"),
     USER_PRONOUNS_FIELD.jsonPath(),
-    randomJsonbValueFromSetSql(List.of("she/her", "he/him", "they/them", "ze/zir"))
+    RandomValueUtils.randomArrayEntryToJsonbSql("she/her", "he/him", "they/them", "ze/zir")
   );
 
   @Autowired
@@ -71,13 +71,5 @@ public class GenderAndPronounsAnonymization implements JobFactory {
             )
       )
     );
-  }
-
-  private static String randomJsonbValueFromSetSql(List<String> values) {
-    String sqlValues = values
-      .stream()
-      .map(value -> "'" + value.replace("'", "''") + "'")
-      .collect(Collectors.joining(", "));
-    return "to_jsonb((ARRAY[%s])[1 + floor(random() * %d)::int])".formatted(sqlValues, values.size());
   }
 }

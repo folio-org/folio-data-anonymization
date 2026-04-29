@@ -1,11 +1,10 @@
 package org.folio.anonymization.domain.db;
 
-import static org.jooq.impl.DSL.field;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import org.apache.commons.text.StringSubstitutor;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.util.DBUtils;
@@ -39,20 +38,38 @@ public record FieldReference(String schema, String table, String column, String 
     return DSL.table(DSL.name(DBUtils.getSchemaName(tenant.id(), schema), table));
   }
 
-  public Field<Object> column(Tenant tenant) {
+  public Field<Object> baseColumn(Tenant tenant) {
     return DSL.field(DSL.name(DBUtils.getSchemaName(tenant.id(), schema), table, column));
   }
 
-  public <T> Field<T> column(Tenant tenant, Class<T> clazz) {
+  public <T> Field<T> baseColumn(Tenant tenant, Class<T> clazz) {
     return DSL.field(DSL.name(DBUtils.getSchemaName(tenant.id(), schema), table, column), clazz);
   }
 
-  public Field<JSONB> jsonbSet(Tenant tenant, Field<JSONB> replacement) {
+  public <T> Field<T> field(Tenant tenant, Class<T> clazz) {
+    if (jsonPath == null) {
+      return this.baseColumn(tenant, clazz);
+    } else {
+      return DSL.field(
+        "jsonb_path_query({0}, {1}) #>> '{}'",
+        clazz,
+        baseColumn(tenant, JSONB.class),
+        DSL.inline(jsonPath)
+      );
+    }
+  }
+
+  /**
+   * Returns a jsonb_set value to replace this field with a given value.
+   * The provided replacement will be passed a variable referring to the Field<JSONB>
+   * represented by the fully-resolved version of this FieldReference.
+   */
+  public Field<JSONB> jsonbSet(Tenant tenant, Function<Field<JSONB>, Field<JSONB>> replacement) {
     if (jsonPath == null) {
       throw new UnsupportedOperationException("Cannot use jsonb_set for a non-JSONB field");
     }
 
-    Field<JSONB> parentColumn = column(tenant, JSONB.class);
+    Field<JSONB> parentColumn = baseColumn(tenant, JSONB.class);
     // splits nested arrays into separate groups, e.g. $.foo.bar[*].baz becomes [[foo,bar],[baz]]
     List<List<String>> parts = Arrays
       .stream(jsonPath.substring(2).split("\\[\\*\\]\\."))
@@ -79,18 +96,25 @@ public record FieldReference(String schema, String table, String column, String 
     List<List<String>> remainingParts,
     Field<JSONB> parentColumn,
     List<String> parentPath,
-    Field<JSONB> replacement,
+    Function<Field<JSONB>, Field<JSONB>> replacement,
     List<Object> bindings
   ) {
     if (remainingParts.isEmpty()) {
-      return "{" + ListUtils.addAndGetIndex(bindings, replacement) + "}";
+      return (
+        "{" +
+        ListUtils.addAndGetIndex(
+          bindings,
+          replacement.apply(DBUtils.resolveFieldProperties(parentColumn, parentPath))
+        ) +
+        "}"
+      );
     }
     int parentIndex = ListUtils.addAndGetIndex(bindings, DBUtils.resolveFieldProperties(parentColumn, parentPath));
     int parentAsTextIndex = ListUtils.addAndGetIndex(
       bindings,
       DBUtils.resolveFieldPropertiesToString(parentColumn, parentPath)
     );
-    Field<JSONB> innerElement = field("elem" + parentAsTextIndex, JSONB.class);
+    Field<JSONB> innerElement = DSL.field("elem" + parentAsTextIndex, JSONB.class);
     int innerElementIndex = ListUtils.addAndGetIndex(bindings, innerElement);
     int innerElementPropertyAsTextIndex = ListUtils.addAndGetIndex(
       bindings,

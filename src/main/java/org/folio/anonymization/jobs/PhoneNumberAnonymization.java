@@ -11,6 +11,7 @@ import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
+import org.folio.anonymization.util.RandomValueUtils;
 import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -69,7 +70,7 @@ public class PhoneNumberAnonymization implements JobFactory {
                       """
                       concat(
                         '\"(',
-                        ('{978,919,512}'::text[])[floor(random() * 3 + 1)],
+                        %s,
                         ') 555-',
                         trunc(random() * 10),
                         trunc(random() * 10),
@@ -77,7 +78,9 @@ public class PhoneNumberAnonymization implements JobFactory {
                         trunc(random() * 10),
                         '\"'
                       )::jsonb
-                      """,
+                      """.formatted(
+                          RandomValueUtils.randomArrayEntrySql("978", "919", "512")
+                        ),
                       JSONB.class
                     )
                   )
