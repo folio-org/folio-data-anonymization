@@ -1,5 +1,6 @@
 package org.folio.anonymization.domain.db;
 
+import jakarta.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,10 +40,15 @@ public class TableIDs {
         .collect(Collectors.toMap(pair -> pair.getLeft().tableReference(), Function.identity()));
   }
 
+  @Nonnull
   public static Pair<FieldReference, Class<?>> getIdFor(TableReference table) {
+    if (!TABLE_ID_MAP.containsKey(table)) {
+      throw new IllegalArgumentException("No ID found for table: " + table);
+    }
     return TABLE_ID_MAP.get(table);
   }
 
+  @Nonnull
   public static Pair<FieldReference, Class<?>> getIdFor(FieldReference field) {
     return getIdFor(field.tableReference());
   }

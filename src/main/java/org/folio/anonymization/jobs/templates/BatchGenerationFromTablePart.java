@@ -1,6 +1,10 @@
 package org.folio.anonymization.jobs.templates;
 
-import java.util.ArrayList;
+import static org.jooq.impl.DSL.count;
+import static org.jooq.impl.DSL.inline;
+import static org.jooq.impl.DSL.orderBy;
+import static org.jooq.impl.DSL.rowNumber;
+
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.domain.db.FieldReference;
@@ -10,6 +14,8 @@ import org.folio.anonymization.domain.job.BatchPartFactory;
 import org.folio.anonymization.domain.job.JobPart;
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.Record2;
+import org.jooq.Result;
 import org.jooq.Table;
 
 /**
@@ -82,17 +88,32 @@ public class BatchGenerationFromTablePart<T> extends JobPart {
   @Override
   protected void execute() {
     Table<?> table = tableId.table(this.tenant());
-    int totalCount = this.create().fetchCount(table);
-    log.info("Total count: {}", totalCount);
-
     Field<T> field = this.tableId.field(this.tenant(), this.tableIdType);
 
-    // get the value of every batchSize'th element in the table
-    List<T> values = new ArrayList<>();
+    // derive batch boundaries in a single pass using row_number(), for O(size).
+    // counting via window function also allows us to save an extra count(*)
+    Field<Integer> rowNum = rowNumber().over(orderBy(field)).as("rn");
+    Field<Integer> total = count().over().as("total");
 
-    for (int offset = 0; offset < totalCount; offset += batchSize) {
-      values.add(this.create().select(field).from(table).orderBy(field).limit(1).offset(offset).fetchOne(field));
-    }
+    Table<?> numbered = this.create().select(field.as("v"), rowNum, total).from(table).asTable("numbered");
+
+    @SuppressWarnings("unchecked")
+    Field<T> v = (Field<T>) numbered.field("v");
+    Field<Integer> rn = numbered.field("rn", Integer.class);
+    Field<Integer> tot = numbered.field("total", Integer.class);
+
+    Result<Record2<T, Integer>> rows =
+      this.create()
+        .select(v, tot)
+        .from(numbered)
+        .where(rn.minus(inline(1)).mod(inline(batchSize)).eq(0))
+        .orderBy(v)
+        .fetch();
+
+    int totalCount = rows.isEmpty() ? 0 : rows.get(0).value2();
+    log.info("Total count: {}", totalCount);
+
+    List<T> values = rows.map(Record2::value1);
 
     for (int i = 0; i < values.size(); i++) {
       T startValueInclusive = values.get(i);
