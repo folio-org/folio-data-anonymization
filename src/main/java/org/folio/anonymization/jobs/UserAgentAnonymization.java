@@ -2,8 +2,6 @@ package org.folio.anonymization.jobs;
 
 import static org.jooq.impl.DSL.field;
 
-import com.github.javafaker.Faker;
-import java.util.ArrayList;
 import java.util.List;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
@@ -30,7 +28,7 @@ public class UserAgentAnonymization implements JobFactory {
 
   private static final List<FieldReference> TARGET_FIELDS = List.of(USER_AGENT_FIELD);
   private static final int USER_AGENT_POOL_SIZE = 15;
-  private static final List<String> USER_AGENT_VALUES = generateUserAgentValues(USER_AGENT_POOL_SIZE);
+  private static final List<String> USER_AGENT_VALUES = RandomValueUtils.userAgents(USER_AGENT_POOL_SIZE);
   private static final String REPLACEMENT_SQL = RandomValueUtils.randomArrayEntryToJsonbSql(
     USER_AGENT_VALUES.toArray(new String[0])
   );
@@ -64,14 +62,5 @@ public class UserAgentAnonymization implements JobFactory {
             )
       )
     );
-  }
-
-  private static List<String> generateUserAgentValues(int size) {
-    Faker faker = new Faker();
-    ArrayList<String> values = new ArrayList<>(size);
-    for (int i = 0; i < size; i++) {
-      values.add(faker.internet().userAgentAny());
-    }
-    return List.copyOf(values);
   }
 }

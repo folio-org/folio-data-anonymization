@@ -183,8 +183,8 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
                   JobConfigurationProperty
                     .getEnabledFields(ctx.settings())
                     .filter(f -> !pairedFields.containsKey(f))
-                    .map(field -> {
-                      return new BatchGenerationFromTablePart<>(
+                    .map(field ->
+                      new BatchGenerationFromTablePart<>(
                         "Make batches to enumerate independent data from " + field.toString(),
                         field,
                         BATCH_SIZE,
@@ -201,8 +201,8 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
                               )
                               .where(field("a").isNotNull())
                           )
-                      );
-                    })
+                      )
+                    )
                 )
                 .toList()
             );

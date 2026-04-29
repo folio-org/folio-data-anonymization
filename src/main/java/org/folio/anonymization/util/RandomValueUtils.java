@@ -1,12 +1,12 @@
 package org.folio.anonymization.util;
 
-import com.github.javafaker.Faker;
 import java.nio.ByteBuffer;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import lombok.experimental.UtilityClass;
+import net.datafaker.Faker;
 import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.lang3.StringUtils;
 
@@ -50,7 +50,11 @@ public class RandomValueUtils {
   public static List<String> emails(int qty) {
     return IntStream
       .range(0, qty)
-      .mapToObj(i -> FAKER.name().username() + EMAIL_DOMAINS.get(FAKER.random().nextInt(EMAIL_DOMAINS.size())))
+      .mapToObj(i -> FAKER.credentials().username() + EMAIL_DOMAINS.get(FAKER.random().nextInt(EMAIL_DOMAINS.size())))
       .toList();
+  }
+
+  public static List<String> userAgents(int qty) {
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.internet().userAgent()).toList();
   }
 }
