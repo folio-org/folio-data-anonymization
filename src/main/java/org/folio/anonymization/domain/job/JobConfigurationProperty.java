@@ -25,7 +25,14 @@ public class JobConfigurationProperty {
   public JobConfigurationProperty(String label) {
     this.key = label;
     this.label = label;
-    this.booleanValue = null;
+    this.booleanValue = true;
+    this.disabled = false;
+  }
+
+  public JobConfigurationProperty(String key, String label) {
+    this.key = key;
+    this.label = label;
+    this.booleanValue = true;
     this.disabled = false;
   }
 
@@ -117,6 +124,15 @@ public class JobConfigurationProperty {
       .stream()
       .filter(JobConfigurationProperty::isOn)
       .map(JobConfigurationProperty::getKey)
+      .filter(clazz::isInstance)
       .map(clazz::cast);
+  }
+
+  public static boolean isOn(List<JobConfigurationProperty> haystack, Object key) {
+    return haystack
+      .stream()
+      .filter(JobConfigurationProperty::isOn)
+      .map(JobConfigurationProperty::getKey)
+      .anyMatch(key::equals);
   }
 }

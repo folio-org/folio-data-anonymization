@@ -27,14 +27,14 @@ class GenderAndPronounsAnonymizationTest {
     assertEquals(2, parts.size());
 
     ReplaceJSONBValuePart genderPart = findPart(parts, "$.personal.gender");
-    String genderSql = genderPart.getReplacement().toString();
+    String genderSql = genderPart.getReplacement().apply(null).toString();
     assertTrue(genderSql.contains("Female"));
     assertTrue(genderSql.contains("Male"));
     assertTrue(genderSql.contains("Non-binary"));
     assertTrue(genderSql.contains("Prefer not to say"));
 
     ReplaceJSONBValuePart pronounsPart = findPart(parts, "$.personal.pronouns");
-    String pronounsSql = pronounsPart.getReplacement().toString();
+    String pronounsSql = pronounsPart.getReplacement().apply(null).toString();
     assertTrue(pronounsSql.contains("she/her"));
     assertTrue(pronounsSql.contains("he/him"));
     assertTrue(pronounsSql.contains("they/them"));

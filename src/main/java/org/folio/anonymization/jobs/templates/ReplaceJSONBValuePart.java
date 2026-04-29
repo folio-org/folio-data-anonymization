@@ -1,5 +1,6 @@
 package org.folio.anonymization.jobs.templates;
 
+import java.util.function.Function;
 import lombok.Getter;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.JobPart;
@@ -17,19 +18,29 @@ public class ReplaceJSONBValuePart extends JobPart {
   private final FieldReference field;
 
   @Getter // for testing
-  private final Field<JSONB> replacement;
+  private final Function<Field<JSONB>, Field<JSONB>> replacement;
 
   public ReplaceJSONBValuePart(String label, FieldReference field, Field<JSONB> replacement) {
     super(label + " (" + field.toString() + ")");
     this.field = field;
-    this.replacement = replacement;
+    this.replacement = f -> replacement;
+  }
+
+  public ReplaceJSONBValuePart(
+    String label,
+    FieldReference field,
+    Function<Field<JSONB>, Field<JSONB>> getReplacement
+  ) {
+    super(label + " (" + field.toString() + ")");
+    this.field = field;
+    this.replacement = getReplacement;
   }
 
   @Override
   protected void execute() {
     this.create()
       .update(field.table(this.tenant()))
-      .set(field.column(this.tenant()), field.jsonbSet(this.tenant(), replacement))
+      .set(field.baseColumn(this.tenant()), field.jsonbSet(this.tenant(), replacement))
       .execute();
   }
 }

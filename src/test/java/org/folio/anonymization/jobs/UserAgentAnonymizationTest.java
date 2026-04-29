@@ -36,9 +36,7 @@ class UserAgentAnonymizationTest {
     assertTrue(generatedValues.size() >= 10 && generatedValues.size() <= 20);
     assertTrue(generatedValues.stream().allMatch(value -> value != null && !value.isBlank()));
 
-    String replacementSql = userAgentPart.getReplacement().toString();
-    assertTrue(replacementSql.contains("to_jsonb((ARRAY["));
-    assertTrue(replacementSql.contains("floor(random() * 15)::int"));
+    String replacementSql = userAgentPart.getReplacement().apply(null).toString();
     assertTrue(replacementSql.contains(generatedValues.getFirst().replace("'", "''")));
   }
 

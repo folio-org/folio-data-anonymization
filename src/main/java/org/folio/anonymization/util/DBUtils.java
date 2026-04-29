@@ -1,12 +1,18 @@
 package org.folio.anonymization.util;
 
+import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.jsonbGetAttribute;
 import static org.jooq.impl.DSL.jsonbGetAttributeAsText;
+import static org.jooq.impl.DSL.name;
+import static org.jooq.impl.DSL.sequence;
 
 import java.util.List;
 import lombok.experimental.UtilityClass;
 import org.jooq.Field;
 import org.jooq.JSONB;
+import org.jooq.Sequence;
+import org.jooq.Table;
+import org.jooq.impl.SQLDataType;
 
 @UtilityClass
 public class DBUtils {
@@ -28,5 +34,20 @@ public class DBUtils {
     String lastPath = path.get(path.size() - 1);
 
     return jsonbGetAttributeAsText(resolveFieldProperties(field, path.subList(0, path.size() - 1)), lastPath);
+  }
+
+  public static Field<String> jsonbToString(Field<JSONB> field) {
+    return field("{0} #>> '{}'", String.class, field);
+  }
+
+  public static Sequence<Integer> getSequence(Table<?> table) {
+    return sequence(name("public", table.getName() + "_seq"), SQLDataType.INTEGER);
+  }
+
+  public static Field<Integer> getSequenceField(Table<?> table) {
+    return field(
+      name(name(table.getName()), name("_seq")),
+      SQLDataType.INTEGER.notNull().defaultValue(getSequence(table).nextval())
+    );
   }
 }
