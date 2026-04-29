@@ -76,13 +76,6 @@ public class UtilRepository {
           record.get("size", Integer.class)
         )
       )
-      .map(table -> {
-        if (table.size() == -1) {
-          log.info("Performing manual COUNT(*) for table {}.{}", prefix + table.schema(), table.table());
-          return table.withSize(create.fetchCount(table(name(prefix + table.schema(), table.table()))));
-        }
-        return table;
-      })
       .toList();
   }
 }
