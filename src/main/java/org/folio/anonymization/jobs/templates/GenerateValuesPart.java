@@ -14,11 +14,12 @@ import org.jooq.Select;
 import org.jooq.Table;
 
 /**
- * Job part to create unique data for a field in a table. Designed to be used with temporary tables,
- * so we use a regular jOOQ Field
+ * Job part to create data for a field in a table. Designed to be used with temporary tables,
+ * and to copy data from one place into a new one. Columns in the destination must
+ * be the same columns as in the source, + destinationField for the new values
  */
 @Log4j2
-public class GenerateUniqueValuesPart extends JobPart {
+public class GenerateValuesPart extends JobPart {
 
   private static final int INSERT_BATCH_SIZE = 100;
 
@@ -27,7 +28,7 @@ public class GenerateUniqueValuesPart extends JobPart {
   private final Select<?> source;
   private final Function<Integer, List<String>> valueFactory;
 
-  public GenerateUniqueValuesPart(
+  public GenerateValuesPart(
     String label,
     Table<?> destinationTable,
     Field<String> destinationField,

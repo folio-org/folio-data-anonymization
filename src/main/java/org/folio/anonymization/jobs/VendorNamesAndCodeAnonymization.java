@@ -21,7 +21,7 @@ import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationJobPart;
 import org.folio.anonymization.jobs.templates.CreateTablePart;
 import org.folio.anonymization.jobs.templates.DropTablePart;
-import org.folio.anonymization.jobs.templates.GenerateUniqueValuesPart;
+import org.folio.anonymization.jobs.templates.GenerateValuesPart;
 import org.folio.anonymization.jobs.templates.InsertIntoTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.folio.anonymization.util.DBUtils;
@@ -196,7 +196,7 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
                   BATCH_SIZE,
                   "generate-new-values-regular",
                   (cond, start, end) ->
-                    new GenerateUniqueValuesPart(
+                    new GenerateValuesPart(
                       "Generate values (%s-%s)".formatted(start, end),
                       tempTableFinal,
                       newValue,
