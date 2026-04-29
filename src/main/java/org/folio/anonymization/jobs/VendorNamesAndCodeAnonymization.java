@@ -191,7 +191,7 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
               "generate-new-values-prep",
               List.of(
                 new BatchGenerationJobPart(
-                  "test",
+                  "Analyze table size for split processing",
                   tempTableStaging,
                   BATCH_SIZE,
                   "generate-new-values-regular",
