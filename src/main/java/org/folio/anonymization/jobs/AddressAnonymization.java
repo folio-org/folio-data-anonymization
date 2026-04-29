@@ -109,34 +109,32 @@ public class AddressAnonymization implements JobFactory {
           List<String> stages = IntStream.range(0, enabledFields.size()).mapToObj(i -> "overwrite-" + i).toList();
           Job job = new Job(ctx, stages.isEmpty() ? List.of("overwrite") : stages);
 
-          IntStream
-            .range(0, enabledFields.size())
-            .forEach(i -> {
-              FieldReference addressField = enabledFields.get(i);
-              if (addressField.jsonPath() == null) {
-                job.scheduleParts(
-                  stages.get(i),
-                  List.of(
-                    new ReplaceStringValuePart(
-                      "replace address in " + addressField.toString(),
-                      addressField,
-                      field(replacementTextSql(addressField), String.class)
-                    )
-                  )
-                );
-              } else {
-                job.scheduleParts(
-                  stages.get(i),
-                  List.of(
-                    new ReplaceJSONBValuePart(
-                      "replace address in " + addressField.toString(),
-                      addressField,
-                      field(replacementJsonbSql(addressField), JSONB.class)
-                    )
-                  )
-                );
-              }
-            });
+          job.scheduleParts("prepare",
+            enabledFields.stream().map(field -> 
+              new BatchGenerationFromTablePart<>(
+                "Prepare batches for address updates in " + field.toString(),
+                field,
+                BATCH_SIZE,
+                "prepare",
+                (label, condition, start, end) -> {
+                  if (field.jsonPath() != null) {
+                    return new ReplaceJSONBValuePart(
+                      "replace %s on %s".formatted(field.toString(), label),
+                      field,
+                      i -> field(replacementJsonbSql(addressField), JSONB.class),
+                      condition
+                    );
+                  } else {
+                    return new ReplaceValuePart(
+                      "replace %s on %s".formatted(field.toString(), label),
+                      field,
+                      i -> field(replacementTextSql(addressField), String.class),
+                      condition
+                    );
+                  }
+                }
+              )
+            ).toList());
           return job;
         }
       )
