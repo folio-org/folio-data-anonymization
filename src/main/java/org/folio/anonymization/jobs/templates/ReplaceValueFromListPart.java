@@ -95,7 +95,7 @@ public class ReplaceValueFromListPart extends JobPart {
         int replacementCount = replacements.size();
 
         Select<? extends Record1<?>> select;
-        Sequence<Integer> insertionSequence = null;
+        Sequence<Integer> insertionSequence = DBUtils.getSequence(tempTable2RefOnly);;
         if (replacementCount == 1) {
           // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
           select = select(valueField).from(tempTable).limit(1);
@@ -141,10 +141,7 @@ public class ReplaceValueFromListPart extends JobPart {
         }
 
         ctx.dropTemporaryTable(tempTable).cascade().execute();
-        ctx.dropSequence(replacementsSequence).execute();
-        if (insertionSequence != null) {
-          ctx.dropSequence(insertionSequence).execute();
-        }
+        ctx.dropSequenceIfExists(insertionSequence).execute();
       });
   }
 }
