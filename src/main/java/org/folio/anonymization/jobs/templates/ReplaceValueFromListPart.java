@@ -50,6 +50,10 @@ public class ReplaceValueFromListPart extends JobPart {
     this.field = field;
     this.condition = condition;
     this.replacements = replacements;
+
+    if (replacements.isEmpty()) {
+      throw new IllegalArgumentException("I can't replace values with nothing!");
+    }
   }
 
   @Override
@@ -63,7 +67,7 @@ public class ReplaceValueFromListPart extends JobPart {
         Table<?> tempTable2RefOnly = table(name("_danon_insertions_" + System.nanoTime()));
 
         Sequence<Integer> replacementsSequence = DBUtils.getSequence(tempTable);
-        this.create().createSequence(replacementsSequence).startWith(0).minvalue(0).execute();
+        ctx.createSequence(replacementsSequence).startWith(0).minvalue(0).execute();
 
         Field<Integer> replacementsSequenceField = DBUtils.getSequenceField(tempTable);
         Field<String> valueField = field("value", String.class);
@@ -85,14 +89,14 @@ public class ReplaceValueFromListPart extends JobPart {
         for (int i = 0; i < queries.size(); i += INSERT_BATCH_SIZE) {
           int end = Math.min(i + INSERT_BATCH_SIZE, queries.size());
           List<Query> batch = queries.subList(i, end);
-          this.create().batch(batch).execute();
+          ctx.batch(batch).execute();
         }
 
         // we know all values will be in our table with indexes [0,max)
-        int maxSequenceValueExclusive = this.create().select(replacementsSequence.nextval()).fetchOne().value1();
+        int maxSequenceValueExclusive = ctx.select(replacementsSequence.nextval()).fetchOne().value1();
 
         Sequence<Integer> insertionSequence = DBUtils.getSequence(tempTable2RefOnly);
-        this.create()
+        ctx
           .createSequence(insertionSequence)
           .startWith(0)
           .minvalue(0)

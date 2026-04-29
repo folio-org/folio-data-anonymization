@@ -15,7 +15,7 @@ public class RandomValueUtils {
 
   // defining static ones instead of allowing Faker to fill this in as our anonymized system may
   // attempt to send emails and we want to ensure we don't accidentally hit a real inbox.
-  private static final List<String> emailDomains = List.of(
+  private static final List<String> EMAIL_DOMAINS = List.of(
     "@example.com",
     "@library.example.com",
     "@institution.example.com",
@@ -50,7 +50,7 @@ public class RandomValueUtils {
   public static List<String> emails(int qty) {
     return IntStream
       .range(0, qty)
-      .mapToObj(i -> FAKER.name().username() + emailDomains.get(FAKER.random().nextInt(emailDomains.size())))
+      .mapToObj(i -> FAKER.name().username() + EMAIL_DOMAINS.get(FAKER.random().nextInt(EMAIL_DOMAINS.size())))
       .toList();
   }
 }
