@@ -18,12 +18,14 @@ import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.JobPart;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
-import org.folio.anonymization.jobs.templates.BatchGenerationJobPart;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromSequencePart;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.CreateTablePart;
 import org.folio.anonymization.jobs.templates.DropTablePart;
 import org.folio.anonymization.jobs.templates.GenerateValuesPart;
 import org.folio.anonymization.jobs.templates.InsertIntoTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
+import org.folio.anonymization.jobs.templates.ReplaceValuePart;
 import org.folio.anonymization.util.DBUtils;
 import org.folio.anonymization.util.RandomValueUtils;
 import org.jooq.Field;
@@ -67,6 +69,7 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
   @Autowired
   private SharedExecutionContext context;
 
+  @SuppressWarnings("unchecked")
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
@@ -110,15 +113,17 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
             ctx,
             List.of(
               "prepare",
+              "enumerate-prep",
               // must be done discretely and as its own part since first inserts take priority
               // over later ones
               "enumerate-correlated",
               "enumerate-independent",
               // single job to count and spawn child generate-new-values jobs
               "generate-new-values-prep",
-              "generate-new-values-regular",
+              "generate-new-values",
               // overwrite generated new values for names that have codes
               "correlate-new-values",
+              "apply-new-values-prep",
               "apply-new-values",
               "cleanup"
             )
@@ -145,59 +150,75 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
               )
             );
             job.scheduleParts(
-              "enumerate-correlated",
-              JobConfigurationProperty
-                .getEnabledFields(ctx.settings())
-                .filter(pairedFields::containsKey)
-                .map(field -> {
-                  FieldReference pairedField = pairedFields.get(field);
+              "enumerate-prep",
+              Stream
+                .concat(
+                  JobConfigurationProperty
+                    .getEnabledFields(ctx.settings())
+                    .filter(pairedFields::containsKey)
+                    .map(field -> {
+                      FieldReference pairedField = pairedFields.get(field);
 
-                  return new InsertIntoTablePart(
-                    "Enumerate correlated data from " + field.toString(),
-                    tempTableStaging,
-                    select(field("a"), field("b"))
-                      .from(
-                        select(
-                          field.field(ctx.tenant().tenant(), String.class).as("a"),
-                          pairedField.field(ctx.tenant().tenant(), String.class).as("b")
-                        )
-                          .from(field.table(ctx.tenant().tenant()))
-                      )
-                      .where(field("a").isNotNull())
-                  );
-                })
-                .toList()
-            );
-            job.scheduleParts(
-              "enumerate-independent",
-              JobConfigurationProperty
-                .getEnabledFields(ctx.settings())
-                .filter(f -> !pairedFields.containsKey(f))
-                .map(field ->
-                  new InsertIntoTablePart(
-                    "Enumerate independent data from " + field.toString(),
-                    tempTableStaging,
-                    select(field("a"))
-                      .from(
-                        select(field.field(ctx.tenant().tenant(), String.class).as("a"))
-                          .from(field.table(ctx.tenant().tenant()))
-                      )
-                      .where(field("a").isNotNull())
-                  )
+                      return new BatchGenerationFromTablePart<>(
+                        "Make batches to enumerate correlated data from " + field.toString(),
+                        field,
+                        BATCH_SIZE,
+                        "enumerate-correlated",
+                        (label, condition, start, end) ->
+                          new InsertIntoTablePart(
+                            "Enumerate correlated data from " + field.toString() + " " + label,
+                            tempTableStaging,
+                            select(field("a"), field("b"))
+                              .from(
+                                select(
+                                  field.field(ctx.tenant().tenant(), String.class).as("a"),
+                                  pairedField.field(ctx.tenant().tenant(), String.class).as("b")
+                                )
+                                  .from(field.table(ctx.tenant().tenant()))
+                                  .where(condition)
+                              )
+                              .where(field("a").isNotNull())
+                          )
+                      );
+                    }),
+                  JobConfigurationProperty
+                    .getEnabledFields(ctx.settings())
+                    .filter(f -> !pairedFields.containsKey(f))
+                    .map(field -> {
+                      return new BatchGenerationFromTablePart<>(
+                        "Make batches to enumerate independent data from " + field.toString(),
+                        field,
+                        BATCH_SIZE,
+                        "enumerate-independent",
+                        (label, condition, start, end) ->
+                          new InsertIntoTablePart(
+                            "Enumerate independent data from " + field.toString() + " " + label,
+                            tempTableStaging,
+                            select(field("a"))
+                              .from(
+                                select(field.field(ctx.tenant().tenant(), String.class).as("a"))
+                                  .from(field.table(ctx.tenant().tenant()))
+                                  .where(condition)
+                              )
+                              .where(field("a").isNotNull())
+                          )
+                      );
+                    })
                 )
                 .toList()
             );
+
             job.scheduleParts(
               "generate-new-values-prep",
               List.of(
-                new BatchGenerationJobPart(
+                new BatchGenerationFromSequencePart(
                   "Analyze table size for split processing",
                   tempTableStaging,
                   BATCH_SIZE,
-                  "generate-new-values-regular",
-                  (cond, start, end) ->
+                  "generate-new-values",
+                  (label, cond, start, end) ->
                     new GenerateValuesPart(
-                      "Generate values (%s-%s)".formatted(start, end),
+                      "Generate values %s".formatted(label),
                       tempTableFinal,
                       newValue,
                       select(originalValue, referenceCode).from(tempTableStaging).where(cond),
@@ -213,19 +234,40 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
           }
 
           job.scheduleParts(
-            "apply-new-values",
+            "apply-new-values-prep",
             JobConfigurationProperty
               .getEnabledFields(ctx.settings())
               .map(field ->
-                new ReplaceJSONBValuePart(
-                  "replace",
+                new BatchGenerationFromTablePart<>(
+                  "Prep to apply new values to " + field.toString(),
                   field,
-                  innerField ->
-                    field(
-                      "to_jsonb(({0}))",
-                      JSONB.class,
-                      select(newValue).from(tempTableFinal).where(originalValue.eq(DBUtils.jsonbToString(innerField)))
-                    )
+                  BATCH_SIZE,
+                  "apply-new-values",
+                  (label, condition, start, end) -> {
+                    if (field.jsonPath() != null) {
+                      return new ReplaceJSONBValuePart(
+                        "replace %s on %s".formatted(field.toString(), label),
+                        field,
+                        innerField ->
+                          field(
+                            "to_jsonb(({0}))",
+                            JSONB.class,
+                            select(newValue)
+                              .from(tempTableFinal)
+                              .where(originalValue.eq(DBUtils.jsonbToString(innerField)))
+                          )
+                      );
+                    } else {
+                      return new ReplaceValuePart(
+                        "replace %s on %s".formatted(field.toString(), label),
+                        field,
+                        innerField ->
+                          field(
+                            select(newValue).from(tempTableFinal).where(originalValue.eq((Field<String>) innerField))
+                          )
+                      );
+                    }
+                  }
                 )
               )
               .toList()

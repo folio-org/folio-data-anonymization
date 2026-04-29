@@ -47,7 +47,6 @@ public class GenerateValuesPart extends JobPart {
     Result<?> toCopy = this.create().selectFrom(source).fetch();
 
     List<String> newValues = valueFactory.apply(toCopy.size());
-    log.info("Found {} records to copy with new values", toCopy.size());
 
     List<Field<?>> sourceFields = Arrays.asList(source.fields());
 

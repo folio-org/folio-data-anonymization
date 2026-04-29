@@ -119,6 +119,9 @@ public final class Job {
   }
 
   public synchronized Job scheduleParts(String destinationStage, List<? extends JobPart> jobParts) {
+    if (!stages.contains(destinationStage)) {
+      throw new IllegalArgumentException("Job '%s': stage '%s' is not recognized".formatted(name, destinationStage));
+    }
     parts.computeIfAbsent(destinationStage, k -> new ConcurrentLinkedQueue<>()).addAll(jobParts);
     return this;
   }
