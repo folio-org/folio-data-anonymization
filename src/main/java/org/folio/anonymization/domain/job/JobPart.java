@@ -4,12 +4,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.exception.UncheckedException;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.jooq.DSLContext;
+import org.springframework.core.retry.RetryException;
+import org.springframework.core.retry.RetryPolicy;
+import org.springframework.core.retry.RetryTemplate;
+import org.springframework.dao.PessimisticLockingFailureException;
 
 @Data
 @Log4j2
 public abstract class JobPart implements Supplier<JobPart> {
+
+  private static final RetryTemplate RETRY_TEMPLATE = new RetryTemplate(
+    RetryPolicy.builder().includes(PessimisticLockingFailureException.class).build()
+  );
 
   protected Job job;
   protected String stage;
@@ -23,8 +32,18 @@ public abstract class JobPart implements Supplier<JobPart> {
     log.info("Job {} stage {}: starting job part: {}", job.getName(), stage, label);
     this.started.set(true);
     try {
-      this.execute();
-    } catch (Exception e) {
+      RETRY_TEMPLATE.execute(() -> {
+        try {
+          this.execute();
+        } catch (PessimisticLockingFailureException e) {
+          log.warn("Job {} stage {} part {}: Pessimistic locking failure. Retrying...", job.getName(), stage, label);
+          throw e;
+        }
+        return null;
+      });
+    } catch (RetryException e) {
+      throw new UncheckedException(e);
+    } catch (RuntimeException e) {
       log.error("Error executing job part: {}", label, e);
       throw e;
     } finally {

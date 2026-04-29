@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import lombok.experimental.UtilityClass;
 import net.datafaker.Faker;
@@ -16,10 +17,10 @@ public class RandomValueUtils {
   // defining static ones instead of allowing Faker to fill this in as our anonymized system may
   // attempt to send emails and we want to ensure we don't accidentally hit a real inbox.
   private static final List<String> EMAIL_DOMAINS = List.of(
-          "@example.com",
-          "@library.example.com",
-          "@institution.example.com",
-          "@folio.example.org"
+    "@example.com",
+    "@library.example.com",
+    "@institution.example.com",
+    "@folio.example.org"
   );
 
   private static final Faker FAKER = new Faker();
@@ -27,16 +28,47 @@ public class RandomValueUtils {
   private static final Base64.Encoder B64_NO_PADDING = B64.withoutPadding();
   private static final Base32 B32 = new Base32();
 
+  private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-z0-9]");
+
   public static Function<Integer, List<String>> codeLikeValueGenerator(int startSeed) {
     return qty ->
-            IntStream
-                    .range(startSeed, startSeed + qty)
-                    .mapToObj(i ->
-                            // hex digits for entropy + B32 for guaranteed uniqueness (minus padding)
-                            FAKER.random().hex(6) +
-                                    StringUtils.chop(StringUtils.stripStart(B32.encodeToString(ByteBuffer.allocate(4).putInt(i).array()), "A"))
-                    )
-                    .toList();
+      IntStream
+        .range(startSeed, startSeed + qty)
+        .mapToObj(i ->
+          // hex digits for entropy + B32 for guaranteed uniqueness (minus padding)
+          FAKER.random().hex(6) +
+          StringUtils.chop(StringUtils.stripStart(B32.encodeToString(ByteBuffer.allocate(4).putInt(i).array()), "A"))
+        )
+        .toList();
+  }
+
+  public static Function<Integer, List<String>> usernameGenerator(int startSeed) {
+    return qty ->
+      IntStream
+        .range(startSeed, startSeed + qty)
+        .mapToObj(i -> {
+          StringBuilder builder = new StringBuilder();
+
+          // for funsies
+          if (FAKER.random().nextBoolean()) {
+            builder.append(FAKER.word().adjective());
+          }
+          int nameSource = FAKER.random().nextInt(100);
+          if (nameSource < 5) {
+            builder.append(FAKER.pokemon().name());
+          } else if (nameSource < 25) {
+            builder.append(FAKER.animal().name());
+          } else if (nameSource < 40) {
+            builder.append(FAKER.funnyName().name());
+          } else {
+            builder.append(FAKER.credentials().username());
+          }
+          // B32 for guaranteed uniqueness (minus padding)
+          builder.append(StringUtils.stripStart(B32.encodeToString(ByteBuffer.allocate(4).putInt(i).array()), "A"));
+
+          return NON_ALPHANUMERIC.matcher(builder.toString().toLowerCase()).replaceAll("");
+        })
+        .toList();
   }
 
   public static String randomArrayEntrySql(String... options) {
@@ -49,9 +81,9 @@ public class RandomValueUtils {
 
   public static List<String> emails(int qty) {
     return IntStream
-            .range(0, qty)
-            .mapToObj(i -> FAKER.credentials().username() + EMAIL_DOMAINS.get(FAKER.random().nextInt(EMAIL_DOMAINS.size())))
-            .toList();
+      .range(0, qty)
+      .mapToObj(i -> FAKER.credentials().username() + EMAIL_DOMAINS.get(FAKER.random().nextInt(EMAIL_DOMAINS.size())))
+      .toList();
   }
 
   public static List<String> streetAddresses(int qty) {
