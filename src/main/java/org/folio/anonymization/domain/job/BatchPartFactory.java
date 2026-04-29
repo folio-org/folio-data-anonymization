@@ -10,5 +10,5 @@ import org.jooq.Condition;
  */
 @FunctionalInterface
 public interface BatchPartFactory {
-  public JobPart build(String label, Condition condition, int startIndex, int endIndex);
+  public JobPart build(String label, Condition condition, int startIndexInclusive, int endIndexExclusive);
 }

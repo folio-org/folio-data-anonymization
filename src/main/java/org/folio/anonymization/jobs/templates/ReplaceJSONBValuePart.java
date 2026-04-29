@@ -1,9 +1,12 @@
 package org.folio.anonymization.jobs.templates;
 
+import static org.jooq.impl.DSL.noCondition;
+
 import java.util.function.Function;
 import lombok.Getter;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.JobPart;
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.JSONB;
 
@@ -16,14 +19,13 @@ import org.jooq.JSONB;
 public class ReplaceJSONBValuePart extends JobPart {
 
   private final FieldReference field;
+  private final Condition condition;
 
   @Getter // for testing
   private final Function<Field<JSONB>, Field<JSONB>> replacement;
 
   public ReplaceJSONBValuePart(String label, FieldReference field, Field<JSONB> replacement) {
-    super(label + " (" + field.toString() + ")");
-    this.field = field;
-    this.replacement = f -> replacement;
+    this(label, field, f -> replacement);
   }
 
   public ReplaceJSONBValuePart(
@@ -31,9 +33,19 @@ public class ReplaceJSONBValuePart extends JobPart {
     FieldReference field,
     Function<Field<JSONB>, Field<JSONB>> getReplacement
   ) {
+    this(label, field, getReplacement, noCondition());
+  }
+
+  public ReplaceJSONBValuePart(
+    String label,
+    FieldReference field,
+    Function<Field<JSONB>, Field<JSONB>> getReplacement,
+    Condition condition
+  ) {
     super(label + " (" + field.toString() + ")");
     this.field = field;
     this.replacement = getReplacement;
+    this.condition = condition;
   }
 
   @Override
@@ -41,6 +53,7 @@ public class ReplaceJSONBValuePart extends JobPart {
     this.create()
       .update(field.table(this.tenant()))
       .set(field.baseColumn(this.tenant()), field.jsonbSet(this.tenant(), replacement))
+      .where(condition)
       .execute();
   }
 }
