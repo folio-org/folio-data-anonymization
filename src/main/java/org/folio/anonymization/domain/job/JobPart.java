@@ -26,6 +26,7 @@ public abstract class JobPart implements Supplier<JobPart> {
       this.execute();
     } catch (Exception e) {
       log.error("Error executing job part: {}", label, e);
+      throw e;
     } finally {
       this.started.set(false);
       Thread.currentThread().setName("parked");

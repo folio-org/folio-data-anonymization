@@ -2,10 +2,9 @@ package org.folio.anonymization.jobs.templates;
 
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.function.TriFunction;
+import org.folio.anonymization.domain.job.BatchPartFactory;
 import org.folio.anonymization.domain.job.JobPart;
 import org.folio.anonymization.util.DBUtils;
-import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.Table;
 
@@ -17,14 +16,14 @@ import org.jooq.Table;
  * of rows.
  */
 @Log4j2
-public class BatchGenerationJobPart extends JobPart {
+public class BatchGenerationFromSequencePart extends JobPart {
 
   private final Table<?> table;
   private final int batchSize;
   private final String childrenJobStage;
   private final BatchPartFactory factory;
 
-  public BatchGenerationJobPart(
+  public BatchGenerationFromSequencePart(
     String label,
     Table<?> table,
     int batchSize,
@@ -49,7 +48,8 @@ public class BatchGenerationJobPart extends JobPart {
       this.job.scheduleParts(
           childrenJobStage,
           List.of(
-            factory.apply(
+            factory.build(
+              "(%s to %s)".formatted(minInclusive, Math.min(maxExclusive - 1, totalMaxExclusive - 1)),
               sequenceField.greaterOrEqual(minInclusive).and(sequenceField.lessThan(maxExclusive)),
               minInclusive,
               Math.min(maxExclusive - 1, totalMaxExclusive - 1)
@@ -58,12 +58,4 @@ public class BatchGenerationJobPart extends JobPart {
         );
     }
   }
-
-  /**
-   * Factory for creating parts based on a batch range. Given a jOOQ condition to match the range and an
-   * integer to start with (based on the range). It is guaranteed that this value on the range of
-   * [value, value + count(condition)) is exclusive to this part and can be used as the basis for unique
-   * values. The second value is the maximum for convenience, equal to min(value + batch_size, total)
-   */
-  public static interface BatchPartFactory extends TriFunction<Condition, Integer, Integer, JobPart> {}
 }

@@ -38,6 +38,10 @@ public record FieldReference(String schema, String table, String column, String 
     return DSL.table(DSL.name(DBUtils.getSchemaName(tenant.id(), schema), table));
   }
 
+  public TableReference tableReference() {
+    return new TableReference(this.schema, this.table);
+  }
+
   public Field<Object> baseColumn(Tenant tenant) {
     return DSL.field(DSL.name(DBUtils.getSchemaName(tenant.id(), schema), table, column));
   }
