@@ -12,10 +12,8 @@ import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
-import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
 import org.junit.jupiter.api.Test;
 
 class AddressAnonymizationTest {
@@ -23,23 +21,23 @@ class AddressAnonymizationTest {
   private static final Tenant TEST_TENANT = new Tenant("test", "Test", "Test tenant", null, false);
 
   @Test
-  void buildSchedulesAddressReplacementParts() throws Exception {
+  void buildSchedulesAddressReplacementBatchParts() throws Exception {
     Job job = buildJobWithTables(new ModuleTable("users", "users", 100));
-    List<ReplaceJSONBValuePart> parts = getOverwriteParts(job);
+    List<BatchGenerationFromTablePart<?>> parts = getPrepareParts(job);
     assertEquals(6, parts.size());
 
-    assertRandomArrayJsonbSql(renderedSql(findPart(parts, "$.personal.addresses[*].addressLine1")));
-    assertRandomArrayJsonbSql(renderedSql(findPart(parts, "$.personal.addresses[*].addressLine2")));
-    assertRandomArrayJsonbSql(renderedSql(findPart(parts, "$.personal.addresses[*].city")));
-    assertRandomArrayJsonbSql(renderedSql(findPart(parts, "$.personal.addresses[*].region")));
-    assertRandomArrayJsonbSql(renderedSql(findPart(parts, "$.personal.addresses[*].postalCode")));
-    assertRandomArrayJsonbSql(renderedSql(findPart(parts, "$.personal.addresses[*].countryId")));
+    assertHasLabel(parts, "$.personal.addresses[*].addressLine1");
+    assertHasLabel(parts, "$.personal.addresses[*].addressLine2");
+    assertHasLabel(parts, "$.personal.addresses[*].city");
+    assertHasLabel(parts, "$.personal.addresses[*].region");
+    assertHasLabel(parts, "$.personal.addresses[*].postalCode");
+    assertHasLabel(parts, "$.personal.addresses[*].countryId");
   }
 
   @Test
   void buildDoesNotSchedulePartsWhenUsersTableIsMissing() throws Exception {
     Job job = buildJobWithTables(new ModuleTable("users", "outbox_event_log", 10));
-    assertTrue(getOverwriteParts(job).isEmpty());
+    assertTrue(getPrepareParts(job).isEmpty());
   }
 
   private static Job buildJobWithTables(ModuleTable... tables) throws Exception {
@@ -56,34 +54,21 @@ class AddressAnonymizationTest {
     return anonymization;
   }
 
-  private static List<ReplaceJSONBValuePart> getOverwriteParts(Job job) {
-    List<ReplaceJSONBValuePart> parts = job
-      .getParts()
-      .values()
+  private static List<BatchGenerationFromTablePart<?>> getPrepareParts(Job job) {
+    ConcurrentLinkedQueue<?> prepareParts = job.getParts().get("prepare");
+    if (prepareParts == null) {
+      return List.of();
+    }
+    List<BatchGenerationFromTablePart<?>> parts = prepareParts
       .stream()
-      .flatMap(ConcurrentLinkedQueue::stream)
-      .map(ReplaceJSONBValuePart.class::cast)
+      .map(part -> (BatchGenerationFromTablePart<?>) part)
       .toList();
     assertNotNull(parts);
     return parts;
   }
 
-  private static ReplaceJSONBValuePart findPart(List<ReplaceJSONBValuePart> parts, String jsonPath) {
+  private static void assertHasLabel(List<BatchGenerationFromTablePart<?>> parts, String jsonPath) {
     String fullPathToken = "->'" + jsonPath + "'";
-    return parts
-      .stream()
-      .filter(part -> part.getLabel().contains(fullPathToken))
-      .findFirst()
-      .orElseThrow(() -> new AssertionError("No part found for json path " + jsonPath));
-  }
-
-  private static String renderedSql(ReplaceJSONBValuePart part) {
-    return DSL.using(SQLDialect.POSTGRES).renderInlined(part.getReplacement().apply(null));
-  }
-
-  private static void assertRandomArrayJsonbSql(String sql) {
-    assertTrue(sql.contains("to_jsonb"));
-    assertTrue(sql.contains("::text[]"));
-    assertTrue(sql.contains("floor(random() *"));
+    assertTrue(parts.stream().anyMatch(part -> part.getLabel().contains(fullPathToken)));
   }
 }

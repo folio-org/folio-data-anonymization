@@ -1,9 +1,6 @@
 package org.folio.anonymization.jobs;
 
-import static org.jooq.impl.DSL.field;
-
 import java.util.List;
-import java.util.stream.IntStream;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -11,10 +8,9 @@ import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
-import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
-import org.folio.anonymization.jobs.templates.ReplaceStringValuePart;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
+import org.folio.anonymization.jobs.templates.ReplaceValueFromListPart;
 import org.folio.anonymization.util.RandomValueUtils;
-import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -78,19 +74,7 @@ public class AddressAnonymization implements JobFactory {
     new FieldReference("users", "users", "jsonb", "$.personal.addresses[*].postalCode")
   );
 
-  private static final String STREET_JSONB_SQL = randomJsonbValueFromResource("address-values/street.txt");
-  private static final String STREET2_JSONB_SQL = randomJsonbValueFromResource("address-values/street2.txt");
-  private static final String CITY_JSONB_SQL = randomJsonbValueFromResource("address-values/city.txt");
-  private static final String STATE_JSONB_SQL = randomJsonbValueFromResource("address-values/state.txt");
-  private static final String ZIPCODE_JSONB_SQL = randomJsonbValueFromResource("address-values/zipcode.txt");
-  private static final String COUNTRY_JSONB_SQL = randomJsonbValueFromResource("address-values/country.txt");
-
-  private static final String STREET_TEXT_SQL = randomTextValueFromResource("address-values/street.txt");
-  private static final String STREET2_TEXT_SQL = randomTextValueFromResource("address-values/street2.txt");
-  private static final String CITY_TEXT_SQL = randomTextValueFromResource("address-values/city.txt");
-  private static final String STATE_TEXT_SQL = randomTextValueFromResource("address-values/state.txt");
-  private static final String ZIPCODE_TEXT_SQL = randomTextValueFromResource("address-values/zipcode.txt");
-  private static final String COUNTRY_TEXT_SQL = randomTextValueFromResource("address-values/country.txt");
+  private static final int BATCH_SIZE = 2000;
 
   @Autowired
   private SharedExecutionContext context;
@@ -106,88 +90,68 @@ public class AddressAnonymization implements JobFactory {
         JobConfigurationProperty.fromFieldList(ADDRESS_FIELDS, tenant),
         ctx -> {
           List<FieldReference> enabledFields = JobConfigurationProperty.getEnabledFields(ctx.settings()).toList();
-          List<String> stages = IntStream.range(0, enabledFields.size()).mapToObj(i -> "overwrite-" + i).toList();
-          Job job = new Job(ctx, stages.isEmpty() ? List.of("overwrite") : stages);
-
-          IntStream
-            .range(0, enabledFields.size())
-            .forEach(i -> {
-              FieldReference addressField = enabledFields.get(i);
-              if (addressField.jsonPath() == null) {
-                job.scheduleParts(
-                  stages.get(i),
-                  List.of(
-                    new ReplaceStringValuePart(
-                      "replace address in " + addressField.toString(),
+          Job job = new Job(ctx, List.of("prepare", "overwrite"));
+          job.scheduleParts(
+            "prepare",
+            enabledFields
+              .stream()
+              .map(addressField ->
+                new BatchGenerationFromTablePart<>(
+                  "Prepare batches for address updates in " + addressField.toString(),
+                  addressField,
+                  BATCH_SIZE,
+                  "overwrite",
+                  (label, condition, start, end) ->
+                    new ReplaceValueFromListPart(
+                      "replace %s on %s".formatted(addressField.toString(), label),
                       addressField,
-                      field(replacementTextSql(addressField), String.class)
+                      condition,
+                      replacementValues(addressField, end - start)
                     )
-                  )
-                );
-              } else {
-                job.scheduleParts(
-                  stages.get(i),
-                  List.of(
-                    new ReplaceJSONBValuePart(
-                      "replace address in " + addressField.toString(),
-                      addressField,
-                      field(replacementJsonbSql(addressField), JSONB.class)
-                    )
-                  )
-                );
-              }
-            });
+                )
+              )
+              .toList()
+          );
           return job;
         }
       )
     );
   }
 
-  private static String replacementJsonbSql(FieldReference fieldReference) {
+  private static List<String> replacementValues(FieldReference fieldReference, int qty) {
+    int size = Math.max(1, qty);
+
     String path = fieldReference.jsonPath();
-    if (path == null) {
-      throw new IllegalStateException("Expected JSON path for field: " + fieldReference);
+    if (path != null) {
+      if (path.endsWith(".addressLine1") || path.endsWith(".addressLine0")) {
+        return RandomValueUtils.streetAddresses(size);
+      }
+      if (path.endsWith(".addressLine2")) {
+        return RandomValueUtils.secondaryAddresses(size);
+      }
+      if (path.endsWith(".city")) {
+        return RandomValueUtils.cities(size);
+      }
+      if (path.endsWith(".stateRegion") || path.endsWith(".region") || path.endsWith(".province")) {
+        return RandomValueUtils.states(size);
+      }
+      if (path.endsWith(".zipCode") || path.endsWith(".postalCode") || path.endsWith(".zip")) {
+        return RandomValueUtils.postalCodes(size);
+      }
+      if (path.endsWith(".country") || path.endsWith(".countryId")) {
+        return RandomValueUtils.countryCodes(size);
+      }
+      throw new IllegalStateException("No replacement configured for field path: " + path);
     }
-    if (path.endsWith(".addressLine1") || path.endsWith(".addressLine0")) {
-      return STREET_JSONB_SQL;
-    }
-    if (path.endsWith(".addressLine2")) {
-      return STREET2_JSONB_SQL;
-    }
-    if (path.endsWith(".city")) {
-      return CITY_JSONB_SQL;
-    }
-    if (path.endsWith(".stateRegion") || path.endsWith(".region") || path.endsWith(".province")) {
-      return STATE_JSONB_SQL;
-    }
-    if (path.endsWith(".zipCode") || path.endsWith(".postalCode") || path.endsWith(".zip")) {
-      return ZIPCODE_JSONB_SQL;
-    }
-    if (path.endsWith(".country") || path.endsWith(".countryId")) {
-      return COUNTRY_JSONB_SQL;
-    }
-    throw new IllegalStateException("No JSONB replacement configured for field path: " + path);
-  }
 
-  private static String replacementTextSql(FieldReference fieldReference) {
     return switch (fieldReference.column()) {
-      case "add_address_line_one" -> STREET_TEXT_SQL;
-      case "add_address_line_two" -> STREET2_TEXT_SQL;
-      case "add_city" -> CITY_TEXT_SQL;
-      case "add_region" -> STATE_TEXT_SQL;
-      case "add_postal_code" -> ZIPCODE_TEXT_SQL;
-      case "add_country" -> COUNTRY_TEXT_SQL;
-      default -> throw new IllegalStateException("No text replacement configured for column: " + fieldReference.column());
+      case "add_address_line_one" -> RandomValueUtils.streetAddresses(size);
+      case "add_address_line_two" -> RandomValueUtils.secondaryAddresses(size);
+      case "add_city" -> RandomValueUtils.cities(size);
+      case "add_region" -> RandomValueUtils.states(size);
+      case "add_postal_code" -> RandomValueUtils.postalCodes(size);
+      case "add_country" -> RandomValueUtils.countryCodes(size);
+      default -> throw new IllegalStateException("No replacement configured for column: " + fieldReference.column());
     };
-  }
-
-  private static String randomJsonbValueFromResource(String resourcePath) {
-    List<String> values = RandomValueUtils.loadValuesFromResource(resourcePath);
-    return RandomValueUtils.randomArrayEntryToJsonbSql(values.toArray(new String[0]));
-  }
-
-  private static String randomTextValueFromResource(String resourcePath) {
-    List<String> values = RandomValueUtils.loadValuesFromResource(resourcePath);
-    return RandomValueUtils.randomArrayEntrySql(values.toArray(new String[0]));
   }
 }

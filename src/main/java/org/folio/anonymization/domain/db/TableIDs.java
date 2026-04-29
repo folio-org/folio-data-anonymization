@@ -30,6 +30,7 @@ public class TableIDs {
     Pair.of(new FieldReference("invoice_storage", "batch_vouchers", "id"), UUID.class),
     Pair.of(new FieldReference("licenses", "alternate_name", "an_id"), String.class),
     Pair.of(new FieldReference("licenses", "org", "org_id"), String.class),
+    Pair.of(new FieldReference("oa", "address", "add_id"), String.class),
     Pair.of(new FieldReference("oa", "alternate_email_address", "aea_id"), String.class),
     Pair.of(new FieldReference("oa", "party", "p_id"), String.class),
     Pair.of(new FieldReference("oai_pmh", "configuration_settings", "id"), UUID.class),
