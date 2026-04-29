@@ -23,7 +23,7 @@ class AddressAnonymizationTest {
   @Test
   void buildSchedulesAddressReplacementBatchParts() throws Exception {
     Job job = buildJobWithTables(new ModuleTable("users", "users", 100));
-    List<BatchGenerationFromTablePart<?>> parts = getPrepareParts(job);
+    List<? extends BatchGenerationFromTablePart<?>> parts = getPrepareParts(job);
     assertEquals(6, parts.size());
 
     assertHasLabel(parts, "$.personal.addresses[*].addressLine1");
@@ -54,12 +54,12 @@ class AddressAnonymizationTest {
     return anonymization;
   }
 
-  private static List<BatchGenerationFromTablePart<?>> getPrepareParts(Job job) {
+  private static List<? extends BatchGenerationFromTablePart<?>> getPrepareParts(Job job) {
     ConcurrentLinkedQueue<?> prepareParts = job.getParts().get("prepare");
     if (prepareParts == null) {
       return List.of();
     }
-    List<BatchGenerationFromTablePart<?>> parts = prepareParts
+    List<? extends BatchGenerationFromTablePart<?>> parts = prepareParts
       .stream()
       .map(part -> (BatchGenerationFromTablePart<?>) part)
       .toList();
@@ -67,7 +67,7 @@ class AddressAnonymizationTest {
     return parts;
   }
 
-  private static void assertHasLabel(List<BatchGenerationFromTablePart<?>> parts, String jsonPath) {
+  private static void assertHasLabel(List<? extends BatchGenerationFromTablePart<?>> parts, String jsonPath) {
     String fullPathToken = "->'" + jsonPath + "'";
     assertTrue(parts.stream().anyMatch(part -> part.getLabel().contains(fullPathToken)));
   }

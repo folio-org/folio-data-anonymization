@@ -1,6 +1,7 @@
 package org.folio.anonymization.jobs;
 
 import java.util.List;
+import java.util.stream.IntStream;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -90,17 +91,23 @@ public class AddressAnonymization implements JobFactory {
         JobConfigurationProperty.fromFieldList(ADDRESS_FIELDS, tenant),
         ctx -> {
           List<FieldReference> enabledFields = JobConfigurationProperty.getEnabledFields(ctx.settings()).toList();
-          Job job = new Job(ctx, List.of("prepare", "overwrite"));
+          List<String> overwriteStages = IntStream.range(0, enabledFields.size()).mapToObj(i -> "overwrite-" + i).toList();
+          List<String> stages = IntStream
+            .rangeClosed(0, overwriteStages.size())
+            .mapToObj(i -> i == 0 ? "prepare" : overwriteStages.get(i - 1))
+            .toList();
+          Job job = new Job(ctx, stages);
           job.scheduleParts(
             "prepare",
-            enabledFields
-              .stream()
-              .map(addressField ->
-                new BatchGenerationFromTablePart<>(
+            IntStream
+              .range(0, enabledFields.size())
+              .mapToObj(i -> {
+                FieldReference addressField = enabledFields.get(i);
+                return new BatchGenerationFromTablePart<>(
                   "Prepare batches for address updates in " + addressField.toString(),
                   addressField,
                   BATCH_SIZE,
-                  "overwrite",
+                  overwriteStages.get(i),
                   (label, condition, start, end) ->
                     new ReplaceValueFromListPart(
                       "replace %s on %s".formatted(addressField.toString(), label),
@@ -108,8 +115,8 @@ public class AddressAnonymization implements JobFactory {
                       condition,
                       replacementValues(addressField, end - start)
                     )
-                )
-              )
+                );
+              })
               .toList()
           );
           return job;

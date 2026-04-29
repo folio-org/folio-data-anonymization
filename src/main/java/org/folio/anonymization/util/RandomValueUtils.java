@@ -54,6 +54,30 @@ public class RandomValueUtils {
             .toList();
   }
 
+  public static List<String> streetAddresses(int qty) {
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().streetAddress()).toList();
+  }
+
+  public static List<String> secondaryAddresses(int qty) {
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().secondaryAddress()).toList();
+  }
+
+  public static List<String> cities(int qty) {
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().city()).toList();
+  }
+
+  public static List<String> states(int qty) {
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().state()).toList();
+  }
+
+  public static List<String> postalCodes(int qty) {
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().zipCode()).toList();
+  }
+
+  public static List<String> countryCodes(int qty) {
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().countryCode()).toList();
+  }
+
   public static List<String> userAgents(int qty) {
     return IntStream.range(0, qty).mapToObj(i -> FAKER.internet().userAgent()).toList();
   }
