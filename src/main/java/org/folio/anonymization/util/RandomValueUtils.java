@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import lombok.experimental.UtilityClass;
 import net.datafaker.Faker;
@@ -27,6 +28,8 @@ public class RandomValueUtils {
   private static final Base64.Encoder B64_NO_PADDING = B64.withoutPadding();
   private static final Base32 B32 = new Base32();
 
+  private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-z0-9]");
+
   public static Function<Integer, List<String>> codeLikeValueGenerator(int startSeed) {
     return qty ->
             IntStream
@@ -37,6 +40,37 @@ public class RandomValueUtils {
                                     StringUtils.chop(StringUtils.stripStart(B32.encodeToString(ByteBuffer.allocate(4).putInt(i).array()), "A"))
                     )
                     .toList();
+  }
+
+  public static Function<Integer, List<String>> usernameGenerator(int startSeed) {
+    return qty ->
+      IntStream
+        .range(startSeed, startSeed + qty)
+        .mapToObj(i -> {
+          StringBuilder builder = new StringBuilder();
+
+          // for funsies
+          if (FAKER.random().nextBoolean()) {
+            builder.append(FAKER.word().adjective());
+          }
+          int nameSource = FAKER.random().nextInt(100);
+          if (nameSource < 5) {
+            builder.append(FAKER.pokemon().name());
+          } else if (nameSource < 25) {
+            builder.append(FAKER.animal().name());
+          } else if (nameSource < 40) {
+            builder.append(FAKER.funnyName().name());
+          } else {
+            builder.append(FAKER.credentials().username());
+          }
+          // B32 for guaranteed uniqueness (minus padding)
+          builder.append(
+            StringUtils.chop(StringUtils.stripStart(B32.encodeToString(ByteBuffer.allocate(4).putInt(i).array()), "A"))
+          );
+
+          return NON_ALPHANUMERIC.matcher(builder.toString().toLowerCase()).replaceAll("");
+        })
+        .toList();
   }
 
   public static String randomArrayEntrySql(String... options) {
