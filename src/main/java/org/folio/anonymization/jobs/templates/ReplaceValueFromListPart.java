@@ -116,6 +116,8 @@ public class ReplaceValueFromListPart extends JobPart {
             .where(
               replacementsSequenceField
                 .eq(field("chosen_seq", Integer.class))
+                 // we must bind to the outer column in some way or this will not be re-executed for each update
+                 // (thanks postgres for cleverly optimizing! 🙃)
                 .and(TableIDs.getIdFor(field, this.tenant()).isNotNull())
             );
         }
