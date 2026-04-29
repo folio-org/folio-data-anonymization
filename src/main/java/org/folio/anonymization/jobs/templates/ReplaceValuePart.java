@@ -51,7 +51,7 @@ public class ReplaceValuePart extends JobPart {
     this.create()
       .update(field.table(this.tenant()))
       .set(field.baseColumn(this.tenant()), replacement.apply(field.baseColumn(this.tenant())))
-      .where(this.condition)
+      .where(field.baseColumn(this.tenant()).isNotNull().and(this.condition))
       .execute();
   }
 }

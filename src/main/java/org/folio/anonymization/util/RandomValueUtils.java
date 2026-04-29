@@ -13,6 +13,15 @@ import org.apache.commons.lang3.StringUtils;
 @UtilityClass
 public class RandomValueUtils {
 
+  // defining static ones instead of allowing Faker to fill this in as our anonymized system may
+  // attempt to send emails and we want to ensure we don't accidentally hit a real inbox.
+  private static final List<String> emailDomains = List.of(
+    "@example.com",
+    "@library.example.com",
+    "@institution.example.com",
+    "@folio.example.org"
+  );
+
   private static final Faker FAKER = new Faker();
   private static final Base64.Encoder B64 = Base64.getEncoder();
   private static final Base64.Encoder B64_NO_PADDING = B64.withoutPadding();
@@ -36,5 +45,12 @@ public class RandomValueUtils {
 
   public static String randomArrayEntryToJsonbSql(String... options) {
     return "to_jsonb(%s)".formatted(randomArrayEntrySql(options));
+  }
+
+  public static List<String> emails(int qty) {
+    return IntStream
+      .range(0, qty)
+      .mapToObj(i -> FAKER.name().username() + emailDomains.get(FAKER.random().nextInt(emailDomains.size())))
+      .toList();
   }
 }

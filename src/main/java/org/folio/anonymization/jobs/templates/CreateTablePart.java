@@ -1,7 +1,5 @@
 package org.folio.anonymization.jobs.templates;
 
-import static org.jooq.impl.DSL.field;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.folio.anonymization.domain.job.JobPart;
@@ -10,7 +8,6 @@ import org.jooq.Constraint;
 import org.jooq.Field;
 import org.jooq.Sequence;
 import org.jooq.Table;
-import org.jooq.impl.SQLDataType;
 
 /**
  * Job part to create a table. Note the following caveats:
@@ -56,11 +53,7 @@ public class CreateTablePart extends JobPart {
     this.create()
       .createTable(table)
       .columns(fields)
-      .columns(
-        includeSequence
-          ? new Field[] { field("_seq", SQLDataType.INTEGER.notNull().defaultValue(sequence.nextval())) }
-          : new Field[] {}
-      )
+      .columns(includeSequence ? new Field[] { DBUtils.getSequenceField(table) } : new Field[] {})
       .constraints(constraints)
       .execute();
   }

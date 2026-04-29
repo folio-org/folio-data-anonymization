@@ -38,7 +38,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class VendorNamesAndCodeAnonymization implements JobFactory {
 
-  // used for generating new names/codes
   private static final int BATCH_SIZE = 2_000;
 
   private static final List<FieldReference> FIELDS = List.of(
