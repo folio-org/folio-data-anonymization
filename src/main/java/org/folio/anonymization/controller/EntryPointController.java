@@ -3,7 +3,6 @@ package org.folio.anonymization.controller;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.log4j.Log4j2;
-import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
 import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
@@ -26,6 +25,7 @@ public class EntryPointController {
   @EventListener(ApplicationReadyEvent.class)
   public void entryPoint() throws InterruptedException {
     log.info("============================");
+
     TenantExecutionContext tenant = tenantRepository.getTenantExecutionContext(
       tenantRepository.getAllTenants().get("fs09000000")
     );
@@ -34,11 +34,12 @@ public class EntryPointController {
       .map(factory -> factory.getBuilders(tenant))
       .flatMap(List::stream)
       .toList();
-    List<Job> jobs = builders.stream().map(JobBuilder::build).toList();
-    log.info("Created {} jobs", jobs.size());
+    log.info("Found {} available jobs", builders.size());
 
-    log.info("Running jobs based on temporary filter...");
-    jobs.stream().filter(job -> job.getName().contains("User agent anonymization")).forEach(Job::execute);
+    JobBuilder toTest = builders.stream().filter(b -> b.name().contains("Vendor names")).findFirst().orElseThrow();
+    toTest.configuration().stream().filter(c -> c.getKey().equals("drop-table")).forEach(s -> s.setBooleanValue(false));
+    log.info("Running job...");
+    toTest.build().execute();
 
     log.info("========== finished launching jobs ==========");
 
