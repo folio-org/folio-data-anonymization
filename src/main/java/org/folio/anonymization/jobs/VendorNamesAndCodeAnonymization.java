@@ -255,7 +255,8 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
                             select(newValue)
                               .from(tempTableFinal)
                               .where(originalValue.eq(DBUtils.jsonbToString(innerField)))
-                          )
+                          ),
+                        condition
                       );
                     } else {
                       return new ReplaceValuePart(
@@ -264,7 +265,8 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
                         innerField ->
                           field(
                             select(newValue).from(tempTableFinal).where(originalValue.eq((Field<String>) innerField))
-                          )
+                          ),
+                        condition
                       );
                     }
                   }
