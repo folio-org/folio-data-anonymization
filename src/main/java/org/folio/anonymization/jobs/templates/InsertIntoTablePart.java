@@ -38,7 +38,7 @@ public class InsertIntoTablePart extends JobPart {
       .transaction(configuration -> {
         DSLContext ctx = using(configuration);
 
-        Table<?> tempTable = table(name("staging_" + System.nanoTime()));
+        Table<?> tempTable = table(name("_danon_staging_" + System.nanoTime()));
 
         ctx.createTemporaryTable(tempTable).as(source).onCommitDrop().execute();
 
