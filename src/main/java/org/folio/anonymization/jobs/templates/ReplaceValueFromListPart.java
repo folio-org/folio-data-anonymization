@@ -92,29 +92,35 @@ public class ReplaceValueFromListPart extends JobPart {
           ctx.batch(batch).execute();
         }
 
-        // we know all values will be in our table with indexes [0,max)
-        int maxSequenceValueExclusive = ctx.select(replacementsSequence.nextval()).fetchOne().value1();
+        int replacementCount = replacements.size();
 
-        Sequence<Integer> insertionSequence = DBUtils.getSequence(tempTable2RefOnly);
-        ctx
-          .createSequence(insertionSequence)
-          .startWith(0)
-          .minvalue(0)
-          .maxvalue(maxSequenceValueExclusive - 1)
-          .cycle()
-          .execute();
+        Select<? extends Record1<?>> select;
+        Sequence<Integer> insertionSequence = DBUtils.getSequence(tempTable2RefOnly);;
+        if (replacementCount == 1) {
+          // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
+          select = select(valueField).from(tempTable).limit(1);
+        } else {
+          insertionSequence = DBUtils.getSequence(tempTable2RefOnly);
+          ctx
+            .createSequence(insertionSequence)
+            .startWith(0)
+            .minvalue(0)
+            .maxvalue(replacementCount - 1)
+            .cycle()
+            .execute();
 
-        Select<? extends Record1<?>> select = select(valueField)
-          // must query the next value from the insertion sequence in the from clause
-          // to ensure it only runs once per subquery execution
-          .from(tempTable, select(insertionSequence.nextval().as("chosen_seq")))
-          .where(
-            replacementsSequenceField
-              .eq(field("chosen_seq", Integer.class))
-              // we must bind to the outer column in some way or this will not be re-executed for each update
-              // (thanks postgres for cleverly optimizing! 🙃)
-              .and(TableIDs.getIdFor(field, this.tenant()).isNotNull())
-          );
+          select = select(valueField)
+            // must query the next value from the insertion sequence in the from clause
+            // to ensure it only runs once per subquery execution
+            .from(tempTable, select(insertionSequence.nextval().as("chosen_seq")))
+            .where(
+              replacementsSequenceField
+                .eq(field("chosen_seq", Integer.class))
+                 // we must bind to the outer column in some way or this will not be re-executed for each update
+                 // (thanks postgres for cleverly optimizing! 🙃)
+                .and(TableIDs.getIdFor(field, this.tenant()).isNotNull())
+            );
+        }
 
         // do the actual update
         if (field.jsonPath() == null) {
@@ -135,8 +141,7 @@ public class ReplaceValueFromListPart extends JobPart {
         }
 
         ctx.dropTemporaryTable(tempTable).cascade().execute();
-        ctx.dropSequence(replacementsSequence).execute();
-        ctx.dropSequence(insertionSequence).execute();
+        ctx.dropSequenceIfExists(insertionSequence).execute();
       });
   }
 }

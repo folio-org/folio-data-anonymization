@@ -36,7 +36,7 @@ public class EntryPointController {
       .toList();
     log.info("Found {} available jobs", builders.size());
 
-    JobBuilder toTest = builders.stream().filter(b -> b.name().contains("Vendor names")).findFirst().orElseThrow();
+    JobBuilder toTest = builders.stream().filter(b -> b.name().contains("Address anonymization")).findFirst().orElseThrow();
     toTest.configuration().stream().filter(c -> c.getKey().equals("drop-table")).forEach(s -> s.setBooleanValue(false));
     log.info("Running job...");
     toTest.build().execute();
