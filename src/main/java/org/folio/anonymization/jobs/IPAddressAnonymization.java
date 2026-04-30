@@ -3,6 +3,7 @@ package org.folio.anonymization.jobs;
 import static org.jooq.impl.DSL.field;
 
 import java.util.List;
+import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -10,6 +11,7 @@ import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,20 +37,28 @@ public class IPAddressAnonymization implements JobFactory {
         context,
         JobConfigurationProperty.fromFieldList(IP_FIELDS, tenant),
         ctx ->
-          new Job(ctx, List.of("overwrite"))
+          new Job(ctx, List.of("prepare", "overwrite"))
             .scheduleParts(
-              "overwrite",
+              "prepare",
               JobConfigurationProperty
                 .getEnabledFields(ctx.settings())
                 .map(field ->
-                  new ReplaceJSONBValuePart(
-                    "replace IP",
+                  new BatchGenerationFromTablePart<>(
+                    "Prep to apply new values to " + field.toString(),
                     field,
-                    // 169.254.X.X, reserved block of link-local IPs to ensure we don't accidentally point to a real IP
-                    field(
-                      "concat('\"169.254.', trunc(random() * 256), '.', trunc(random() * 256), '\"')::jsonb",
-                      JSONB.class
-                    )
+                    JobConfig.BATCH_SIZE,
+                    "overwrite",
+                    (label, condition, start, end) ->
+                      new ReplaceJSONBValuePart(
+                        "replace IPs in %s on %s".formatted(field.toString(), label),
+                        field,
+                        i ->
+                          field(
+                            "concat('\"169.254.', trunc(random() * 256), '.', trunc(random() * 256), '\"')::jsonb",
+                            JSONB.class
+                          ),
+                        condition
+                      )
                   )
                 )
                 .toList()

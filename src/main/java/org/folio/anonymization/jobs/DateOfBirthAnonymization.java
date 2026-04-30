@@ -3,6 +3,7 @@ package org.folio.anonymization.jobs;
 import static org.jooq.impl.DSL.field;
 
 import java.util.List;
+import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -10,7 +11,9 @@ import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
+import org.jooq.Field;
 import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,8 +25,10 @@ public class DateOfBirthAnonymization implements JobFactory {
     new FieldReference("users", "users", "jsonb", "$.personal.dateOfBirth")
   );
 
-  private static final String RANDOM_DOB_SQL =
-    "to_jsonb(to_char(date '1940-01-01' + trunc(random() * ((date '2007-12-31' - date '1940-01-01') + 1))::int, 'YYYY-MM-DD'))";
+  private static final Field<JSONB> RANDOM_DOB_SQL = field(
+    "to_jsonb(to_char(date '1940-01-01' + trunc(random() * ((date '2007-12-31' - date '1940-01-01') + 1))::int, 'YYYY-MM-DD'))",
+    JSONB.class
+  );
 
   @Autowired
   private SharedExecutionContext context;
@@ -38,16 +43,24 @@ public class DateOfBirthAnonymization implements JobFactory {
         context,
         JobConfigurationProperty.fromFieldList(DATE_OF_BIRTH_FIELDS, tenant),
         ctx ->
-          new Job(ctx, List.of("overwrite"))
+          new Job(ctx, List.of("prepare", "overwrite"))
             .scheduleParts(
-              "overwrite",
+              "prepare",
               JobConfigurationProperty
                 .getEnabledFields(ctx.settings())
                 .map(field ->
-                  new ReplaceJSONBValuePart(
-                    "replace date of birth in " + field.toString(),
+                  new BatchGenerationFromTablePart<>(
+                    "Prep to apply new values to " + field.toString(),
                     field,
-                    field(RANDOM_DOB_SQL, JSONB.class)
+                    JobConfig.BATCH_SIZE,
+                    "overwrite",
+                    (label, condition, start, end) ->
+                      new ReplaceJSONBValuePart(
+                        "replace date of birth in %s on %s".formatted(field.toString(), label),
+                        field,
+                        i -> RANDOM_DOB_SQL,
+                        condition
+                      )
                   )
                 )
                 .toList()

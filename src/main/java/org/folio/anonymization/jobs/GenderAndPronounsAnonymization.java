@@ -4,6 +4,7 @@ import static org.jooq.impl.DSL.field;
 
 import java.util.List;
 import java.util.Map;
+import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -11,6 +12,7 @@ import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.folio.anonymization.util.RandomValueUtils;
 import org.jooq.JSONB;
@@ -50,21 +52,29 @@ public class GenderAndPronounsAnonymization implements JobFactory {
     return List.of(
       new JobBuilder(
         "Gender/pronouns anonymization",
-        "Replaces personal gender and pronouns with randomized realistic-appearing values",
+        "Replaces personal gender and pronouns with values from a predefined set",
         tenant,
         context,
         JobConfigurationProperty.fromFieldList(TARGET_FIELDS, tenant),
         ctx ->
-          new Job(ctx, List.of("overwrite"))
+          new Job(ctx, List.of("prepare", "overwrite"))
             .scheduleParts(
-              "overwrite",
+              "prepare",
               JobConfigurationProperty
                 .getEnabledFields(ctx.settings())
                 .map(field ->
-                  new ReplaceJSONBValuePart(
-                    "replace " + field.jsonPath(),
+                  new BatchGenerationFromTablePart<>(
+                    "Prep to apply new values to " + field.toString(),
                     field,
-                    field(REPLACEMENT_SQL_BY_JSON_PATH.get(field.jsonPath()), JSONB.class)
+                    JobConfig.BATCH_SIZE,
+                    "overwrite",
+                    (label, condition, start, end) ->
+                      new ReplaceJSONBValuePart(
+                        "replace %s on %s".formatted(field.toString(), label),
+                        field,
+                        i -> field(REPLACEMENT_SQL_BY_JSON_PATH.get(field.jsonPath()), JSONB.class),
+                        condition
+                      )
                   )
                 )
                 .toList()

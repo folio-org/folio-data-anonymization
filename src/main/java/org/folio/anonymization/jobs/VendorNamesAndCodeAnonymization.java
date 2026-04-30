@@ -10,6 +10,7 @@ import static org.jooq.impl.DSL.unique;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -37,8 +38,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class VendorNamesAndCodeAnonymization implements JobFactory {
-
-  private static final int BATCH_SIZE = 2_000;
 
   private static final List<FieldReference> FIELDS = List.of(
     new FieldReference("agreements", "alternate_name", "an_name"),
@@ -161,7 +160,7 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
                       return new BatchGenerationFromTablePart<>(
                         "Make batches to enumerate correlated data from " + field.toString(),
                         field,
-                        BATCH_SIZE,
+                        JobConfig.BATCH_SIZE,
                         "enumerate-correlated",
                         (label, condition, start, end) ->
                           new InsertIntoTablePart(
@@ -187,7 +186,7 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
                       new BatchGenerationFromTablePart<>(
                         "Make batches to enumerate independent data from " + field.toString(),
                         field,
-                        BATCH_SIZE,
+                        JobConfig.BATCH_SIZE,
                         "enumerate-independent",
                         (label, condition, start, end) ->
                           new InsertIntoTablePart(
@@ -213,7 +212,7 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
                 new BatchGenerationFromSequencePart(
                   "Analyze table size for split processing",
                   tempTableStaging,
-                  BATCH_SIZE,
+                  JobConfig.BATCH_SIZE,
                   "generate-new-values",
                   (label, cond, start, end) ->
                     new GenerateValuesPart(
@@ -240,7 +239,7 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
                 new BatchGenerationFromTablePart<>(
                   "Prep to apply new values to " + field.toString(),
                   field,
-                  BATCH_SIZE,
+                  JobConfig.BATCH_SIZE,
                   "apply-new-values",
                   (label, condition, start, end) -> {
                     if (field.jsonPath() != null) {

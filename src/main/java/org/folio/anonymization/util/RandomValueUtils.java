@@ -111,6 +111,20 @@ public class RandomValueUtils {
   }
 
   public static List<String> userAgents(int qty) {
-    return IntStream.range(0, qty).mapToObj(i -> FAKER.internet().userAgent()).toList();
+    return IntStream
+      .range(0, qty)
+      .mapToObj(i -> {
+        int source = FAKER.random().nextInt(100);
+        if (source < 5) {
+          return "Samsung Smart Fridge";
+        } else if (source < 10) {
+          return "Roomba";
+        } else if (source < 15) {
+          return "Nokia 3310";
+        } else {
+          return FAKER.internet().userAgent();
+        }
+      })
+      .toList();
   }
 }
