@@ -14,6 +14,9 @@ import org.apache.commons.lang3.StringUtils;
 @UtilityClass
 public class RandomValueUtils {
 
+  public static final String POSTGRES_TRANSLATE_FROM = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  public static final String POSTGRES_TRANSLATE_TO = "XXXXXXXXXXXXXXXXXXXXXXXXXXxxxxxxxxxxxxxxxxxxxxxxxxxx1111111111";
+
   // defining static ones instead of allowing Faker to fill this in as our anonymized system may
   // attempt to send emails and we want to ensure we don't accidentally hit a real inbox.
   private static final List<String> EMAIL_DOMAINS = List.of(

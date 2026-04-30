@@ -21,6 +21,7 @@ public class TableIDs {
 
   private static final List<Pair<FieldReference, Class<?>>> TABLE_ID_FIELD_LIST = List.of(
     Pair.of(new FieldReference("agreements", "alternate_name", "an_id"), String.class),
+    Pair.of(new FieldReference("agreements", "file_upload", "fu_id"), String.class),
     Pair.of(new FieldReference("agreements", "kbart_import_job", "id"), String.class),
     Pair.of(new FieldReference("agreements", "org", "org_id"), String.class),
     Pair.of(new FieldReference("agreements", "package", "id"), String.class),
@@ -29,7 +30,9 @@ public class TableIDs {
     Pair.of(new FieldReference("consortia_keycloak", "inactive_user_tenant", "id"), UUID.class),
     Pair.of(new FieldReference("consortia_keycloak", "user_tenant", "id"), UUID.class),
     Pair.of(new FieldReference("copycat", "profile", "id"), UUID.class),
+    Pair.of(new FieldReference("data_export_spring", "export_config", "id"), UUID.class),
     Pair.of(new FieldReference("data_export_spring", "job", "id"), UUID.class),
+    Pair.of(new FieldReference("data_export", "file_definitions", "id"), UUID.class),
     Pair.of(new FieldReference("data_export", "job_profiles", "id"), UUID.class),
     Pair.of(new FieldReference("data_export", "mapping_profiles", "id"), UUID.class),
     Pair.of(new FieldReference("data_import", "default_file_extensions", "id"), UUID.class),
@@ -41,6 +44,7 @@ public class TableIDs {
     Pair.of(new FieldReference("di_converter_storage", "marc_field_protection_settings", "id"), UUID.class),
     Pair.of(new FieldReference("di_converter_storage", "match_profiles", "id"), UUID.class),
     Pair.of(new FieldReference("di_converter_storage", "profile_snapshots", "id"), UUID.class),
+    Pair.of(new FieldReference("erm_usage", "custom_reports", "id"), UUID.class),
     Pair.of(new FieldReference("erm_usage", "usage_data_providers", "id"), UUID.class),
     Pair.of(new FieldReference("inn_reach", "agency_location_ac_mapping", "id"), UUID.class),
     Pair.of(new FieldReference("inn_reach", "agency_location_location_mapping", "id"), UUID.class),
@@ -72,6 +76,7 @@ public class TableIDs {
     Pair.of(new FieldReference("kb_ebsco_java", "kb_credentials", "id"), UUID.class),
     Pair.of(new FieldReference("kb_ebsco_java", "usage_consolidation_settings", "id"), UUID.class),
     Pair.of(new FieldReference("licenses", "alternate_name", "an_id"), String.class),
+    Pair.of(new FieldReference("licenses", "file_upload", "fu_id"), String.class),
     Pair.of(new FieldReference("licenses", "org", "org_id"), String.class),
     Pair.of(new FieldReference("oa", "address", "add_id"), String.class),
     Pair.of(new FieldReference("oa", "alternate_email_address", "aea_id"), String.class),
