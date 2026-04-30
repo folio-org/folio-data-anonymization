@@ -246,6 +246,7 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
                       return new ReplaceJSONBValuePart(
                         "replace %s on %s".formatted(field.toString(), label),
                         field,
+                        condition,
                         innerField ->
                           field(
                             "to_jsonb(({0}))",
@@ -253,18 +254,17 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
                             select(newValue)
                               .from(tempTableFinal)
                               .where(originalValue.eq(DBUtils.jsonbToString(innerField)))
-                          ),
-                        condition
+                          )
                       );
                     } else {
                       return new ReplaceValuePart(
                         "replace %s on %s".formatted(field.toString(), label),
                         field,
+                        condition,
                         innerField ->
                           field(
                             select(newValue).from(tempTableFinal).where(originalValue.eq((Field<String>) innerField))
-                          ),
-                        condition
+                          )
                       );
                     }
                   }

@@ -52,12 +52,11 @@ public class IPAddressAnonymization implements JobFactory {
                       new ReplaceJSONBValuePart(
                         "replace IPs in %s on %s".formatted(field.toString(), label),
                         field,
-                        i ->
-                          field(
-                            "concat('\"169.254.', trunc(random() * 256), '.', trunc(random() * 256), '\"')::jsonb",
-                            JSONB.class
-                          ),
-                        condition
+                        condition,
+                        field(
+                          "concat('\"169.254.', trunc(random() * 256), '.', trunc(random() * 256), '\"')::jsonb",
+                          JSONB.class
+                        )
                       )
                   )
                 )

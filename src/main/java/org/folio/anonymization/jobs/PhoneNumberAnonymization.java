@@ -71,9 +71,9 @@ public class PhoneNumberAnonymization implements JobFactory {
                       new ReplaceJSONBValuePart(
                         "replace phone number in %s on %s".formatted(field.toString(), label),
                         field,
-                        i ->
-                          field(
-                            """
+                        condition,
+                        field(
+                          """
                       concat(
                         '\"(',
                         %s,
@@ -85,14 +85,13 @@ public class PhoneNumberAnonymization implements JobFactory {
                         '\"'
                       )::jsonb
                       """.formatted(
-                                // 978 = Ipswich, MA
-                                // 919 = Durham, NC
-                                // 512 = Austin, TX
-                                RandomValueUtils.randomArrayEntrySql("978", "919", "512")
-                              ),
-                            JSONB.class
-                          ),
-                        condition
+                              // 978 = Ipswich, MA
+                              // 919 = Durham, NC
+                              // 512 = Austin, TX
+                              RandomValueUtils.randomArrayEntrySql("978", "919", "512")
+                            ),
+                          JSONB.class
+                        )
                       )
                   )
                 )

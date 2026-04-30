@@ -58,8 +58,8 @@ public class DateOfBirthAnonymization implements JobFactory {
                       new ReplaceJSONBValuePart(
                         "replace date of birth in %s on %s".formatted(field.toString(), label),
                         field,
-                        i -> RANDOM_DOB_SQL,
-                        condition
+                        condition,
+                        RANDOM_DOB_SQL
                       )
                   )
                 )

@@ -72,8 +72,8 @@ public class GenderAndPronounsAnonymization implements JobFactory {
                       new ReplaceJSONBValuePart(
                         "replace %s on %s".formatted(field.toString(), label),
                         field,
-                        i -> field(REPLACEMENT_SQL_BY_JSON_PATH.get(field.jsonPath()), JSONB.class),
-                        condition
+                        condition,
+                        field(REPLACEMENT_SQL_BY_JSON_PATH.get(field.jsonPath()), JSONB.class)
                       )
                   )
                 )
