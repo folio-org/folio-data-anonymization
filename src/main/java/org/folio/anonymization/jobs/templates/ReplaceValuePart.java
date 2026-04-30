@@ -36,6 +36,10 @@ public class ReplaceValuePart extends JobPart {
     }
   }
 
+  public ReplaceValuePart(String label, FieldReference field, Condition condition, Field<?> replacement) {
+    this(label, field, condition, i -> replacement);
+  }
+
   @Override
   protected void execute() {
     this.create()

@@ -26,7 +26,8 @@ public class RandomValueUtils {
     "@folio.example.org"
   );
 
-  private static final Faker FAKER = new Faker();
+  // Faker doesn't seem to like working across threads...https://github.com/datafaker-net/datafaker/issues/1477
+  private static final ThreadLocal<Faker> FAKER = ThreadLocal.withInitial(Faker::new);
   private static final Base64.Encoder B64 = Base64.getEncoder();
   private static final Base64.Encoder B64_NO_PADDING = B64.withoutPadding();
   private static final Base32 B32 = new Base32();
@@ -39,7 +40,7 @@ public class RandomValueUtils {
         .range(startSeed, startSeed + qty)
         .mapToObj(i ->
           // hex digits for entropy + B32 for guaranteed uniqueness (minus padding)
-          FAKER.random().hex(6) +
+          FAKER.get().random().hex(6) +
           StringUtils.chop(StringUtils.stripStart(B32.encodeToString(ByteBuffer.allocate(4).putInt(i).array()), "A"))
         )
         .toList();
@@ -53,18 +54,18 @@ public class RandomValueUtils {
           StringBuilder builder = new StringBuilder();
 
           // for funsies
-          if (FAKER.random().nextBoolean()) {
-            builder.append(FAKER.word().adjective());
+          if (FAKER.get().random().nextBoolean()) {
+            builder.append(FAKER.get().word().adjective());
           }
-          int nameSource = FAKER.random().nextInt(100);
+          int nameSource = FAKER.get().random().nextInt(100);
           if (nameSource < 5) {
-            builder.append(FAKER.pokemon().name());
+            builder.append(FAKER.get().pokemon().name());
           } else if (nameSource < 25) {
-            builder.append(FAKER.animal().name());
+            builder.append(FAKER.get().animal().name());
           } else if (nameSource < 40) {
-            builder.append(FAKER.funnyName().name());
+            builder.append(FAKER.get().funnyName().name());
           } else {
-            builder.append(FAKER.credentials().username());
+            builder.append(FAKER.get().credentials().username());
           }
           // B32 for guaranteed uniqueness (minus padding)
           builder.append(StringUtils.stripStart(B32.encodeToString(ByteBuffer.allocate(4).putInt(i).array()), "A"));
@@ -85,39 +86,41 @@ public class RandomValueUtils {
   public static List<String> emails(int qty) {
     return IntStream
       .range(0, qty)
-      .mapToObj(i -> FAKER.credentials().username() + EMAIL_DOMAINS.get(FAKER.random().nextInt(EMAIL_DOMAINS.size())))
+      .mapToObj(i ->
+        FAKER.get().credentials().username() + EMAIL_DOMAINS.get(FAKER.get().random().nextInt(EMAIL_DOMAINS.size()))
+      )
       .toList();
   }
 
   public static List<String> streetAddresses(int qty) {
-    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().streetAddress()).toList();
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.get().address().streetAddress()).toList();
   }
 
   public static List<String> secondaryAddresses(int qty) {
-    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().secondaryAddress()).toList();
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.get().address().secondaryAddress()).toList();
   }
 
   public static List<String> cities(int qty) {
-    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().city()).toList();
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.get().address().city()).toList();
   }
 
   public static List<String> states(int qty) {
-    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().state()).toList();
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.get().address().state()).toList();
   }
 
   public static List<String> postalCodes(int qty) {
-    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().zipCode()).toList();
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.get().address().zipCode()).toList();
   }
 
   public static List<String> countryCodes(int qty) {
-    return IntStream.range(0, qty).mapToObj(i -> FAKER.address().countryCode()).toList();
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.get().address().countryCode()).toList();
   }
 
   public static List<String> userAgents(int qty) {
     return IntStream
       .range(0, qty)
       .mapToObj(i -> {
-        int source = FAKER.random().nextInt(100);
+        int source = FAKER.get().random().nextInt(100);
         if (source < 5) {
           return "Samsung Smart Fridge";
         } else if (source < 10) {
@@ -125,7 +128,7 @@ public class RandomValueUtils {
         } else if (source < 15) {
           return "Nokia 3310";
         } else {
-          return FAKER.internet().userAgent();
+          return FAKER.get().internet().userAgent();
         }
       })
       .toList();

@@ -32,6 +32,10 @@ public class ReplaceJSONBValuePart extends JobPart {
     this.field = field;
     this.replacement = getReplacement;
     this.condition = condition;
+
+    if (field.jsonPath() == null) {
+      throw new IllegalStateException("Cannot use ReplaceJSONBValuePart on non-JSONB property " + field.toString());
+    }
   }
 
   public ReplaceJSONBValuePart(String label, FieldReference field, Condition condition, Field<JSONB> replacement) {

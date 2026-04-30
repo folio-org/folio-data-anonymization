@@ -17,6 +17,6 @@ public class TruncateTablePart extends JobPart {
 
   @Override
   protected void execute() {
-    this.create().truncate(table.table(this.tenant())).execute();
+    this.create().truncate(table.table(this.tenant())).cascade().execute();
   }
 }
