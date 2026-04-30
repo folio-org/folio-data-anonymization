@@ -1,7 +1,7 @@
 package org.folio.anonymization.jobs;
 
 import java.util.List;
-import java.util.stream.IntStream;
+import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -43,10 +43,25 @@ public class AddressAnonymization implements JobFactory {
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.contacts.addresses[*].stateRegion"),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.contacts.addresses[*].zipCode"),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.contacts.addresses[*].country"),
-    new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts.addresses[*].addressLine1"),
-    new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts.addresses[*].addressLine2"),
+    new FieldReference(
+      "organizations_storage",
+      "organizations",
+      "jsonb",
+      "$.privilegedContacts.addresses[*].addressLine1"
+    ),
+    new FieldReference(
+      "organizations_storage",
+      "organizations",
+      "jsonb",
+      "$.privilegedContacts.addresses[*].addressLine2"
+    ),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts.addresses[*].city"),
-    new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts.addresses[*].stateRegion"),
+    new FieldReference(
+      "organizations_storage",
+      "organizations",
+      "jsonb",
+      "$.privilegedContacts.addresses[*].stateRegion"
+    ),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts.addresses[*].zipCode"),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts.addresses[*].country"),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.addresses[*].addressLine1"),
@@ -75,8 +90,6 @@ public class AddressAnonymization implements JobFactory {
     new FieldReference("users", "users", "jsonb", "$.personal.addresses[*].postalCode")
   );
 
-  private static final int BATCH_SIZE = 2000;
-
   @Autowired
   private SharedExecutionContext context;
 
@@ -89,45 +102,34 @@ public class AddressAnonymization implements JobFactory {
         tenant,
         context,
         JobConfigurationProperty.fromFieldList(ADDRESS_FIELDS, tenant),
-        ctx -> {
-          List<FieldReference> enabledFields = JobConfigurationProperty.getEnabledFields(ctx.settings()).toList();
-          List<String> overwriteStages = IntStream.range(0, enabledFields.size()).mapToObj(i -> "overwrite-" + i).toList();
-          List<String> stages = IntStream
-            .rangeClosed(0, overwriteStages.size())
-            .mapToObj(i -> i == 0 ? "prepare" : overwriteStages.get(i - 1))
-            .toList();
-          Job job = new Job(ctx, stages);
-          job.scheduleParts(
-            "prepare",
-            IntStream
-              .range(0, enabledFields.size())
-              .mapToObj(i -> {
-                FieldReference addressField = enabledFields.get(i);
-                return new BatchGenerationFromTablePart<>(
-                  "Prepare batches for address updates in " + addressField.toString(),
-                  addressField,
-                  BATCH_SIZE,
-                  overwriteStages.get(i),
-                  (label, condition, start, end) ->
-                    new ReplaceValueFromListPart(
-                      "replace %s on %s".formatted(addressField.toString(), label),
-                      addressField,
-                      condition,
-                      replacementValues(addressField, end - start)
-                    )
-                );
-              })
-              .toList()
-          );
-          return job;
-        }
+        ctx ->
+          new Job(ctx, List.of("prepare", "overwrite"))
+            .scheduleParts(
+              "prepare",
+              JobConfigurationProperty
+                .getEnabledFields(ctx.settings())
+                .map(field ->
+                  new BatchGenerationFromTablePart<>(
+                    "Prep to apply new values to " + field.toString(),
+                    field,
+                    JobConfig.BATCH_SIZE,
+                    "overwrite",
+                    (label, condition, start, end) ->
+                      new ReplaceValueFromListPart(
+                        "replace %s on %s".formatted(field.toString(), label),
+                        field,
+                        condition,
+                        replacementValues(field, Math.max(end - start, 5))
+                      )
+                  )
+                )
+                .toList()
+            )
       )
     );
   }
 
-  private static List<String> replacementValues(FieldReference fieldReference, int qty) {
-    int size = Math.max(1, qty);
-
+  private static List<String> replacementValues(FieldReference fieldReference, int size) {
     String path = fieldReference.jsonPath();
     if (path != null) {
       if (path.endsWith(".addressLine1") || path.endsWith(".addressLine0")) {

@@ -7,6 +7,7 @@ import static org.jooq.impl.DSL.table;
 import static org.jooq.impl.DSL.using;
 
 import java.util.List;
+import lombok.Getter;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.db.TableIDs;
 import org.folio.anonymization.domain.job.JobPart;
@@ -43,6 +44,7 @@ public class ReplaceValueFromListPart extends JobPart {
   private final FieldReference field;
   private final Condition condition;
 
+  @Getter // for testing
   private final List<String> replacements;
 
   public ReplaceValueFromListPart(String label, FieldReference field, Condition condition, List<String> replacements) {

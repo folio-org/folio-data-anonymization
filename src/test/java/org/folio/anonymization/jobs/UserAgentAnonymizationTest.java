@@ -12,7 +12,8 @@ import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
-import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
+import org.folio.anonymization.jobs.templates.ReplaceValueFromListPart;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
@@ -21,23 +22,17 @@ class UserAgentAnonymizationTest {
   private static final Tenant TEST_TENANT = new Tenant("test", "Test", "Test tenant", null, false);
 
   @Test
-  @SuppressWarnings("unchecked")
   void buildSchedulesUserAgentReplacementFromFakerPool() throws Exception {
     Job job = buildJobWithTables(new ModuleTable("login", "event_logs", 100));
-    List<ReplaceJSONBValuePart> parts = getOverwriteParts(job);
+    List<ReplaceValueFromListPart> parts = getOverwriteParts(job);
     assertEquals(1, parts.size());
 
-    ReplaceJSONBValuePart userAgentPart = parts.getFirst();
+    ReplaceValueFromListPart userAgentPart = parts.getFirst();
     assertTrue(userAgentPart.getLabel().contains("$.userAgent"));
 
-    Field valuesField = UserAgentAnonymization.class.getDeclaredField("USER_AGENT_VALUES");
-    valuesField.setAccessible(true);
-    List<String> generatedValues = (List<String>) valuesField.get(null);
-    assertTrue(generatedValues.size() >= 10 && generatedValues.size() <= 20);
-    assertTrue(generatedValues.stream().allMatch(value -> value != null && !value.isBlank()));
-
-    String replacementSql = userAgentPart.getReplacement().apply(null).toString();
-    assertTrue(replacementSql.contains(generatedValues.getFirst().replace("'", "''")));
+    List<String> replacements = userAgentPart.getReplacements();
+    assertTrue(replacements.size() >= 10 && replacements.size() <= 20);
+    assertTrue(replacements.stream().allMatch(value -> value != null && !value.isBlank()));
   }
 
   @Test
@@ -60,9 +55,15 @@ class UserAgentAnonymizationTest {
     return anonymization;
   }
 
-  private static List<ReplaceJSONBValuePart> getOverwriteParts(Job job) {
-    ConcurrentLinkedQueue<?> overwriteParts = job.getParts().get("overwrite");
-    assertNotNull(overwriteParts);
-    return overwriteParts.stream().map(ReplaceJSONBValuePart.class::cast).toList();
+  private static List<ReplaceValueFromListPart> getOverwriteParts(Job job) {
+    ConcurrentLinkedQueue<?> prepareParts = job.getParts().get("prepare");
+    assertNotNull(prepareParts);
+    return prepareParts
+      .stream()
+      .map(BatchGenerationFromTablePart.class::cast)
+      .map(BatchGenerationFromTablePart::getFactory)
+      .map(f -> f.build("", null, 0, 15))
+      .map(ReplaceValueFromListPart.class::cast)
+      .toList();
   }
 }

@@ -16,7 +16,8 @@ import org.springframework.dao.PessimisticLockingFailureException;
 public abstract class JobPart implements Supplier<JobPart> {
 
   private static final RetryTemplate RETRY_TEMPLATE = new RetryTemplate(
-    RetryPolicy.builder().includes(PessimisticLockingFailureException.class).build()
+    // retry for 30 seconds
+    RetryPolicy.builder().includes(PessimisticLockingFailureException.class).maxRetries(30).build()
   );
 
   protected Job job;

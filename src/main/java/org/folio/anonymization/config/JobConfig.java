@@ -14,6 +14,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class JobConfig {
 
+  public static final int BATCH_SIZE = 2_000;
+  public static final int INSERT_BATCH_SIZE = 100;
+
   @Bean
   public JobNotifier notifier() {
     // TODO: make this fancier, integrate with interface, etc

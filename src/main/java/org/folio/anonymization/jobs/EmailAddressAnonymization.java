@@ -1,6 +1,7 @@
 package org.folio.anonymization.jobs;
 
 import java.util.List;
+import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -16,8 +17,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class EmailAddressAnonymization implements JobFactory {
-
-  private static final int BATCH_SIZE = 2_000;
 
   private static final List<FieldReference> FIELDS = List.of(
     new FieldReference("batch_print", "printing", "sorting_field"),
@@ -61,7 +60,7 @@ public class EmailAddressAnonymization implements JobFactory {
                   new BatchGenerationFromTablePart<>(
                     "Prep to apply new values to " + field.toString(),
                     field,
-                    BATCH_SIZE,
+                    JobConfig.BATCH_SIZE,
                     "overwrite",
                     (label, condition, start, end) ->
                       new ReplaceValueFromListPart(
