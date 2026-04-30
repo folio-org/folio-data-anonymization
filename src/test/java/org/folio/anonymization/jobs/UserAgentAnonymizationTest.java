@@ -12,6 +12,7 @@ import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
@@ -61,8 +62,14 @@ class UserAgentAnonymizationTest {
   }
 
   private static List<ReplaceJSONBValuePart> getOverwriteParts(Job job) {
-    ConcurrentLinkedQueue<?> overwriteParts = job.getParts().get("overwrite");
-    assertNotNull(overwriteParts);
-    return overwriteParts.stream().map(ReplaceJSONBValuePart.class::cast).toList();
+    ConcurrentLinkedQueue<?> prepareParts = job.getParts().get("prepare");
+    assertNotNull(prepareParts);
+    return prepareParts
+      .stream()
+      .map(BatchGenerationFromTablePart.class::cast)
+      .map(BatchGenerationFromTablePart::getFactory)
+      .map(f -> f.build("", null, 0, 1))
+      .map(ReplaceJSONBValuePart.class::cast)
+      .toList();
   }
 }

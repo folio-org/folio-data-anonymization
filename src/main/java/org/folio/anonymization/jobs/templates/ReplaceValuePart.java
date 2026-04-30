@@ -1,7 +1,5 @@
 package org.folio.anonymization.jobs.templates;
 
-import static org.jooq.impl.DSL.noCondition;
-
 import java.util.function.Function;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.JobPart;
@@ -22,21 +20,13 @@ public class ReplaceValuePart extends JobPart {
 
   private final Function<Field<?>, Field<?>> replacement;
 
-  public ReplaceValuePart(String label, FieldReference field, Field<?> replacement) {
-    this(label, field, f -> replacement);
-  }
-
-  public ReplaceValuePart(String label, FieldReference field, Function<Field<?>, Field<?>> getReplacement) {
-    this(label, field, getReplacement, noCondition());
-  }
-
   public ReplaceValuePart(
     String label,
     FieldReference field,
-    Function<Field<?>, Field<?>> getReplacement,
-    Condition condition
+    Condition condition,
+    Function<Field<?>, Field<?>> getReplacement
   ) {
-    super(label + " (" + field.toString() + ")");
+    super(label);
     this.field = field;
     this.replacement = getReplacement;
     this.condition = condition;

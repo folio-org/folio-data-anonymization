@@ -14,6 +14,9 @@ import org.apache.commons.lang3.StringUtils;
 @UtilityClass
 public class RandomValueUtils {
 
+  public static final String POSTGRES_TRANSLATE_FROM = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  public static final String POSTGRES_TRANSLATE_TO = "XXXXXXXXXXXXXXXXXXXXXXXXXXxxxxxxxxxxxxxxxxxxxxxxxxxx1111111111";
+
   // defining static ones instead of allowing Faker to fill this in as our anonymized system may
   // attempt to send emails and we want to ensure we don't accidentally hit a real inbox.
   private static final List<String> EMAIL_DOMAINS = List.of(
@@ -111,6 +114,20 @@ public class RandomValueUtils {
   }
 
   public static List<String> userAgents(int qty) {
-    return IntStream.range(0, qty).mapToObj(i -> FAKER.internet().userAgent()).toList();
+    return IntStream
+      .range(0, qty)
+      .mapToObj(i -> {
+        int source = FAKER.random().nextInt(100);
+        if (source < 5) {
+          return "Samsung Smart Fridge";
+        } else if (source < 10) {
+          return "Roomba";
+        } else if (source < 15) {
+          return "Nokia 3310";
+        } else {
+          return FAKER.internet().userAgent();
+        }
+      })
+      .toList();
   }
 }

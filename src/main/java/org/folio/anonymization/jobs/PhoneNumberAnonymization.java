@@ -3,6 +3,7 @@ package org.folio.anonymization.jobs;
 import static org.jooq.impl.DSL.field;
 
 import java.util.List;
+import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -10,6 +11,7 @@ import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.folio.anonymization.util.RandomValueUtils;
 import org.jooq.JSONB;
@@ -54,20 +56,24 @@ public class PhoneNumberAnonymization implements JobFactory {
         context,
         JobConfigurationProperty.fromFieldList(PHONE_NUMBER_FIELDS, tenant),
         ctx ->
-          new Job(ctx, List.of("overwrite"))
+          new Job(ctx, List.of("prepare", "overwrite"))
             .scheduleParts(
-              "overwrite",
+              "prepare",
               JobConfigurationProperty
                 .getEnabledFields(ctx.settings())
                 .map(field ->
-                  new ReplaceJSONBValuePart(
-                    "replace phone number in " + field.toString(),
+                  new BatchGenerationFromTablePart<>(
+                    "Prep to apply new values to " + field.toString(),
                     field,
-                    // 978 = Ipswich, MA
-                    // 919 = Durham, NC
-                    // 512 = Austin, TX
-                    field(
-                      """
+                    JobConfig.BATCH_SIZE,
+                    "overwrite",
+                    (label, condition, start, end) ->
+                      new ReplaceJSONBValuePart(
+                        "replace phone number in %s on %s".formatted(field.toString(), label),
+                        field,
+                        condition,
+                        field(
+                          """
                       concat(
                         '\"(',
                         %s,
@@ -79,10 +85,14 @@ public class PhoneNumberAnonymization implements JobFactory {
                         '\"'
                       )::jsonb
                       """.formatted(
-                          RandomValueUtils.randomArrayEntrySql("978", "919", "512")
-                        ),
-                      JSONB.class
-                    )
+                              // 978 = Ipswich, MA
+                              // 919 = Durham, NC
+                              // 512 = Austin, TX
+                              RandomValueUtils.randomArrayEntrySql("978", "919", "512")
+                            ),
+                          JSONB.class
+                        )
+                      )
                   )
                 )
                 .toList()

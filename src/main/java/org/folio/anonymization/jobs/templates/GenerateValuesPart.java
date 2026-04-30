@@ -6,6 +6,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.log4j.Log4j2;
+import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.job.JobPart;
 import org.jooq.Field;
 import org.jooq.Query;
@@ -20,8 +21,6 @@ import org.jooq.Table;
  */
 @Log4j2
 public class GenerateValuesPart extends JobPart {
-
-  private static final int INSERT_BATCH_SIZE = 100;
 
   private final Table<?> destinationTable;
   private final Field<String> destinationField;
@@ -62,8 +61,8 @@ public class GenerateValuesPart extends JobPart {
       .map(Query.class::cast)
       .toList();
 
-    for (int i = 0; i < queries.size(); i += INSERT_BATCH_SIZE) {
-      int end = Math.min(i + INSERT_BATCH_SIZE, queries.size());
+    for (int i = 0; i < queries.size(); i += JobConfig.INSERT_BATCH_SIZE) {
+      int end = Math.min(i + JobConfig.INSERT_BATCH_SIZE, queries.size());
       List<Query> batch = queries.subList(i, end);
       this.create().batch(batch).execute();
     }

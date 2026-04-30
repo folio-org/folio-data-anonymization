@@ -1,7 +1,5 @@
 package org.folio.anonymization.jobs.templates;
 
-import static org.jooq.impl.DSL.noCondition;
-
 import java.util.function.Function;
 import lombok.Getter;
 import org.folio.anonymization.domain.db.FieldReference;
@@ -24,28 +22,20 @@ public class ReplaceJSONBValuePart extends JobPart {
   @Getter // for testing
   private final Function<Field<JSONB>, Field<JSONB>> replacement;
 
-  public ReplaceJSONBValuePart(String label, FieldReference field, Field<JSONB> replacement) {
-    this(label, field, f -> replacement);
-  }
-
   public ReplaceJSONBValuePart(
     String label,
     FieldReference field,
+    Condition condition,
     Function<Field<JSONB>, Field<JSONB>> getReplacement
   ) {
-    this(label, field, getReplacement, noCondition());
-  }
-
-  public ReplaceJSONBValuePart(
-    String label,
-    FieldReference field,
-    Function<Field<JSONB>, Field<JSONB>> getReplacement,
-    Condition condition
-  ) {
-    super(label + " (" + field.toString() + ")");
+    super(label);
     this.field = field;
     this.replacement = getReplacement;
     this.condition = condition;
+  }
+
+  public ReplaceJSONBValuePart(String label, FieldReference field, Condition condition, Field<JSONB> replacement) {
+    this(label, field, condition, i -> replacement);
   }
 
   @Override
