@@ -11,8 +11,8 @@ import org.jooq.Condition;
 import org.jooq.JSONB;
 
 /**
- * Job part to redact all alphanumeric characters in a field, JSONB or plain.
- * This just wraps {@link ReplaceValuePart} and {@link ReplaceJSONBValuePart}
+ * Job part to redact all alphanumeric characters in a field, JSONB or plain, using the TRUNCATE
+ * function on the unaccented value.
  *
  * @example
  * new RedactPart("redact value", field, condition)

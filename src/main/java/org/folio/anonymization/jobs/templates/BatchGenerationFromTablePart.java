@@ -6,6 +6,7 @@ import static org.jooq.impl.DSL.orderBy;
 import static org.jooq.impl.DSL.rowNumber;
 
 import java.util.List;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.db.TableIDs;
@@ -31,6 +32,8 @@ public class BatchGenerationFromTablePart<T> extends JobPart {
   private final Class<T> tableIdType;
   private final int batchSize;
   private final String childrenJobStage;
+
+  @Getter // for testing
   private final BatchPartFactory factory;
 
   public BatchGenerationFromTablePart(
