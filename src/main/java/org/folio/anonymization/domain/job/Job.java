@@ -87,7 +87,7 @@ public final class Job {
         log.info("Job '{}': completed part '{}'.", name, r.getLabel());
         this.currentlyExecuting.remove(r.getLabel());
       } else {
-        log.error("Job '{}': error in part '{}'.", name, r.getLabel(), e);
+        log.error("Job '{}': encountered an error in part '{}':", name, part.getLabel(), e);
       }
       this.checkNextStageEligibility();
       this.context.executionContext().jobNotifier().onStatusUpdate(this);

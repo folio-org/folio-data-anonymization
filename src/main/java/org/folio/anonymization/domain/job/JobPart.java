@@ -7,7 +7,6 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.exception.UncheckedException;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.jooq.DSLContext;
-import org.springframework.core.retry.RetryException;
 import org.springframework.core.retry.RetryPolicy;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.dao.PessimisticLockingFailureException;
@@ -41,11 +40,9 @@ public abstract class JobPart implements Supplier<JobPart> {
         }
         return null;
       });
-    } catch (RetryException e) {
-      throw new UncheckedException(e);
-    } catch (RuntimeException e) {
+    } catch (Exception e) {
       log.error("Error executing job part: {}", label, e);
-      throw e;
+      throw new UncheckedException(e);
     } finally {
       this.started.set(false);
       Thread.currentThread().setName("parked");
