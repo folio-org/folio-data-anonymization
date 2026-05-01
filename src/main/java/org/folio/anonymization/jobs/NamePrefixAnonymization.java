@@ -21,8 +21,8 @@ public class NamePrefixAnonymization implements JobFactory {
   private static final List<FieldReference> NAME_PREFIX_FIELDS = List.of(
     new FieldReference("oa", "party", "p_title"),
     new FieldReference("organizations_storage", "contacts", "jsonb", "$.prefix"),
-    new FieldReference("organizations_storage", "organizations", "jsonb", "$.contacts.prefix"),
-    new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts.prefix"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.contacts[*].prefix"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts[*].prefix"),
     new FieldReference("organizations_storage", "privileged_contacts", "jsonb", "$.prefix")
   );
 
