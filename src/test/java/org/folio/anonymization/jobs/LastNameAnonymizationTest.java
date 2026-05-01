@@ -37,12 +37,12 @@ class LastNameAnonymizationTest {
   }
 
   @Test
-  void buildDoesNotScheduleInventoryStorageItemPartByDefault() throws Exception {
+  void buildSchedulesInventoryStorageItemPartByDefault() throws Exception {
     Job job = buildJobWithTables(new ModuleTable("inventory_storage", "item", 100));
     assertTrue(
       getPrepareParts(job)
         .stream()
-        .noneMatch(part -> part.getLabel().contains("$.circulationNotes[*].source.personal.lastName"))
+        .anyMatch(part -> part.getLabel().contains("$.circulationNotes[*].source.personal.lastName"))
     );
   }
 
