@@ -141,6 +141,10 @@ public class RandomValueUtils {
       .toList();
   }
 
+  public static List<String> namePrefixes(int qty) {
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.get().name().prefix()).toList();
+  }
+
   public static List<String> userAgents(int qty) {
     return IntStream
       .range(0, qty)
