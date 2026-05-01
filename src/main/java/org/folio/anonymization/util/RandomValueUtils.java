@@ -128,6 +128,19 @@ public class RandomValueUtils {
     return IntStream.range(0, qty).mapToObj(i -> FAKER.get().name().lastName()).toList();
   }
 
+  public static List<String> fullNames(int qty) {
+    return IntStream
+      .range(0, qty)
+      .mapToObj(i -> {
+        if (FAKER.get().random().nextInt(100) < 10) {
+          return FAKER.get().funnyName().name();
+        } else {
+          return FAKER.get().name().fullName();
+        }
+      })
+      .toList();
+  }
+
   public static List<String> userAgents(int qty) {
     return IntStream
       .range(0, qty)
