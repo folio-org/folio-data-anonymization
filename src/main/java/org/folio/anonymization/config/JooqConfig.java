@@ -9,6 +9,7 @@ import org.jooq.impl.DataSourceConnectionProvider;
 import org.springframework.boot.jooq.autoconfigure.DefaultConfigurationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 
 @Configuration
 public class JooqConfig {
@@ -38,7 +39,7 @@ public class JooqConfig {
     @Override
     public Connection acquire() {
       try {
-        Connection conn = super.acquire();
+        Connection conn = DataSourceUtils.getConnection(super.dataSource());
         // disables triggers/fk checks/etc for this session, speeding things up
         // and preventing some modules from attempting to update modification timestamps/etc
         conn.prepareCall("SET session_replication_role = replica").execute();
