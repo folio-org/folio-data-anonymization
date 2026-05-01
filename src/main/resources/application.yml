@@ -10,7 +10,7 @@ spring:
       # to boot up application despite of any DB connection issues
       continue-on-error: false
   jpa:
-    hibernate:
+    hibernate: a
       ddl-auto: none
     properties:
       hibernate:
