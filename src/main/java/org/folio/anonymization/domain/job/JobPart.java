@@ -1,5 +1,6 @@
 package org.folio.anonymization.domain.job;
 
+import java.sql.SQLTransientConnectionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import lombok.Data;
@@ -17,7 +18,11 @@ public abstract class JobPart implements Supplier<JobPart> {
 
   private static final RetryTemplate RETRY_TEMPLATE = new RetryTemplate(
     // retry for 30 seconds
-    RetryPolicy.builder().includes(PessimisticLockingFailureException.class).maxRetries(30).build()
+    RetryPolicy
+      .builder()
+      .includes(PessimisticLockingFailureException.class, SQLTransientConnectionException.class)
+      .maxRetries(30)
+      .build()
   );
 
   protected Job job;
@@ -36,7 +41,7 @@ public abstract class JobPart implements Supplier<JobPart> {
         try {
           this.execute();
         } catch (PessimisticLockingFailureException e) {
-          log.warn("Job {} stage {} part {}: Pessimistic locking failure. Retrying...", job.getName(), stage, label);
+          log.warn("Job {} stage {} part {}: lock or connection failure. Retrying...", job.getName(), stage, label);
           throw e;
         }
         return null;
