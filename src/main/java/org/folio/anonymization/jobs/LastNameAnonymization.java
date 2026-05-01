@@ -18,19 +18,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class LastNameAnonymization implements JobFactory {
 
-  private static final FieldReference INVENTORY_ITEM_LAST_NAME_FIELD = new FieldReference(
-    "inventory_storage",
-    "item",
-    "jsonb",
-    "$.circulationNotes[*].source.personal.lastName"
-  );
-  private static final FieldReference SEARCH_ITEM_LAST_NAME_FIELD = new FieldReference(
-    "search",
-    "item",
-    "json",
-    "$.circulationNotes[*].source.personal.lastName"
-  );
-
   private static final List<FieldReference> LAST_NAME_FIELDS = List.of(
     new FieldReference("circulation_storage", "actual_cost_record", "jsonb", "$.user.lastName"),
     new FieldReference("circulation_storage", "request", "jsonb", "$.requester.lastName"),
@@ -48,7 +35,7 @@ public class LastNameAnonymization implements JobFactory {
     new FieldReference("di_converter_storage", "mapping_profiles", "jsonb", "$.userInfo.lastName"),
     new FieldReference("di_converter_storage", "match_profiles", "jsonb", "$.userInfo.lastName"),
     new FieldReference("di_converter_storage", "profile_snapshots", "jsonb", "$.content.userInfo.lastName"),
-    INVENTORY_ITEM_LAST_NAME_FIELD,
+    new FieldReference("inventory_storage", "item", "jsonb", "$.circulationNotes[*].source.personal.lastName"),
     new FieldReference("inventory_storage", "audit_item", "jsonb", "$.record.circulationNotes[*].source.lastName"),
     new FieldReference("oa", "party", "p_family_name"),
     new FieldReference("organizations_storage", "contacts", "jsonb", "$.lastName"),
@@ -57,7 +44,7 @@ public class LastNameAnonymization implements JobFactory {
     new FieldReference("organizations_storage", "privileged_contacts", "jsonb", "$.lastName"),
     new FieldReference("requests_mediated", "mediated_request", "requester_last_name"),
     new FieldReference("requests_mediated", "mediated_request", "proxy_last_name"),
-    SEARCH_ITEM_LAST_NAME_FIELD,
+    new FieldReference("search", "item", "json", "$.circulationNotes[*].source.personal.lastName"),
     new FieldReference(
       "source_record_manager",
       "job_execution",
@@ -75,14 +62,6 @@ public class LastNameAnonymization implements JobFactory {
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     List<JobConfigurationProperty> configuration = JobConfigurationProperty.fromFieldList(LAST_NAME_FIELDS, tenant);
-    configuration
-      .stream()
-      .filter(property -> INVENTORY_ITEM_LAST_NAME_FIELD.equals(property.getKey()))
-      .forEach(property -> property.setBooleanValue(false));
-    configuration
-      .stream()
-      .filter(property -> SEARCH_ITEM_LAST_NAME_FIELD.equals(property.getKey()))
-      .forEach(property -> property.setBooleanValue(false));
 
     return List.of(
       new JobBuilder(
