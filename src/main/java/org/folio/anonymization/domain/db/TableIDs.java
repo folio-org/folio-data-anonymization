@@ -98,6 +98,7 @@ public class TableIDs {
     Pair.of(new FieldReference("oai_pmh", "configuration_settings", "id"), UUID.class),
     Pair.of(new FieldReference("orders_storage", "export_history", "id"), UUID.class),
     Pair.of(new FieldReference("orders_storage", "po_line", "id"), UUID.class),
+    Pair.of(new FieldReference("organizations_storage", "banking_information", "id"), UUID.class),
     Pair.of(new FieldReference("organizations_storage", "contacts", "id"), UUID.class),
     Pair.of(new FieldReference("organizations_storage", "organizations", "id"), UUID.class),
     Pair.of(new FieldReference("organizations_storage", "privileged_contacts", "id"), UUID.class),
