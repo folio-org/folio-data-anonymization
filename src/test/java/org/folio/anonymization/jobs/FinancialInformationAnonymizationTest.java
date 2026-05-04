@@ -28,20 +28,27 @@ class FinancialInformationAnonymizationTest {
       new ModuleTable("organizations_storage", "banking_information", 100),
       new ModuleTable("organizations_storage", "organizations", 100)
     );
-    List<? extends BatchGenerationFromTablePart<?>> parts = getEnumeratePrepParts(job);
-    assertEquals(5, parts.size());
+    List<? extends BatchGenerationFromTablePart<?>> redactParts = getParts(job, "redact-prep");
+    assertEquals(2, redactParts.size());
+    assertHasLabel(redactParts, "$.transactionInformation");
+    assertHasLabel(redactParts, "$.bankName");
 
-    assertHasLabel(parts, "$.transactionInformation");
-    assertHasLabel(parts, "$.bankName");
-    assertHasLabel(parts, "$.bankAccountNumber");
-    assertHasLabel(parts, "$.transitNumber");
-    assertHasLabel(parts, "$.accounts[*].accountNo");
+    List<? extends BatchGenerationFromTablePart<?>> replacementParts = getParts(job, "enumerate-prep");
+    assertEquals(2, replacementParts.size());
+    assertHasLabel(replacementParts, "$.bankAccountNumber");
+    assertHasLabel(replacementParts, "$.accounts[*].accountNo");
+
+    List<? extends BatchGenerationFromTablePart<?>> constantParts = getParts(job, "apply-constant-values-prep");
+    assertEquals(1, constantParts.size());
+    assertHasLabel(constantParts, "$.transitNumber");
   }
 
   @Test
   void buildDoesNotSchedulePartsWhenTargetTablesAreMissing() throws Exception {
     Job job = buildJobWithTables(new ModuleTable("users", "outbox_event_log", 10));
-    assertTrue(getEnumeratePrepParts(job).isEmpty());
+    assertTrue(getParts(job, "redact-prep").isEmpty());
+    assertTrue(getParts(job, "enumerate-prep").isEmpty());
+    assertTrue(getParts(job, "apply-constant-values-prep").isEmpty());
   }
 
   private static Job buildJobWithTables(ModuleTable... tables) throws Exception {
@@ -61,12 +68,12 @@ class FinancialInformationAnonymizationTest {
     return anonymization;
   }
 
-  private static List<? extends BatchGenerationFromTablePart<?>> getEnumeratePrepParts(Job job) {
-    ConcurrentLinkedQueue<?> enumeratePrepParts = job.getParts().get("enumerate-prep");
-    if (enumeratePrepParts == null) {
+  private static List<? extends BatchGenerationFromTablePart<?>> getParts(Job job, String phase) {
+    ConcurrentLinkedQueue<?> partsForPhase = job.getParts().get(phase);
+    if (partsForPhase == null) {
       return List.of();
     }
-    List<? extends BatchGenerationFromTablePart<?>> parts = enumeratePrepParts
+    List<? extends BatchGenerationFromTablePart<?>> parts = partsForPhase
       .stream()
       .map(part -> (BatchGenerationFromTablePart<?>) part)
       .toList();
