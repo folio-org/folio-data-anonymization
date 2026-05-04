@@ -46,6 +46,17 @@ public class RandomValueUtils {
         .toList();
   }
 
+  public static Function<Integer, List<String>> numericCodeLikeValueGenerator(int startSeed) {
+    return qty ->
+      IntStream
+        .range(startSeed, startSeed + qty)
+        .mapToObj(i ->
+          // six random digits for entropy + index for guaranteed uniqueness
+          "" + FAKER.get().random().nextInt(100000, 999999) + i
+        )
+        .toList();
+  }
+
   public static Function<Integer, List<String>> usernameGenerator(int startSeed) {
     return qty ->
       IntStream

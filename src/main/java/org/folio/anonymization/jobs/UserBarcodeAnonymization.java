@@ -162,7 +162,7 @@ public class UserBarcodeAnonymization implements JobFactory {
                       tempTableFinal,
                       newValue,
                       select(originalValue).from(tempTableStaging).where(cond),
-                      RandomValueUtils.codeLikeValueGenerator(start)
+                      RandomValueUtils.numericCodeLikeValueGenerator(start)
                     )
                 )
               )
