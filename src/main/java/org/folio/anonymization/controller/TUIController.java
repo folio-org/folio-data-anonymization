@@ -16,6 +16,7 @@ import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.controller.TUIState.State;
+import org.folio.anonymization.view.LoadingJobsView;
 import org.folio.anonymization.view.LoadingTenantsView;
 import org.folio.anonymization.view.QuitConfirmationView;
 import org.folio.anonymization.view.ShutdownView;
@@ -31,6 +32,7 @@ public class TUIController extends ToolkitApp {
 
   private final LoadingTenantsView loadingTenantsView;
   private final TenantSelectionView tenantSelectionView;
+  private final LoadingJobsView loadingJobsView;
   private final QuitConfirmationView quitConfirmationView;
   private final ShutdownView shutdownView;
 
@@ -47,6 +49,7 @@ public class TUIController extends ToolkitApp {
       switch (state.getState()) {
         case INIT -> loadingTenantsView.render();
         case TENANT_SELECTION -> tenantSelectionView.render();
+        case JOB_LOADING -> loadingJobsView.render();
         case QUIT_CONFIRMATION -> quitConfirmationView.render();
         case SHUTTING_DOWN -> shutdownView.render(this::quit);
         default -> panel("tbd").fill();
@@ -75,7 +78,7 @@ public class TUIController extends ToolkitApp {
         .add(
           (
             switch (state.getState()) {
-              case INIT -> List.of();
+              case INIT, JOB_LOADING -> List.of();
               case TENANT_SELECTION -> tenantSelectionView.getHotkeys();
               default -> List.of(text("[NEED hotkey impl FOR " + state.getState() + "]").cyan().reversed().bold());
             }

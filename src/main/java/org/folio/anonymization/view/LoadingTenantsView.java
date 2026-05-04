@@ -32,9 +32,7 @@ public class LoadingTenantsView implements TUIView {
     if (tenantFetch == null) {
       log.info("Fetching tenant information...");
       tenantFetch =
-        CompletableFuture
-          .supplyAsync(() -> tenantRepository.getAllTenants())
-          .thenAccept(tenants -> state.completeLoadingTenants(tenants));
+        CompletableFuture.supplyAsync(tenantRepository::getAllTenants).thenAccept(this.state::completeLoadingTenants);
     }
 
     // explode the whole view

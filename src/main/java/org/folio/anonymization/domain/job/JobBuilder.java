@@ -10,7 +10,8 @@ public record JobBuilder(
   SharedExecutionContext executionContext,
   List<JobConfigurationProperty> configuration,
   Function<JobContext, Job> creator
-) {
+)
+  implements Comparable<JobBuilder> {
   public Job build() {
     return this.creator()
       .apply(
@@ -22,5 +23,10 @@ public record JobBuilder(
           configuration
         )
       );
+  }
+
+  @Override
+  public int compareTo(JobBuilder that) {
+    return this.name.compareTo(that.name);
   }
 }

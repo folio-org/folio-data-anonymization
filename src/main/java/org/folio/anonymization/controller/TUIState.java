@@ -7,7 +7,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.tuple.Pair;
 import org.folio.anonymization.domain.folio.Tenant;
+import org.folio.anonymization.domain.job.JobBuilder;
 import org.springframework.stereotype.Component;
 
 @Log4j2
@@ -38,6 +40,9 @@ public class TUIState {
   // from TenantSelectionView
   private List<Tenant> selectedTenants;
 
+  // from LoadingJobsView
+  private List<Pair<Tenant, List<JobBuilder>>> availableJobs;
+
   // for ShutdownView
   @Setter
   private boolean readyToQuit = false;
@@ -50,10 +55,17 @@ public class TUIState {
   }
 
   public void selectTenants(List<Tenant> tenants) {
-    this.selectedTenants = tenants;
+    this.selectedTenants = tenants.stream().sorted().toList();
     this.state = State.JOB_LOADING;
 
     log.info("Tenants were selected! Moving to JOB_LOADING...");
+  }
+
+  public void completeLoadingJobs(List<Pair<Tenant, List<JobBuilder>>> availableJobs) {
+    this.availableJobs = availableJobs;
+    this.state = State.JOB_CONFIGURATION;
+
+    log.info("Completed loading jobs! Moving to JOB_CONFIGURATION...");
   }
 
   public void attemptToQuit() {

@@ -60,7 +60,7 @@ public class TenantSelectionView implements TUIView {
             } else if (!a.isCentral() && b.isCentral()) {
               return 1;
             } else {
-              return a.id().compareTo(b.id());
+              return a.compareTo(b);
             }
           })
         );
