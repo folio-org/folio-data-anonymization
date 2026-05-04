@@ -8,8 +8,6 @@ import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.repository.TenantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Log4j2
@@ -17,13 +15,16 @@ import org.springframework.stereotype.Service;
 public class EntryPointController {
 
   @Autowired
+  TUIController tuiController;
+
+  @Autowired
   TenantRepository tenantRepository;
 
   @Autowired
   List<JobFactory> jobFactories;
 
-  @EventListener(ApplicationReadyEvent.class)
-  public void entryPoint() throws InterruptedException {
+  public void entryPoint() throws Exception {
+    tuiController.run();
     log.info("============================");
 
     TenantExecutionContext tenant = tenantRepository.getTenantExecutionContext(
