@@ -34,6 +34,7 @@ public class TableIDs {
     Pair.of(new FieldReference("copycat", "profile", "id"), UUID.class),
     Pair.of(new FieldReference("courses", "coursereserves_courselistings", "id"), UUID.class),
     Pair.of(new FieldReference("courses", "coursereserves_instructors", "id"), UUID.class),
+    Pair.of(new FieldReference("dcb", "transactions", "id"), UUID.class),
     Pair.of(new FieldReference("data_export_spring", "export_config", "id"), UUID.class),
     Pair.of(new FieldReference("data_export_spring", "job", "id"), UUID.class),
     Pair.of(new FieldReference("data_export", "file_definitions", "id"), UUID.class),
