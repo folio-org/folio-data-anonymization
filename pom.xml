@@ -49,6 +49,7 @@
 	</distributionManagement>
 
 	<properties>
+		<!-- keeping it as JDK 21 to ensure ease of running -->
 		<java.version>21</java.version>
 	</properties>
 	<dependencies>
@@ -97,7 +98,6 @@
 			<artifactId>commons-codec</artifactId>
 			<version>1.22.0</version>
 		</dependency>
-
 
 		<dependency>
 			<groupId>dev.tamboui</groupId>
@@ -153,6 +153,14 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.6.3</version>
+				<configuration>
+					<mainClass>org.folio.anonymization.AnonymizationApplication</mainClass>
 				</configuration>
 			</plugin>
 			<plugin>

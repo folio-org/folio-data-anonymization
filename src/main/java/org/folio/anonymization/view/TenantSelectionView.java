@@ -65,7 +65,6 @@ public class TenantSelectionView implements TUIView {
           })
         );
 
-      log.info(tenantsGroupedByConsortium);
       List<Element> formElements = new ArrayList<>();
 
       tenantsGroupedByConsortium

@@ -3,4 +3,10 @@ package org.folio.anonymization.domain.folio;
 import lombok.With;
 
 @With
-public record Tenant(String id, String name, String description, String consortiumName, boolean isCentral) {}
+public record Tenant(String id, String name, String description, String consortiumName, boolean isCentral)
+  implements Comparable<Tenant> {
+  @Override
+  public int compareTo(Tenant that) {
+    return this.id.compareTo(that.id());
+  }
+}

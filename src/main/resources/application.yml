@@ -17,5 +17,5 @@ spring:
       connection-timeout: 120000 # two minutes in MS
   sql:
     init:
-      # to boot up application despite of any DB connection issues
+      # to boot up application despite any DB connection issues
       continue-on-error: false
