@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.folio.anonymization.domain.db.ModuleTable;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.Job;
+import org.folio.anonymization.domain.job.JobBuilder;
 import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
@@ -22,39 +23,55 @@ class FinancialInformationAnonymizationTest {
   private static final Tenant TEST_TENANT = new Tenant("test", "Test", "Test tenant", null, false);
 
   @Test
-  void buildSchedulesFinancialInformationReplacementBatchParts() throws Exception {
-    Job job = buildJobWithTables(
-      new ModuleTable("feesfines", "feefineactions", 100),
-      new ModuleTable("organizations_storage", "banking_information", 100),
-      new ModuleTable("organizations_storage", "organizations", 100)
-    );
-    List<? extends BatchGenerationFromTablePart<?>> redactParts = getParts(job, "redact-prep");
-    assertEquals(2, redactParts.size());
-    assertHasLabel(redactParts, "$.transactionInformation");
-    assertHasLabel(redactParts, "$.bankName");
+  void buildSchedulesBankTransactionRedactionParts() throws Exception {
+    Job job = buildJobWithTables(0, new ModuleTable("feesfines", "feefineactions", 100), new ModuleTable(
+      "organizations_storage",
+      "banking_information",
+      100
+    ));
+    List<? extends BatchGenerationFromTablePart<?>> parts = getParts(job, "prepare");
+    assertEquals(2, parts.size());
+    assertHasLabel(parts, "$.transactionInformation");
+    assertHasLabel(parts, "$.bankName");
+  }
 
-    List<? extends BatchGenerationFromTablePart<?>> replacementParts = getParts(job, "enumerate-prep");
-    assertEquals(2, replacementParts.size());
-    assertHasLabel(replacementParts, "$.bankAccountNumber");
-    assertHasLabel(replacementParts, "$.accounts[*].accountNo");
+  @Test
+  void buildSchedulesAccountNumberAnonymizationParts() throws Exception {
+    Job job = buildJobWithTables(1, new ModuleTable("organizations_storage", "banking_information", 100), new ModuleTable(
+      "organizations_storage",
+      "organizations",
+      100
+    ));
+    List<? extends BatchGenerationFromTablePart<?>> parts = getParts(job, "enumerate-prep");
+    assertEquals(2, parts.size());
+    assertHasLabel(parts, "$.bankAccountNumber");
+    assertHasLabel(parts, "$.accounts[*].accountNo");
+  }
 
-    List<? extends BatchGenerationFromTablePart<?>> constantParts = getParts(job, "apply-constant-values-prep");
-    assertEquals(1, constantParts.size());
-    assertHasLabel(constantParts, "$.transitNumber");
+  @Test
+  void buildSchedulesRoutingNumberReplacementParts() throws Exception {
+    Job job = buildJobWithTables(2, new ModuleTable("organizations_storage", "banking_information", 100));
+    List<? extends BatchGenerationFromTablePart<?>> parts = getParts(job, "prepare");
+    assertEquals(1, parts.size());
+    assertHasLabel(parts, "$.transitNumber");
   }
 
   @Test
   void buildDoesNotSchedulePartsWhenTargetTablesAreMissing() throws Exception {
-    Job job = buildJobWithTables(new ModuleTable("users", "outbox_event_log", 10));
-    assertTrue(getParts(job, "redact-prep").isEmpty());
-    assertTrue(getParts(job, "enumerate-prep").isEmpty());
-    assertTrue(getParts(job, "apply-constant-values-prep").isEmpty());
+    Job redactionJob = buildJobWithTables(0, new ModuleTable("users", "outbox_event_log", 10));
+    Job accountJob = buildJobWithTables(1, new ModuleTable("users", "outbox_event_log", 10));
+    Job routingJob = buildJobWithTables(2, new ModuleTable("users", "outbox_event_log", 10));
+
+    assertTrue(getParts(redactionJob, "prepare").isEmpty());
+    assertTrue(getParts(accountJob, "enumerate-prep").isEmpty());
+    assertTrue(getParts(routingJob, "prepare").isEmpty());
   }
 
-  private static Job buildJobWithTables(ModuleTable... tables) throws Exception {
+  private static Job buildJobWithTables(int builderIndex, ModuleTable... tables) throws Exception {
     FinancialInformationAnonymization anonymization = createFactoryWithContext();
     TenantExecutionContext tenant = new TenantExecutionContext(TEST_TENANT, List.of(tables));
-    Job job = anonymization.getBuilders(tenant).getFirst().build();
+    List<JobBuilder> builders = anonymization.getBuilders(tenant);
+    Job job = builders.get(builderIndex).build();
     List<JobConfigurationProperty> settings = job.getContext().settings();
     settings.stream().filter(s -> "drop-table".equals(s.getKey())).forEach(s -> s.setBooleanValue(false));
     return job;

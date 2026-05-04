@@ -49,14 +49,11 @@ public class FinancialInformationAnonymization implements JobFactory {
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.accounts[*].accountNo")
   );
 
-  private static final List<FieldReference> CONSTANT_FIELDS = List.of(
+  private static final List<FieldReference> ROUTING_NUMBER_FIELDS = List.of(
     new FieldReference("organizations_storage", "banking_information", "jsonb", "$.transitNumber")
   );
 
-  private static final List<FieldReference> FIELDS = Stream
-    .of(REDACT_FIELDS, GENERATED_FIELDS, CONSTANT_FIELDS)
-    .flatMap(List::stream)
-    .toList();
+  private static final String TEST_ROUTING_NUMBER = "123123123";
 
   @Autowired
   private SharedExecutionContext context;
@@ -66,8 +63,33 @@ public class FinancialInformationAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
-        "Financial information anonymization",
-        "Replaces bank/transaction details with unique generated values.",
+        "Bank/transaction information redaction",
+        "Redacts bank and transaction information values by replacing alphanumeric characters.",
+        tenant,
+        context,
+        JobConfigurationProperty.fromFieldList(REDACT_FIELDS, tenant),
+        ctx ->
+          new Job(ctx, List.of("prepare", "redact"))
+            .scheduleParts(
+              "prepare",
+              JobConfigurationProperty
+                .getEnabledFields(ctx.settings())
+                .map(field ->
+                  new BatchGenerationFromTablePart<>(
+                    "Prepare to redact " + field.toString(),
+                    field,
+                    JobConfig.BATCH_SIZE,
+                    "redact",
+                    (label, condition, start, end) ->
+                      new RedactPart("Redact " + field.toString() + " on " + label, field, condition)
+                  )
+                )
+                .toList()
+            )
+      ),
+      new JobBuilder(
+        "Account number anonymization",
+        "Replaces account numbers with generated numeric values.",
         tenant,
         context,
         Stream
@@ -82,20 +104,13 @@ public class FinancialInformationAnonymization implements JobFactory {
                 "Destroy temporary table (PII will be left behind if disabled)"
               )
             ),
-            JobConfigurationProperty.fromFieldList(FIELDS, tenant).stream()
+            JobConfigurationProperty.fromFieldList(GENERATED_FIELDS, tenant).stream()
           )
           .toList(),
         ctx -> {
-          List<FieldReference> enabledFields = JobConfigurationProperty.getEnabledFields(ctx.settings()).toList();
-          List<FieldReference> enabledRedactFields = enabledFields.stream().filter(REDACT_FIELDS::contains).toList();
-          List<FieldReference> enabledGeneratedFields = enabledFields.stream().filter(GENERATED_FIELDS::contains).toList();
-          List<FieldReference> enabledConstantFields = enabledFields.stream().filter(CONSTANT_FIELDS::contains).toList();
-
-          Table<?> tempTableFinal = table(
-            name("public", "_danon_" + ctx.tenant().tenant().id() + "_financial_information")
-          );
+          Table<?> tempTableFinal = table(name("public", "_danon_" + ctx.tenant().tenant().id() + "_account_numbers"));
           Table<?> tempTableStaging = table(
-            name("public", "_danon_" + ctx.tenant().tenant().id() + "_financial_information_staging")
+            name("public", "_danon_" + ctx.tenant().tenant().id() + "_account_numbers_staging")
           );
 
           Field<String> originalValue = field("original_value", SQLDataType.VARCHAR.notNull());
@@ -105,40 +120,17 @@ public class FinancialInformationAnonymization implements JobFactory {
             ctx,
             List.of(
               "prepare",
-              "redact-prep",
-              "redact",
               "enumerate-prep",
               "enumerate",
               "generate-new-values-prep",
               "generate-new-values",
               "apply-new-values-prep",
               "apply-new-values",
-              "apply-constant-values-prep",
-              "apply-constant-values",
               "cleanup"
             )
           );
 
-          if (!enabledRedactFields.isEmpty()) {
-            job.scheduleParts(
-              "redact-prep",
-              enabledRedactFields
-                .stream()
-                .map(field ->
-                  new BatchGenerationFromTablePart<>(
-                    "Prepare to redact " + field.toString(),
-                    field,
-                    JobConfig.BATCH_SIZE,
-                    "redact",
-                    (label, condition, start, end) ->
-                      new RedactPart("Redact " + field.toString() + " on " + label, field, condition)
-                  )
-                )
-                .toList()
-            );
-          }
-
-          if (JobConfigurationProperty.isOn(ctx.settings(), "create-table") && !enabledGeneratedFields.isEmpty()) {
+          if (JobConfigurationProperty.isOn(ctx.settings(), "create-table")) {
             job.scheduleParts(
               "prepare",
               List.of(
@@ -160,8 +152,8 @@ public class FinancialInformationAnonymization implements JobFactory {
             );
             job.scheduleParts(
               "enumerate-prep",
-              enabledGeneratedFields
-                .stream()
+              JobConfigurationProperty
+                .getEnabledFields(ctx.settings())
                 .map(field ->
                   new BatchGenerationFromTablePart<>(
                     "Make batches to enumerate data from " + field.toString(),
@@ -208,8 +200,8 @@ public class FinancialInformationAnonymization implements JobFactory {
 
           job.scheduleParts(
             "apply-new-values-prep",
-            enabledGeneratedFields
-              .stream()
+            JobConfigurationProperty
+              .getEnabledFields(ctx.settings())
               .map(field ->
                 new BatchGenerationFromTablePart<>(
                   "Prep to apply new values to " + field.toString(),
@@ -248,37 +240,43 @@ public class FinancialInformationAnonymization implements JobFactory {
               .toList()
           );
 
-          if (!enabledConstantFields.isEmpty()) {
-            job.scheduleParts(
-              "apply-constant-values-prep",
-              enabledConstantFields
-                .stream()
-                .map(field ->
-                  new BatchGenerationFromTablePart<>(
-                    "Prep to apply constant value to " + field.toString(),
-                    field,
-                    JobConfig.BATCH_SIZE,
-                    "apply-constant-values",
-                    (label, condition, start, end) ->
-                      new ReplaceValueFromListPart(
-                        "replace %s on %s".formatted(field.toString(), label),
-                        field,
-                        condition,
-                        List.of("123123123")
-                      )
-                  )
-                )
-                .toList()
-            );
-          }
-
-          if (JobConfigurationProperty.isOn(ctx.settings(), "drop-table") && !enabledGeneratedFields.isEmpty()) {
+          if (JobConfigurationProperty.isOn(ctx.settings(), "drop-table")) {
             job.scheduleParts("cleanup", List.of(new DropTablePart("Destroy temp table (staging)", tempTableStaging)));
             job.scheduleParts("cleanup", List.of(new DropTablePart("Destroy temp table (final)", tempTableFinal)));
           }
 
           return job;
         }
+      ),
+      new JobBuilder(
+        "Routing number replacement",
+        "Replaces routing numbers with reserved test value 123123123.",
+        tenant,
+        context,
+        JobConfigurationProperty.fromFieldList(ROUTING_NUMBER_FIELDS, tenant),
+        ctx ->
+          new Job(ctx, List.of("prepare", "overwrite"))
+            .scheduleParts(
+              "prepare",
+              JobConfigurationProperty
+                .getEnabledFields(ctx.settings())
+                .map(field ->
+                  new BatchGenerationFromTablePart<>(
+                    "Prep to apply constant value to " + field.toString(),
+                    field,
+                    JobConfig.BATCH_SIZE,
+                    "overwrite",
+                    (label, condition, start, end) ->
+                      new ReplaceValueFromListPart(
+                        "replace %s on %s".formatted(field.toString(), label),
+                        field,
+                        condition,
+                        List.of(TEST_ROUTING_NUMBER)
+                      )
+                  )
+                )
+                .toList()
+            )
       )
     );
   }
