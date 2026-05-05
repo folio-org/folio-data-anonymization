@@ -1,5 +1,6 @@
 package org.folio.anonymization.view;
 
+import static dev.tamboui.toolkit.Toolkit.column;
 import static dev.tamboui.toolkit.Toolkit.list;
 import static dev.tamboui.toolkit.Toolkit.panel;
 import static dev.tamboui.toolkit.Toolkit.row;
@@ -181,13 +182,22 @@ public class JobConfigurationView implements TUIView {
     if (ref.property() != null) {
       return row(text(ref.getPrefix()), spacer(1), ref.property().getLabel()).style(ref.getStyle());
     } else {
-      Row row = row(text(ref.getPrefix()), spacer(1), text(ref.job().name())).style(ref.getStyle());
+      Row row = row(
+        text(ref.getPrefix()),
+        spacer(1),
+        text(ref.job().name()),
+        text(" ".repeat(Math.max(1, ref.job().description().length() - ref.job.name().length() + 2)))
+      );
       int unavailable = (int) ref.job().configuration().stream().filter(JobConfigurationProperty::isDisabled).count();
       if (unavailable != 0) {
         row.add(text(" (" + unavailable + " unavailable)").dim());
       }
 
-      return row;
+      if (node.isExpanded()) {
+        return column(row, text(" " + ref.job().description()).italic()).style(ref.getStyle());
+      } else {
+        return row;
+      }
     }
   }
 
