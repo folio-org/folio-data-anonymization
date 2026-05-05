@@ -39,8 +39,9 @@ class ProfilePictureAnonymizationTest {
     assertEquals(3, job.getParts().get("update-configuration").size());
     assertTrue(job.getParts().containsKey("update-settings"));
     assertEquals(3, job.getParts().get("update-settings").size());
-    assertTrue(job.getParts().containsKey("replace-pictures"));
-    assertEquals(1, job.getParts().get("replace-pictures").size());
+    assertTrue(job.getParts().containsKey("prepare-replace-pictures"));
+    assertEquals(1, job.getParts().get("prepare-replace-pictures").size());
+    assertTrue(job.getParts().getOrDefault("replace-pictures", new java.util.concurrent.ConcurrentLinkedQueue<>()).isEmpty());
   }
 
   @Test
@@ -56,6 +57,9 @@ class ProfilePictureAnonymizationTest {
       job.getParts().getOrDefault("update-configuration", new java.util.concurrent.ConcurrentLinkedQueue<>()).isEmpty()
     );
     assertTrue(job.getParts().getOrDefault("update-settings", new java.util.concurrent.ConcurrentLinkedQueue<>()).isEmpty());
+    assertTrue(
+      job.getParts().getOrDefault("prepare-replace-pictures", new java.util.concurrent.ConcurrentLinkedQueue<>()).isEmpty()
+    );
     assertTrue(job.getParts().getOrDefault("replace-pictures", new java.util.concurrent.ConcurrentLinkedQueue<>()).isEmpty());
   }
 

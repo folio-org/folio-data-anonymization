@@ -1,10 +1,15 @@
 package org.folio.anonymization.jobs;
 
+import static org.jooq.impl.DSL.condition;
 import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.inline;
-import static org.jooq.impl.DSL.condition;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
+import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -12,12 +17,14 @@ import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
-import org.folio.anonymization.jobs.templates.ReplaceProfilePicturesFromSeedPart;
+import org.folio.anonymization.jobs.templates.ReplaceValueFromListPart;
+import org.folio.anonymization.util.ProfilePictureSeedCsvLoader;
+import org.folio.anonymization.util.ProfilePictureSeedCsvLoader.SeedValue;
 import org.jooq.Condition;
 import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
@@ -68,7 +75,7 @@ public class ProfilePictureAnonymization implements JobFactory {
         context,
         configuration,
         ctx -> {
-          Job job = new Job(ctx, List.of("update-configuration", "update-settings", "replace-pictures"));
+          Job job = new Job(ctx, List.of("update-configuration", "update-settings", "prepare-replace-pictures", "replace-pictures"));
           if (JobConfigurationProperty.isOn(ctx.settings(), "update-configuration")) {
             job.scheduleParts("update-configuration", buildConfigUpdateParts(tenant, "configuration"));
           }
@@ -76,13 +83,32 @@ public class ProfilePictureAnonymization implements JobFactory {
             job.scheduleParts("update-settings", buildConfigUpdateParts(tenant, "settings"));
           }
           if (JobConfigurationProperty.isOn(ctx.settings(), "replace-pictures")) {
-            Resource seedResource = resourceLoader.getResource(PROFILE_PICTURE_SEED_LOCATION);
+            List<SeedValue> seeds = ProfilePictureSeedCsvLoader.load(resourceLoader.getResource(PROFILE_PICTURE_SEED_LOCATION));
+            int runOffset = seeds.size() > 1 ? ThreadLocalRandom.current().nextInt(seeds.size()) : 0;
+
             job.scheduleParts(
-              "replace-pictures",
+              "prepare-replace-pictures",
               List.of(
-                new ReplaceProfilePicturesFromSeedPart(
-                  "Replace users.profile_picture blob and hmac from seed CSV",
-                  seedResource
+                new BatchGenerationFromTablePart<UUID>(
+                  "Prepare batches for users.profile_picture replacements",
+                  new FieldReference("users", "profile_picture", "id"),
+                  UUID.class,
+                  JobConfig.BATCH_SIZE,
+                  "replace-pictures",
+                  (label, condition, start, end) ->
+                    new ReplaceValueFromListPart(
+                      "Replace users.profile_picture blob+hmac on " + label,
+                      List.of(
+                        new FieldReference("users", "profile_picture", "profile_picture_blob"),
+                        new FieldReference("users", "profile_picture", "hmac")
+                      ),
+                      condition,
+                      List.of(
+                        replacementColumn(seeds, runOffset + start, Math.max(end - start, 1), SeedValue::profilePictureBlob),
+                        replacementColumn(seeds, runOffset + start, Math.max(end - start, 1), SeedValue::hmac)
+                      ),
+                      List.of(field("profile_picture_blob", byte[].class), field("hmac", byte[].class))
+                    )
                 )
               )
             );
@@ -127,5 +153,19 @@ public class ProfilePictureAnonymization implements JobFactory {
         field("to_jsonb({0})", JSONB.class, inline(true))
       )
     );
+  }
+
+  private static List<byte[]> replacementColumn(
+    List<SeedValue> seeds,
+    int offset,
+    int size,
+    Function<SeedValue, byte[]> extractor
+  ) {
+    List<byte[]> values = new ArrayList<>(size);
+    int seedCount = seeds.size();
+    for (int i = 0; i < size; i++) {
+      values.add(extractor.apply(seeds.get((offset + i) % seedCount)));
+    }
+    return values;
   }
 }

@@ -1,6 +1,7 @@
 package org.folio.anonymization.jobs.templates;
 
 import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.DSL.table;
@@ -116,12 +117,17 @@ public class ReplaceValueFromListPart extends JobPart {
           .onCommitDrop()
           .execute();
 
-        // populate new temporary table
-        List<Query> queries = replacements
-          .stream()
-          .map(value -> ctx.insertInto(tempTable).columns(valueFields).values(value))
-          .map(Query.class::cast)
-          .toList();
+        int maxReplacementCount = replacements.stream().mapToInt(List::size).max().orElse(0);
+        // populate new temporary table (rows), cycling shorter replacement columns as needed
+        List<Query> queries = new ArrayList<>(maxReplacementCount);
+        for (int row = 0; row < maxReplacementCount; row++) {
+          Object[] values = new Object[valueFields.size()];
+          for (int column = 0; column < valueFields.size(); column++) {
+            List<?> replacementsForColumn = replacements.get(column);
+            values[column] = replacementsForColumn.get(row % replacementsForColumn.size());
+          }
+          queries.add(ctx.insertInto(tempTable).columns(valueFields).values(values));
+        }
 
         for (int i = 0; i < queries.size(); i += INSERT_BATCH_SIZE) {
           int end = Math.min(i + INSERT_BATCH_SIZE, queries.size());
@@ -130,6 +136,10 @@ public class ReplaceValueFromListPart extends JobPart {
         }
 
         Sequence<Integer> insertionSequence = DBUtils.getSequence(tempTable2RefOnly);
+        if (maxReplacementCount > 1) {
+          ctx.createSequence(insertionSequence).startWith(0).minvalue(0).maxvalue(maxReplacementCount - 1).cycle().execute();
+        }
+
         List<Select<? extends Record>> selects = new ArrayList<>(fields.size());
         for (int i = 0; i < fields.size(); i++) {
           int replacementCount = replacements.get(i).size();
@@ -137,14 +147,6 @@ public class ReplaceValueFromListPart extends JobPart {
             // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
             selects.add(select(valueFields.get(i)).from(tempTable).limit(1));
           } else {
-            ctx
-              .createSequence(insertionSequence)
-              .startWith(0)
-              .minvalue(0)
-              .maxvalue(replacementCount - 1)
-              .cycle()
-              .execute();
-
             selects.add(
               select(valueFields.get(i))
                 // must query the next value from the insertion sequence in the from clause
@@ -152,7 +154,7 @@ public class ReplaceValueFromListPart extends JobPart {
                 .from(tempTable, select(insertionSequence.nextval().as("chosen_seq")))
                 .where(
                   replacementsSequenceField
-                    .eq(field("chosen_seq", Integer.class))
+                    .eq(field("chosen_seq", Integer.class).mod(inline(replacementCount)))
                     // we must bind to the outer column in some way or this will not be re-executed for each update
                     // (thanks postgres for cleverly optimizing! 🙃)
                     .and(TableIDs.getIdFor(fields.get(i), this.tenant()).isNotNull())
