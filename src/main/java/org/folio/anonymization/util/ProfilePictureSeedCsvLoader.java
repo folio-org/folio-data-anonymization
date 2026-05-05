@@ -2,33 +2,31 @@ package org.folio.anonymization.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PushbackReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import lombok.experimental.UtilityClass;
+import org.springframework.core.io.Resource;
 
 @UtilityClass
 public class ProfilePictureSeedCsvLoader {
 
   public record SeedValue(byte[] profilePictureBlob, byte[] hmac) {}
 
-  public static List<SeedValue> load(String location) {
-    if (location == null || location.isBlank()) {
-      throw new IllegalArgumentException(
-        "Profile picture seed CSV path is required. Set anonymization.profile-picture.seed-csv-path."
-      );
+  public static List<SeedValue> load(Resource seedCsvResource) {
+    if (seedCsvResource == null) {
+      throw new IllegalArgumentException("Profile picture seed CSV resource is required.");
     }
 
-    try (BufferedReader reader = open(location)) {
+    try (
+      BufferedReader reader = new BufferedReader(new InputStreamReader(seedCsvResource.getInputStream(), StandardCharsets.UTF_8))
+    ) {
       List<List<String>> rows = parseCsvRows(reader);
       if (rows.isEmpty()) {
-        throw new IllegalArgumentException("Profile picture seed CSV is empty: " + location);
+        throw new IllegalArgumentException("Profile picture seed CSV is empty.");
       }
 
       List<String> header = rows.getFirst();
@@ -52,24 +50,12 @@ public class ProfilePictureSeedCsvLoader {
       }
 
       if (result.isEmpty()) {
-        throw new IllegalArgumentException("No usable seed rows found in profile picture CSV: " + location);
+        throw new IllegalArgumentException("No usable seed rows found in profile picture CSV.");
       }
       return result;
     } catch (IOException e) {
-      throw new IllegalStateException("Unable to read profile picture seed CSV from: " + location, e);
+      throw new IllegalStateException("Unable to read profile picture seed CSV resource.", e);
     }
-  }
-
-  private static BufferedReader open(String location) throws IOException {
-    if (location.startsWith("classpath:")) {
-      String resource = location.substring("classpath:".length()).replaceFirst("^/", "");
-      InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
-      if (stream == null) {
-        throw new IllegalStateException("Profile picture seed CSV not found on classpath: " + location);
-      }
-      return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
-    }
-    return Files.newBufferedReader(Path.of(location), StandardCharsets.UTF_8);
   }
 
   private static List<List<String>> parseCsvRows(BufferedReader reader) throws IOException {

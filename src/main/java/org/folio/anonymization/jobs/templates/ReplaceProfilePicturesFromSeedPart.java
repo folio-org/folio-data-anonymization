@@ -17,6 +17,7 @@ import org.jooq.Field;
 import org.jooq.Query;
 import org.jooq.Table;
 import org.jooq.impl.SQLDataType;
+import org.springframework.core.io.Resource;
 
 public class ReplaceProfilePicturesFromSeedPart extends JobPart {
 
@@ -36,16 +37,16 @@ public class ReplaceProfilePicturesFromSeedPart extends JobPart {
 
   private static final int INSERT_BATCH_SIZE = 100;
 
-  private final String seedCsvPath;
+  private final Resource seedCsvResource;
 
-  public ReplaceProfilePicturesFromSeedPart(String label, String seedCsvPath) {
+  public ReplaceProfilePicturesFromSeedPart(String label, Resource seedCsvResource) {
     super(label);
-    this.seedCsvPath = seedCsvPath;
+    this.seedCsvResource = seedCsvResource;
   }
 
   @Override
   protected void execute() {
-    List<SeedValue> seeds = ProfilePictureSeedCsvLoader.load(seedCsvPath);
+    List<SeedValue> seeds = ProfilePictureSeedCsvLoader.load(seedCsvResource);
     int seedCount = seeds.size();
 
     String schemaName = DBUtils.getSchemaName(this.tenant().id(), "users");

@@ -1,5 +1,9 @@
 package org.folio.anonymization.jobs;
 
+import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.inline;
+import static org.jooq.impl.DSL.condition;
+
 import java.util.List;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
@@ -8,52 +12,80 @@ import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
-import org.folio.anonymization.jobs.templates.ForceProfilePictureConfigPart;
+import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.folio.anonymization.jobs.templates.ReplaceProfilePicturesFromSeedPart;
+import org.jooq.Condition;
+import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ProfilePictureAnonymization implements JobFactory {
 
-  private static final List<FieldReference> PROFILE_PICTURE_FIELDS = List.of(
-    new FieldReference("users", "profile_picture", "profile_picture_blob"),
-    new FieldReference("users", "profile_picture", "hmac")
-  );
-
-  @Value("${anonymization.profile-picture.encryption-key:anonymizedanonymizedanonymizedan}")
-  private String encryptionKey;
-
-  @Value("${anonymization.profile-picture.seed-csv-path:classpath:/seed/profile-picture-seed.csv}")
-  private String seedCsvPath;
+  private static final String PROFILE_PICTURE_ENCRYPTION_KEY = "anonymizedanonymizedanonymizedan";
+  private static final String PROFILE_PICTURE_SEED_LOCATION = "classpath:seed/profile-picture-seed.csv";
 
   @Autowired
   private SharedExecutionContext context;
 
+  @Autowired
+  private ResourceLoader resourceLoader;
+
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
+    boolean hasProfilePictureTable = hasTable(tenant, "users", "profile_picture");
+    boolean hasConfigurationTable = hasTable(tenant, "users", "configuration");
+    boolean hasSettingsTable = hasTable(tenant, "users", "settings");
+
+    List<JobConfigurationProperty> configuration = List.of(
+      new JobConfigurationProperty(
+        "update-configuration",
+        "Replace profile picture encryption settings in mod_users.configuration",
+        true,
+        !hasConfigurationTable
+      ),
+      new JobConfigurationProperty(
+        "update-settings",
+        "Replace profile picture encryption settings in mod_users.settings",
+        true,
+        !hasSettingsTable
+      ),
+      new JobConfigurationProperty(
+        "replace-pictures",
+        "Replace mod_users.profile_picture blob and hmac values from seed data",
+        true,
+        !hasProfilePictureTable
+      )
+    );
+
     return List.of(
       new JobBuilder(
         "Profile picture anonymization",
-        "Forces PROFILE_PICTURE_CONFIG and replaces users.profile_picture blob+hmac using seeded values.",
+        "Replaces profile picture encryption settings and swaps users.profile_picture values with seeded data.",
         tenant,
         context,
-        JobConfigurationProperty.fromFieldList(PROFILE_PICTURE_FIELDS, tenant),
+        configuration,
         ctx -> {
-          Job job = new Job(ctx, List.of("update-config", "replace"));
-          job.scheduleParts(
-            "update-config",
-            List.of(new ForceProfilePictureConfigPart("Force PROFILE_PICTURE_CONFIG in settings", encryptionKey))
-          );
-
-          if (JobConfigurationProperty.getEnabledFields(ctx.settings()).findAny().isPresent()) {
+          Job job = new Job(ctx, List.of("update-configuration", "update-settings", "replace-pictures"));
+          if (JobConfigurationProperty.isOn(ctx.settings(), "update-configuration")) {
             job.scheduleParts(
-              "replace",
+              "update-configuration",
+              buildConfigUpdateParts(tenant, "configuration")
+            );
+          }
+          if (JobConfigurationProperty.isOn(ctx.settings(), "update-settings")) {
+            job.scheduleParts("update-settings", buildConfigUpdateParts(tenant, "settings"));
+          }
+          if (JobConfigurationProperty.isOn(ctx.settings(), "replace-pictures")) {
+            Resource seedResource = resourceLoader.getResource(PROFILE_PICTURE_SEED_LOCATION);
+            job.scheduleParts(
+              "replace-pictures",
               List.of(
                 new ReplaceProfilePicturesFromSeedPart(
-                  "Replace users.profile_picture blob+hmac from seed CSV",
-                  seedCsvPath
+                  "Replace users.profile_picture blob and hmac from seed CSV",
+                  seedResource
                 )
               )
             );
@@ -63,5 +95,40 @@ public class ProfilePictureAnonymization implements JobFactory {
       )
     );
   }
-}
 
+  private static boolean hasTable(TenantExecutionContext tenant, String schema, String table) {
+    return tenant
+      .availableTables()
+      .stream()
+      .anyMatch(candidate -> schema.equals(candidate.schema()) && table.equals(candidate.table()));
+  }
+
+  private static List<ReplaceJSONBValuePart> buildConfigUpdateParts(TenantExecutionContext tenant, String table) {
+    FieldReference rowJson = new FieldReference("users", table, "jsonb");
+    Condition profilePictureConfigCondition = condition(
+      "{0} ->> 'key' = 'PROFILE_PICTURE_CONFIG' and {0} ->> 'scope' = 'mod-users'",
+      rowJson.baseColumn(tenant.tenant(), JSONB.class)
+    );
+
+    return List.of(
+      new ReplaceJSONBValuePart(
+        "Set PROFILE_PICTURE_CONFIG encryptionKey in users." + table,
+        new FieldReference("users", table, "jsonb", "$.value.encryptionKey"),
+        profilePictureConfigCondition,
+        field("to_jsonb({0})", JSONB.class, inline(PROFILE_PICTURE_ENCRYPTION_KEY))
+      ),
+      new ReplaceJSONBValuePart(
+        "Set PROFILE_PICTURE_CONFIG enabledObjectStorage=false in users." + table,
+        new FieldReference("users", table, "jsonb", "$.value.enabledObjectStorage"),
+        profilePictureConfigCondition,
+        field("to_jsonb({0})", JSONB.class, inline(false))
+      ),
+      new ReplaceJSONBValuePart(
+        "Set PROFILE_PICTURE_CONFIG enabled=true in users." + table,
+        new FieldReference("users", table, "jsonb", "$.value.enabled"),
+        profilePictureConfigCondition,
+        field("to_jsonb({0})", JSONB.class, inline(true))
+      )
+    );
+  }
+}
