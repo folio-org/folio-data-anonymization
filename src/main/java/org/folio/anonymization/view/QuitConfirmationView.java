@@ -7,7 +7,9 @@ import static dev.tamboui.toolkit.Toolkit.spacer;
 import static dev.tamboui.toolkit.Toolkit.text;
 
 import dev.tamboui.layout.Flex;
+import dev.tamboui.style.Color;
 import dev.tamboui.style.Overflow;
+import dev.tamboui.toolkit.app.ToolkitRunner;
 import dev.tamboui.toolkit.element.StyledElement;
 import dev.tamboui.toolkit.elements.ListElement;
 import dev.tamboui.toolkit.event.EventResult;
@@ -42,7 +44,7 @@ public class QuitConfirmationView implements TUIView {
   }
 
   @Override
-  public StyledElement<?> render() {
+  public StyledElement<?> render(ToolkitRunner runner) {
     return panel(
       "Confirm",
       spacer(),
@@ -62,7 +64,7 @@ public class QuitConfirmationView implements TUIView {
       row(list).flex(Flex.CENTER),
       spacer()
     )
-      .red()
+      .bg(Color.RED)
       .rounded()
       .fill();
   }

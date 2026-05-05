@@ -6,6 +6,7 @@ import static dev.tamboui.toolkit.Toolkit.row;
 import static dev.tamboui.toolkit.Toolkit.spacer;
 import static dev.tamboui.toolkit.Toolkit.text;
 
+import dev.tamboui.toolkit.app.ToolkitRunner;
 import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.toolkit.element.StyledElement;
 import dev.tamboui.toolkit.event.EventResult;
@@ -30,7 +31,7 @@ public class TenantSelectionView implements TUIView {
   private final TUIState state;
 
   private Map<String, BooleanFieldState> formState;
-  private Element formElement;
+  private Scrollable formElement;
   private Button submitButton;
 
   protected Element getForm() {
@@ -107,6 +108,7 @@ public class TenantSelectionView implements TUIView {
 
       this.submitButton =
         new Button(text(" Next"))
+          .id("select-tenants-button")
           .onPress(e -> {
             if (this.getSelectedTenants().isEmpty()) {
               log.warn("Tried selecting zero tenants!");
@@ -145,7 +147,7 @@ public class TenantSelectionView implements TUIView {
   }
 
   @Override
-  public StyledElement<?> render() {
+  public StyledElement<?> render(ToolkitRunner runner) {
     return panel("Tenant selection")
       .add(getForm())
       .rounded()
@@ -164,10 +166,10 @@ public class TenantSelectionView implements TUIView {
   }
 
   @Override
-  public List<Element> getHotkeys() {
+  public List<Element> getHotkeys(ToolkitRunner runner) {
     Element actionHotkey = text("[Space] Toggle").bold();
 
-    if (submitButton.isFocused()) {
+    if (runner.focusManager().isFocused("select-tenants-button")) {
       if (this.getSelectedTenants().isEmpty()) {
         actionHotkey = text("[Please select at least one tenant to continue]").red().italic();
       } else {

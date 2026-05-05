@@ -11,15 +11,17 @@ import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.toolkit.event.EventResult;
 import dev.tamboui.tui.TuiConfig;
 import java.time.Duration;
-import java.util.List;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.controller.TUIState.State;
+import org.folio.anonymization.view.JobConfigurationView;
 import org.folio.anonymization.view.LoadingJobsView;
 import org.folio.anonymization.view.LoadingTenantsView;
 import org.folio.anonymization.view.QuitConfirmationView;
 import org.folio.anonymization.view.ShutdownView;
+import org.folio.anonymization.view.StartJobsView;
+import org.folio.anonymization.view.TUIView;
 import org.folio.anonymization.view.TenantSelectionView;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -33,6 +35,8 @@ public class TUIController extends ToolkitApp {
   private final LoadingTenantsView loadingTenantsView;
   private final TenantSelectionView tenantSelectionView;
   private final LoadingJobsView loadingJobsView;
+  private final JobConfigurationView jobConfigurationView;
+  private final StartJobsView startJobsView;
   private final QuitConfirmationView quitConfirmationView;
   private final ShutdownView shutdownView;
 
@@ -45,17 +49,7 @@ public class TUIController extends ToolkitApp {
 
   @Override
   protected Element render() {
-    return column(
-      switch (state.getState()) {
-        case INIT -> loadingTenantsView.render();
-        case TENANT_SELECTION -> tenantSelectionView.render();
-        case JOB_LOADING -> loadingJobsView.render();
-        case QUIT_CONFIRMATION -> quitConfirmationView.render();
-        case SHUTTING_DOWN -> shutdownView.render(this::quit);
-        default -> panel("tbd").fill();
-      },
-      this.keyOptions()
-    )
+    return column(this.getView().render(this.runner()), this.keyOptions())
       .onKeyEvent(e -> {
         if (e.isQuit()) {
           state.attemptToQuit();
@@ -75,24 +69,28 @@ public class TUIController extends ToolkitApp {
         .spacing(2)
         .rowSpacing(0)
         .add(text("[^C or Q] Quit").red().bold())
-        .add(
-          (
-            switch (state.getState()) {
-              case INIT, JOB_LOADING -> List.of();
-              case TENANT_SELECTION -> tenantSelectionView.getHotkeys();
-              default -> List.of(text("[NEED hotkey impl FOR " + state.getState() + "]").cyan().reversed().bold());
-            }
-          ).stream()
-            .filter(Objects::nonNull)
-            .toArray(Element[]::new)
-        )
+        .add(this.getView().getHotkeys(this.runner()).stream().filter(Objects::nonNull).toArray(Element[]::new))
     )
       .rounded()
       .focusable(false);
   }
 
+  protected TUIView getView() {
+    return switch (state.getState()) {
+      case INIT -> loadingTenantsView;
+      case TENANT_SELECTION -> tenantSelectionView;
+      case JOB_LOADING -> loadingJobsView;
+      case JOB_CONFIGURATION -> jobConfigurationView;
+      case JOB_KICKOFF -> startJobsView;
+      case QUIT_CONFIRMATION -> quitConfirmationView;
+      case SHUTTING_DOWN -> shutdownView;
+      default -> throw new IllegalStateException("Unexpected state: " + state.getState());
+    };
+  }
+
   @EventListener(ApplicationReadyEvent.class)
   public void entryPoint() throws Exception {
+    System.err.println("You should see an interface shortly...");
     this.run();
   }
 }

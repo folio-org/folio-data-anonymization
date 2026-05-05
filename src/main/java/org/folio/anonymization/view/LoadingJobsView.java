@@ -11,15 +11,16 @@ import static dev.tamboui.toolkit.Toolkit.waveText;
 import dev.tamboui.layout.Constraint;
 import dev.tamboui.layout.Flex;
 import dev.tamboui.style.Color;
+import dev.tamboui.toolkit.app.ToolkitRunner;
 import dev.tamboui.toolkit.element.StyledElement;
 import dev.tamboui.toolkit.elements.WaveTextElement;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.tuple.Pair;
 import org.folio.anonymization.controller.TUIState;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -43,7 +44,7 @@ public class LoadingJobsView implements TUIView {
   private final WaveTextElement loadingMessage = waveText("Analyzing tenant databases...");
 
   @Override
-  public StyledElement<?> render() {
+  public StyledElement<?> render(ToolkitRunner runner) {
     if (jobFetch == null) {
       log.info("Starting job fetching...");
       jobFetch = CompletableFuture.supplyAsync(this::loadJobsForTenants).thenAccept(state::completeLoadingJobs);
@@ -71,8 +72,8 @@ public class LoadingJobsView implements TUIView {
       .fill();
   }
 
-  public List<Pair<Tenant, List<JobBuilder>>> loadJobsForTenants() {
-    List<Pair<Tenant, List<JobBuilder>>> results = new ArrayList<>();
+  public Map<Tenant, List<JobBuilder>> loadJobsForTenants() {
+    Map<Tenant, List<JobBuilder>> results = new HashMap<>();
 
     this.progress.setTotalQty(this.state.getSelectedTenants().size());
 
@@ -86,11 +87,9 @@ public class LoadingJobsView implements TUIView {
 
       this.progress.setOnDbStage(false);
 
-      results.add(
-        Pair.of(
-          tenant,
-          jobFactories.stream().map(factory -> factory.getBuilders(context)).flatMap(List::stream).sorted().toList()
-        )
+      results.put(
+        tenant,
+        jobFactories.stream().map(factory -> factory.getBuilders(context)).flatMap(List::stream).sorted().toList()
       );
     }
 

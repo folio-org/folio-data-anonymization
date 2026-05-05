@@ -7,8 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.tuple.Pair;
 import org.folio.anonymization.domain.folio.Tenant;
+import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +24,7 @@ public class TUIState {
     TENANT_SELECTION, // waiting on user to pick tenants
     JOB_LOADING, // we are fetching all the table sizes/etc to see what jobs are available
     JOB_CONFIGURATION, // pick settings
+    JOB_KICKOFF, // building and executing jobs
     JOB_EXECUTION, // progress tracker mode
     END, // all done! report/summary of what was skipped or any other pertinent info
 
@@ -40,8 +41,8 @@ public class TUIState {
   // from TenantSelectionView
   private List<Tenant> selectedTenants;
 
-  // from LoadingJobsView
-  private List<Pair<Tenant, List<JobBuilder>>> availableJobs;
+  // from LoadingJobsView, updated in-place by JobConfigurationView
+  private Map<Tenant, List<JobBuilder>> availableJobs;
 
   // for ShutdownView
   @Setter
@@ -61,11 +62,21 @@ public class TUIState {
     log.info("Tenants were selected! Moving to JOB_LOADING...");
   }
 
-  public void completeLoadingJobs(List<Pair<Tenant, List<JobBuilder>>> availableJobs) {
+  public void completeLoadingJobs(Map<Tenant, List<JobBuilder>> availableJobs) {
     this.availableJobs = availableJobs;
     this.state = State.JOB_CONFIGURATION;
 
     log.info("Completed loading jobs! Moving to JOB_CONFIGURATION...");
+  }
+
+  public void completeJobConfiguration() {
+    log.info("Jobs have been configured! Moving to JOB_KICKOFF...");
+    this.state = State.JOB_KICKOFF;
+  }
+
+  public void completeJobKickoff(List<Job> jobs) {
+    log.info("Jobs have been started! Moving to JOB_EXECUTION...");
+    this.state = State.JOB_EXECUTION;
   }
 
   public void attemptToQuit() {

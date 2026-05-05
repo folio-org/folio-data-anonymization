@@ -6,6 +6,7 @@ import static dev.tamboui.toolkit.Toolkit.spacer;
 import static dev.tamboui.toolkit.Toolkit.waveText;
 
 import dev.tamboui.layout.Flex;
+import dev.tamboui.toolkit.app.ToolkitRunner;
 import dev.tamboui.toolkit.element.StyledElement;
 import dev.tamboui.toolkit.elements.WaveTextElement;
 import java.util.concurrent.CompletableFuture;
@@ -28,7 +29,7 @@ public class LoadingTenantsView implements TUIView {
   private final WaveTextElement loadingMessage = waveText("Loading tenant information...");
 
   @Override
-  public StyledElement<?> render() {
+  public StyledElement<?> render(ToolkitRunner runner) {
     if (tenantFetch == null) {
       log.info("Fetching tenant information...");
       tenantFetch =
