@@ -36,9 +36,16 @@ public class ProfilePictureAnonymization implements JobFactory {
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     boolean hasProfilePictureTable = hasTable(tenant, "users", "profile_picture");
+    boolean hasConfigurationTable = hasTable(tenant, "users", "configuration");
     boolean hasSettingsTable = hasTable(tenant, "users", "settings");
 
     List<JobConfigurationProperty> configuration = List.of(
+      new JobConfigurationProperty(
+        "update-configuration",
+        "Replace profile picture encryption settings in mod_users.configuration",
+        true,
+        !hasConfigurationTable
+      ),
       new JobConfigurationProperty(
         "update-settings",
         "Replace profile picture encryption settings in mod_users.settings",
@@ -61,9 +68,12 @@ public class ProfilePictureAnonymization implements JobFactory {
         context,
         configuration,
         ctx -> {
-          Job job = new Job(ctx, List.of("update-settings", "replace-pictures"));
+          Job job = new Job(ctx, List.of("update-configuration", "update-settings", "replace-pictures"));
+          if (JobConfigurationProperty.isOn(ctx.settings(), "update-configuration")) {
+            job.scheduleParts("update-configuration", buildConfigUpdateParts(tenant, "configuration"));
+          }
           if (JobConfigurationProperty.isOn(ctx.settings(), "update-settings")) {
-            job.scheduleParts("update-settings", buildSettingsUpdateParts(tenant));
+            job.scheduleParts("update-settings", buildConfigUpdateParts(tenant, "settings"));
           }
           if (JobConfigurationProperty.isOn(ctx.settings(), "replace-pictures")) {
             Resource seedResource = resourceLoader.getResource(PROFILE_PICTURE_SEED_LOCATION);
@@ -90,8 +100,8 @@ public class ProfilePictureAnonymization implements JobFactory {
       .anyMatch(candidate -> schema.equals(candidate.schema()) && table.equals(candidate.table()));
   }
 
-  private static List<ReplaceJSONBValuePart> buildSettingsUpdateParts(TenantExecutionContext tenant) {
-    FieldReference rowJson = new FieldReference("users", "settings", "jsonb");
+  private static List<ReplaceJSONBValuePart> buildConfigUpdateParts(TenantExecutionContext tenant, String table) {
+    FieldReference rowJson = new FieldReference("users", table, "jsonb");
     Condition profilePictureConfigCondition = condition(
       "{0} ->> 'key' = 'PROFILE_PICTURE_CONFIG' and {0} ->> 'scope' = 'mod-users'",
       rowJson.baseColumn(tenant.tenant(), JSONB.class)
@@ -99,20 +109,20 @@ public class ProfilePictureAnonymization implements JobFactory {
 
     return List.of(
       new ReplaceJSONBValuePart(
-        "Set PROFILE_PICTURE_CONFIG encryptionKey in users.settings",
-        new FieldReference("users", "settings", "jsonb", "$.value.encryptionKey"),
+        "Set PROFILE_PICTURE_CONFIG encryptionKey in users." + table,
+        new FieldReference("users", table, "jsonb", "$.value.encryptionKey"),
         profilePictureConfigCondition,
         field("to_jsonb(cast({0} as text))", JSONB.class, inline(PROFILE_PICTURE_ENCRYPTION_KEY))
       ),
       new ReplaceJSONBValuePart(
-        "Set PROFILE_PICTURE_CONFIG enabledObjectStorage=false in users.settings",
-        new FieldReference("users", "settings", "jsonb", "$.value.enabledObjectStorage"),
+        "Set PROFILE_PICTURE_CONFIG enabledObjectStorage=false in users." + table,
+        new FieldReference("users", table, "jsonb", "$.value.enabledObjectStorage"),
         profilePictureConfigCondition,
         field("to_jsonb({0})", JSONB.class, inline(false))
       ),
       new ReplaceJSONBValuePart(
-        "Set PROFILE_PICTURE_CONFIG enabled=true in users.settings",
-        new FieldReference("users", "settings", "jsonb", "$.value.enabled"),
+        "Set PROFILE_PICTURE_CONFIG enabled=true in users." + table,
+        new FieldReference("users", table, "jsonb", "$.value.enabled"),
         profilePictureConfigCondition,
         field("to_jsonb({0})", JSONB.class, inline(true))
       )
