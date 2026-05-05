@@ -2,22 +2,39 @@ package org.folio.anonymization.jobs.templates;
 
 import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.name;
-import static org.jooq.impl.DSL.sequence;
 import static org.jooq.impl.DSL.table;
 import static org.jooq.impl.DSL.using;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import org.folio.anonymization.domain.job.JobPart;
 import org.folio.anonymization.util.DBUtils;
 import org.folio.anonymization.util.ProfilePictureSeedCsvLoader;
 import org.folio.anonymization.util.ProfilePictureSeedCsvLoader.SeedValue;
 import org.jooq.DSLContext;
 import org.jooq.Field;
-import org.jooq.Sequence;
+import org.jooq.Query;
 import org.jooq.Table;
 import org.jooq.impl.SQLDataType;
 
 public class ReplaceProfilePicturesFromSeedPart extends JobPart {
+
+  private static final String ROTATING_REPLACEMENT_SQL =
+    """
+    update {0} as p
+    set profile_picture_blob = s.profile_picture_blob,
+        hmac = s.hmac
+    from (
+      select id, ((row_number() over (order by id) - 1 + {3}) % {2})::int as row_num
+      from {0}
+      where profile_picture_blob is not null and hmac is not null
+    ) ord
+    join {1} s on s.row_num = ord.row_num
+    where p.id = ord.id
+    """;
+
+  private static final int INSERT_BATCH_SIZE = 100;
 
   private final String seedCsvPath;
 
@@ -42,16 +59,7 @@ public class ReplaceProfilePicturesFromSeedPart extends JobPart {
       .transaction(configuration -> {
         DSLContext ctx = using(configuration);
 
-        int runOffset = 0;
-        if (seedCount > 1) {
-          Sequence<Integer> runOffsetSequence = sequence(
-            name("public", "_danon_profile_picture_run_offset_" + this.tenant().id() + "_seq"),
-            SQLDataType.INTEGER
-          );
-          ctx.createSequenceIfNotExists(runOffsetSequence).startWith(0).minvalue(0).execute();
-          Integer runCounter = ctx.fetchValue(runOffsetSequence.nextval());
-          runOffset = Math.floorMod(runCounter, seedCount);
-        }
+        int runOffset = seedCount > 1 ? ThreadLocalRandom.current().nextInt(seedCount) : 0;
 
         Table<?> tempSeedTable = table(name("_danon_profile_picture_seeds_" + System.nanoTime()));
         ctx
@@ -61,28 +69,20 @@ public class ReplaceProfilePicturesFromSeedPart extends JobPart {
           .onCommitDrop()
           .execute();
 
+        List<Query> inserts = new ArrayList<>(seeds.size());
         for (int i = 0; i < seeds.size(); i++) {
           SeedValue seed = seeds.get(i);
-          ctx
-            .insertInto(tempSeedTable)
-            .columns(rowNum, profilePictureBlob, hmac)
-            .values(i, seed.profilePictureBlob(), seed.hmac())
-            .execute();
+          inserts.add(
+            ctx.insertInto(tempSeedTable).columns(rowNum, profilePictureBlob, hmac).values(i, seed.profilePictureBlob(), seed.hmac())
+          );
+        }
+        for (int i = 0; i < inserts.size(); i += INSERT_BATCH_SIZE) {
+          int end = Math.min(i + INSERT_BATCH_SIZE, inserts.size());
+          ctx.batch(inserts.subList(i, end)).execute();
         }
 
         ctx.execute(
-          """
-          update {0} as p
-          set profile_picture_blob = s.profile_picture_blob,
-              hmac = s.hmac
-          from (
-            select id, ((row_number() over (order by id) - 1 + {3}) % {2})::int as row_num
-            from {0}
-            where profile_picture_blob is not null and hmac is not null
-          ) ord
-          join {1} s on s.row_num = ord.row_num
-          where p.id = ord.id
-          """,
+          ROTATING_REPLACEMENT_SQL,
           profilePictureTable,
           tempSeedTable,
           seedCount,

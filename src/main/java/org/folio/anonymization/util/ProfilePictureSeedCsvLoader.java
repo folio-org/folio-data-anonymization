@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.OptionalInt;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -33,21 +32,12 @@ public class ProfilePictureSeedCsvLoader {
       }
 
       List<String> header = rows.getFirst();
-      int blobIndex = findColumn(header, "profile_picture_blob_b64").orElse(-1);
-      if (blobIndex < 0) {
-        blobIndex = findColumn(header, "profile_picture_blob").orElse(-1);
-      }
-      if (blobIndex < 0) {
-        throw new IllegalArgumentException("Missing profile picture blob column in seed CSV");
-      }
-
-      int hmacIndex = findColumn(header, "hmac_b64").orElse(-1);
-      if (hmacIndex < 0) {
-        hmacIndex = findColumn(header, "hmac").orElse(-1);
-      }
-      if (hmacIndex < 0) {
-        throw new IllegalArgumentException("Missing hmac column in seed CSV");
-      }
+      int blobIndex = findRequiredColumn(
+        header,
+        List.of("profile_picture_blob_b64", "profile_picture_blob"),
+        "Missing profile picture blob column in seed CSV"
+      );
+      int hmacIndex = findRequiredColumn(header, List.of("hmac_b64", "hmac"), "Missing hmac column in seed CSV");
 
       List<SeedValue> result = new ArrayList<>();
       for (int i = 1; i < rows.size(); i++) {
@@ -140,13 +130,23 @@ public class ProfilePictureSeedCsvLoader {
     return rows;
   }
 
-  private static OptionalInt findColumn(List<String> header, String columnName) {
-    for (int i = 0; i < header.size(); i++) {
-      if (columnName.equalsIgnoreCase(header.get(i).trim())) {
-        return OptionalInt.of(i);
+  private static int findRequiredColumn(List<String> header, List<String> columnNames, String errorMessage) {
+    for (String columnName : columnNames) {
+      int index = findColumn(header, columnName);
+      if (index >= 0) {
+        return index;
       }
     }
-    return OptionalInt.empty();
+    throw new IllegalArgumentException(errorMessage);
+  }
+
+  private static int findColumn(List<String> header, String columnName) {
+    for (int i = 0; i < header.size(); i++) {
+      if (columnName.equalsIgnoreCase(header.get(i).trim())) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private static byte[] decodeBase64(String raw, String columnName, int rowIndex) {
