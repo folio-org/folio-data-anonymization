@@ -20,13 +20,12 @@ class ProfilePictureAnonymizationTest {
   private static final Tenant TEST_TENANT = new Tenant("test", "Test", "Test tenant", null, false);
 
   @Test
-  void buildCreatesSingleJobAndSchedulesAllStagesWhenTablesExist() throws Exception {
+  void buildCreatesSingleJobAndSchedulesSettingsAndReplacementWhenTablesExist() throws Exception {
     ProfilePictureAnonymization anonymization = createFactoryWithContext();
     TenantExecutionContext tenant = new TenantExecutionContext(
       TEST_TENANT,
       List.of(
         new ModuleTable("users", "profile_picture", 5),
-        new ModuleTable("users", "configuration", 1),
         new ModuleTable("users", "settings", 1)
       )
     );
@@ -35,8 +34,6 @@ class ProfilePictureAnonymizationTest {
     assertEquals(1, builders.size());
 
     Job job = builders.getFirst().build();
-    assertTrue(job.getParts().containsKey("update-configuration"));
-    assertEquals(3, job.getParts().get("update-configuration").size());
     assertTrue(job.getParts().containsKey("update-settings"));
     assertEquals(3, job.getParts().get("update-settings").size());
     assertTrue(job.getParts().containsKey("replace-pictures"));
@@ -44,7 +41,7 @@ class ProfilePictureAnonymizationTest {
   }
 
   @Test
-  void buildSkipsAllStagesWhenTablesMissing() throws Exception {
+  void buildSkipsAllStagesWhenSettingsAndProfilePictureTablesMissing() throws Exception {
     ProfilePictureAnonymization anonymization = createFactoryWithContext();
     TenantExecutionContext tenant = new TenantExecutionContext(
       TEST_TENANT,
@@ -52,9 +49,6 @@ class ProfilePictureAnonymizationTest {
     );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
-    assertTrue(
-      job.getParts().getOrDefault("update-configuration", new java.util.concurrent.ConcurrentLinkedQueue<>()).isEmpty()
-    );
     assertTrue(job.getParts().getOrDefault("update-settings", new java.util.concurrent.ConcurrentLinkedQueue<>()).isEmpty());
     assertTrue(job.getParts().getOrDefault("replace-pictures", new java.util.concurrent.ConcurrentLinkedQueue<>()).isEmpty());
   }
