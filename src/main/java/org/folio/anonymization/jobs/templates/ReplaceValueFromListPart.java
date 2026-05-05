@@ -146,6 +146,20 @@ public class ReplaceValueFromListPart extends JobPart {
           if (replacementCount == 1) {
             // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
             selects.add(select(valueFields.get(i)).from(tempTable).limit(1));
+          } else if (fields.size() > 1) {
+            // For multi-column updates, derive a stable row-specific index so columns stay paired.
+            Field<?> idField = TableIDs.getIdFor(fields.get(i), this.tenant());
+            Field<Integer> chosenSeq = field(
+              "mod(abs(hashtext(cast({0} as text))::bigint), {1})",
+              Integer.class,
+              idField,
+              inline(replacementCount)
+            );
+            selects.add(
+              select(valueFields.get(i))
+                .from(tempTable)
+                .where(replacementsSequenceField.eq(chosenSeq).and(idField.isNotNull()))
+            );
           } else {
             selects.add(
               select(valueFields.get(i))
