@@ -96,6 +96,16 @@ public final class Job implements Comparable<Job> {
     this.context.executionContext().jobNotifier().onStatusUpdate(this);
   }
 
+  public boolean requiresIntervention() {
+    synchronized (currentlyExecuting) {
+      return this.currentlyExecuting.values().stream().anyMatch(pair -> pair.getRight().isCompletedExceptionally());
+    }
+  }
+
+  public boolean isCompleted() {
+    return this.currentStageIndex >= this.stages.size();
+  }
+
   /**
    * Should only be used for error recovery where a part will simply not work
    * and is preventing further execution. Most cases the whole Job should probably
