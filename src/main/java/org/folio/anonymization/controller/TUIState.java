@@ -44,6 +44,9 @@ public class TUIState {
   // from LoadingJobsView, updated in-place by JobConfigurationView
   private Map<Tenant, List<JobBuilder>> availableJobs;
 
+  // from StartJobsView
+  private List<Job> jobs;
+
   // for ShutdownView
   @Setter
   private boolean readyToQuit = false;
@@ -70,13 +73,16 @@ public class TUIState {
   }
 
   public void completeJobConfiguration() {
-    log.info("Jobs have been configured! Moving to JOB_KICKOFF...");
     this.state = State.JOB_KICKOFF;
+
+    log.info("Jobs have been configured! Moving to JOB_KICKOFF...");
   }
 
   public void completeJobKickoff(List<Job> jobs) {
-    log.info("Jobs have been started! Moving to JOB_EXECUTION...");
+    this.jobs = jobs;
     this.state = State.JOB_EXECUTION;
+
+    log.info("Jobs have been started! Moving to JOB_EXECUTION...");
   }
 
   public void attemptToQuit() {

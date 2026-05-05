@@ -99,7 +99,7 @@ public class StartJobsView implements TUIView {
       }
     }
 
-    return null;
+    return jobs;
   }
 
   @Data
