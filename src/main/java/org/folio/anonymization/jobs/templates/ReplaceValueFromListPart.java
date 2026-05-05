@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.Getter;
 import org.folio.anonymization.domain.db.FieldReference;
@@ -123,9 +124,11 @@ public class ReplaceValueFromListPart extends JobPart {
           .execute();
 
         // populate new temporary table
-        List<Query> queries = replacements
-          .stream()
-          .map(value -> ctx.insertInto(tempTable).columns(valueFields).values(value))
+        List<Query> queries = IntStream
+          .range(0, replacements.get(0).size())
+          .mapToObj(i ->
+            ctx.insertInto(tempTable).columns(valueFields).values(replacements.stream().map(r -> r.get(i)).toList())
+          )
           .map(Query.class::cast)
           .toList();
 
