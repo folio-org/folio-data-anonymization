@@ -1,7 +1,6 @@
 package org.folio.anonymization.jobs.templates;
 
 import static org.jooq.impl.DSL.field;
-import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.DSL.table;
@@ -61,11 +60,12 @@ public class ReplaceValueFromListPart extends JobPart {
 
   /**
    * Replace multiple values at once. {@code fields}, {@code replacements}, and {@code replacementFields} must have the same size.
+   * Each inner column within {@code replacements} must also be the same size.
    *
    * @param label job label
    * @param fields list of fields to replace
    * @param condition condition to use (for batching)
-   * @param replacements list of replacement values
+   * @param replacements list of list of replacement values
    * @param valueFields list of temporary fields to use for replacements (eg {@code field("value", String.class)})
    */
   public ReplaceValueFromListPart(
@@ -93,6 +93,11 @@ public class ReplaceValueFromListPart extends JobPart {
     if (fields.stream().anyMatch(f -> !f.tableReference().equals(table))) {
       throw new IllegalArgumentException("All fields must be from the same table!");
     }
+
+    int numReplacementsAvailable = replacements.get(0).size();
+    if (replacements.stream().anyMatch(r -> r.size() != numReplacementsAvailable)) {
+      throw new IllegalArgumentException("All inner lists of replacements must have the same size!");
+    }
   }
 
   @Override
@@ -117,17 +122,12 @@ public class ReplaceValueFromListPart extends JobPart {
           .onCommitDrop()
           .execute();
 
-        int maxReplacementCount = replacements.stream().mapToInt(List::size).max().orElse(0);
-        // populate new temporary table (rows), cycling shorter replacement columns as needed
-        List<Query> queries = new ArrayList<>(maxReplacementCount);
-        for (int row = 0; row < maxReplacementCount; row++) {
-          Object[] values = new Object[valueFields.size()];
-          for (int column = 0; column < valueFields.size(); column++) {
-            List<?> replacementsForColumn = replacements.get(column);
-            values[column] = replacementsForColumn.get(row % replacementsForColumn.size());
-          }
-          queries.add(ctx.insertInto(tempTable).columns(valueFields).values(values));
-        }
+        // populate new temporary table
+        List<Query> queries = replacements
+          .stream()
+          .map(value -> ctx.insertInto(tempTable).columns(valueFields).values(value))
+          .map(Query.class::cast)
+          .toList();
 
         for (int i = 0; i < queries.size(); i += INSERT_BATCH_SIZE) {
           int end = Math.min(i + INSERT_BATCH_SIZE, queries.size());
@@ -136,30 +136,22 @@ public class ReplaceValueFromListPart extends JobPart {
         }
 
         Sequence<Integer> insertionSequence = DBUtils.getSequence(tempTable2RefOnly);
-        if (maxReplacementCount > 1) {
-          ctx.createSequence(insertionSequence).startWith(0).minvalue(0).maxvalue(maxReplacementCount - 1).cycle().execute();
+        int replacementCount = replacements.get(0).size();
+        if (replacementCount != 1) {
+          ctx
+            .createSequence(insertionSequence)
+            .startWith(0)
+            .minvalue(0)
+            .maxvalue(replacementCount - 1)
+            .cycle()
+            .execute();
         }
 
         List<Select<? extends Record>> selects = new ArrayList<>(fields.size());
         for (int i = 0; i < fields.size(); i++) {
-          int replacementCount = replacements.get(i).size();
           if (replacementCount == 1) {
             // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
             selects.add(select(valueFields.get(i)).from(tempTable).limit(1));
-          } else if (fields.size() > 1) {
-            // For multi-column updates, derive a stable row-specific index so columns stay paired.
-            Field<?> idField = TableIDs.getIdFor(fields.get(i), this.tenant());
-            Field<Integer> chosenSeq = field(
-              "mod(abs(hashtext(cast({0} as text))::bigint), {1})",
-              Integer.class,
-              idField,
-              inline(replacementCount)
-            );
-            selects.add(
-              select(valueFields.get(i))
-                .from(tempTable)
-                .where(replacementsSequenceField.eq(chosenSeq).and(idField.isNotNull()))
-            );
           } else {
             selects.add(
               select(valueFields.get(i))
@@ -168,7 +160,7 @@ public class ReplaceValueFromListPart extends JobPart {
                 .from(tempTable, select(insertionSequence.nextval().as("chosen_seq")))
                 .where(
                   replacementsSequenceField
-                    .eq(field("chosen_seq", Integer.class).mod(inline(replacementCount)))
+                    .eq(field("chosen_seq", Integer.class))
                     // we must bind to the outer column in some way or this will not be re-executed for each update
                     // (thanks postgres for cleverly optimizing! 🙃)
                     .and(TableIDs.getIdFor(fields.get(i), this.tenant()).isNotNull())
