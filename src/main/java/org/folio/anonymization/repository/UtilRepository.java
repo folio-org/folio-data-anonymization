@@ -64,7 +64,7 @@ public class UtilRepository {
       .where(
         field("table_schema")
           .startsWith(prefix)
-          .and(field(name("relkind")).eq("r"))
+          .and(field(name("relkind")).eq("r").or(field(name("relkind")).eq("p")))
           .and(field(name("relispartition")).eq(false))
       )
       .fetch()

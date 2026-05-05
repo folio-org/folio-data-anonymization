@@ -12,7 +12,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 @Data
 @Log4j2
-public final class Job {
+public final class Job implements Comparable<Job> {
 
   private final String name;
   private final String description;
@@ -128,5 +128,13 @@ public final class Job {
 
   public boolean isDone() {
     return this.currentStageIndex >= this.stages.size();
+  }
+
+  @Override
+  public int compareTo(Job other) {
+    if (!this.context.tenant().tenant().id().equals(other.context.tenant().tenant().id())) {
+      return this.context.tenant().tenant().id().compareTo(other.context.tenant().tenant().id());
+    }
+    return this.name.compareTo(other.name);
   }
 }

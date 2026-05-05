@@ -27,6 +27,9 @@ public record JobBuilder(
 
   @Override
   public int compareTo(JobBuilder that) {
+    if (!this.tenant.tenant().id().equals(that.tenant.tenant().id())) {
+      return this.tenant.tenant().id().compareTo(that.tenant.tenant().id());
+    }
     return this.name.compareTo(that.name);
   }
 }

@@ -18,13 +18,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class FirstNameAnonymization implements JobFactory {
 
-  private static final FieldReference INVENTORY_ITEM_FIRST_NAME_FIELD = new FieldReference(
-    "inventory_storage",
-    "item",
-    "jsonb",
-    "$.circulationNotes[*].source.personal.firstName"
-  );
-
   private static final List<FieldReference> FIRST_NAME_FIELDS = List.of(
     new FieldReference("circulation_storage", "actual_cost_record", "jsonb", "$.user.firstName"),
     new FieldReference("circulation_storage", "request", "jsonb", "$.requester.firstName"),
@@ -43,7 +36,7 @@ public class FirstNameAnonymization implements JobFactory {
     new FieldReference("di_converter_storage", "match_profiles", "jsonb", "$.userInfo.firstName"),
     new FieldReference("di_converter_storage", "profile_snapshots", "jsonb", "$.content.userInfo.firstName"),
     new FieldReference("erm_usage", "usage_data_providers", "jsonb", "$.sushiCredentials.requestorName"),
-    INVENTORY_ITEM_FIRST_NAME_FIELD,
+    new FieldReference("inventory_storage", "item", "jsonb", "$.circulationNotes[*].source.personal.firstName"),
     new FieldReference("inventory_storage", "audit_item", "jsonb", "$.record.circulationNotes[*].source.firstName"),
     new FieldReference("oa", "party", "p_given_names"),
     new FieldReference("organizations_storage", "contacts", "jsonb", "$.firstName"),
@@ -71,19 +64,13 @@ public class FirstNameAnonymization implements JobFactory {
 
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
-    List<JobConfigurationProperty> configuration = JobConfigurationProperty.fromFieldList(FIRST_NAME_FIELDS, tenant);
-    configuration
-      .stream()
-      .filter(property -> INVENTORY_ITEM_FIRST_NAME_FIELD.equals(property.getKey()))
-      .forEach(property -> property.setBooleanValue(false));
-
     return List.of(
       new JobBuilder(
         "First name anonymization",
         "Replaces first-name values with Faker-generated realistic-appearing values",
         tenant,
         context,
-        configuration,
+        JobConfigurationProperty.fromFieldList(FIRST_NAME_FIELDS, tenant),
         ctx ->
           new Job(ctx, List.of("prepare", "overwrite"))
             .scheduleParts(
