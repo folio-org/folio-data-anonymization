@@ -10,6 +10,8 @@ import dev.tamboui.toolkit.app.ToolkitRunner;
 import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.toolkit.element.StyledElement;
 import dev.tamboui.toolkit.event.EventResult;
+import dev.tamboui.tui.event.KeyCode;
+import dev.tamboui.tui.event.KeyEvent;
 import dev.tamboui.widgets.form.BooleanFieldState;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -160,6 +162,9 @@ public class TenantSelectionView implements TUIView {
             this.formState.values().forEach(v -> v.setValue(false));
           }
           return EventResult.HANDLED;
+        }
+        if (k.isCharIgnoreCase('g')) {
+          return this.submitButton.handleKeyEvent(KeyEvent.ofKey(KeyCode.ENTER), false);
         }
         return EventResult.UNHANDLED;
       });
