@@ -104,8 +104,8 @@ public class ProfilePictureAnonymization implements JobFactory {
                       ),
                       condition,
                       List.of(
-                        replacementColumn(seeds, runOffset + start, Math.max(end - start, 1), SeedValue::profilePictureBlob),
-                        replacementColumn(seeds, runOffset + start, Math.max(end - start, 1), SeedValue::hmac)
+                        seeds.stream().map(SeedValue::profilePictureBlob).toList(),
+                        seeds.stream().map(SeedValue::hmac).toList()
                       ),
                       List.of(field("profile_picture_blob", byte[].class), field("hmac", byte[].class))
                     )
