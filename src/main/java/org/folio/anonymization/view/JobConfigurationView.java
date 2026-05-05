@@ -184,7 +184,9 @@ public class JobConfigurationView implements TUIView {
     } else {
       Row row = row(text(ref.getPrefix()), spacer(1), text(ref.job().name())).style(ref.getStyle());
       int unavailable = (int) ref.job().configuration().stream().filter(JobConfigurationProperty::isDisabled).count();
-      if (unavailable != 0) {
+      if (unavailable == ref.job().configuration().size()) {
+        row.add(text(" (unavailable)").dim());
+      } else if (unavailable != 0) {
         row.add(text(" (" + unavailable + " unavailable)").dim());
       }
       row.add(text(" ".repeat(Math.max(1, ref.job().description().length() - ref.job.name().length() + 2))));
@@ -212,6 +214,9 @@ public class JobConfigurationView implements TUIView {
         }
         return Style.EMPTY.fg(Color.RED);
       } else {
+        if (job.configuration().stream().allMatch(JobConfigurationProperty::isDisabled)) {
+          return Style.EMPTY.dim();
+        }
         // if all are ON or disabled
         if (job.configuration().stream().allMatch(p -> p.isOn() || p.isDisabled())) {
           return Style.EMPTY.fg(Color.GREEN);
@@ -234,6 +239,9 @@ public class JobConfigurationView implements TUIView {
         }
         return "[ ]";
       } else {
+        if (job.configuration().stream().allMatch(JobConfigurationProperty::isDisabled)) {
+          return "N/A";
+        }
         // if all are ON or disabled
         if (job.configuration().stream().allMatch(p -> p.isOn() || p.isDisabled())) {
           return "[x]";
