@@ -30,7 +30,8 @@ class UserAgentAnonymizationTest {
     ReplaceValueFromListPart userAgentPart = parts.getFirst();
     assertTrue(userAgentPart.getLabel().contains("$.userAgent"));
 
-    List<String> replacements = userAgentPart.getReplacements();
+    @SuppressWarnings("unchecked")
+    List<String> replacements = (List<String>) userAgentPart.getReplacements().get(0);
     assertTrue(replacements.size() >= 10 && replacements.size() <= 20);
     assertTrue(replacements.stream().allMatch(value -> value != null && !value.isBlank()));
   }
