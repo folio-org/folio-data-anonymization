@@ -31,6 +31,10 @@ public class DBUtils {
   }
 
   public static Field<String> resolveFieldPropertiesToString(Field<JSONB> field, List<String> path) {
+    if (path.isEmpty()) {
+      return jsonbToString(field);
+    }
+
     String lastPath = path.get(path.size() - 1);
 
     return jsonbGetAttributeAsText(resolveFieldProperties(field, path.subList(0, path.size() - 1)), lastPath);

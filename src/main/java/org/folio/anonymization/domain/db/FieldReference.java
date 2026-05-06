@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.text.StringSubstitutor;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.util.DBUtils;
@@ -76,21 +77,32 @@ public record FieldReference(String schema, String table, String column, String 
     Field<JSONB> parentColumn = baseColumn(tenant, JSONB.class);
     // splits nested arrays into separate groups, e.g. $.foo.bar[*].baz becomes [[foo,bar],[baz]]
     List<List<String>> parts = Arrays
-      .stream(jsonPath.substring(2).split("\\[\\*\\]\\."))
+      .stream(Strings.CS.removeStart(Strings.CS.removeStart(jsonPath, "$."), "$[*].").split("\\[\\*\\]\\."))
       .map(part -> part.split("\\."))
       .map(Arrays::asList)
       .toList();
 
     List<Object> bindings = new ArrayList<>();
-    bindings.add(parentColumn);
-    bindings.add(parts.get(0).toArray(new String[0]));
-    return DSL.field(
-      "jsonb_set_lax({0}, {1}, %s, false, 'return_target')".formatted(
-          getReplacement(parts.subList(1, parts.size()), parentColumn, parts.get(0), replacement, bindings)
-        ),
-      JSONB.class,
-      bindings.toArray()
-    );
+    if (jsonPath.charAt(1) == '.') {
+      // start with property resolution, so jsonb_set at the root
+      bindings.add(parentColumn);
+      bindings.add(parts.get(0).toArray(new String[0]));
+      return DSL.field(
+        "jsonb_set_lax({0}, {1}, %s, false, 'return_target')".formatted(
+            getReplacement(parts.subList(1, parts.size()), parentColumn, parts.get(0), replacement, bindings)
+          ),
+        JSONB.class,
+        bindings.toArray()
+      );
+    } else {
+      bindings.add(parentColumn);
+      // start with array resolution, so jsonb_set inside a jsonb_agg
+      return DSL.field(
+        getReplacement(parts, parentColumn, List.of(), replacement, bindings),
+        JSONB.class,
+        bindings.toArray()
+      );
+    }
   }
 
   /**
