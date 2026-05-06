@@ -87,9 +87,9 @@ public final class Button extends StyledElement<Button> {
     boolean isFocused = elementId != null && context.isFocused(elementId);
     if (isFocused) {
       if (effectiveStyle.effectiveModifiers().contains(Modifier.REVERSED)) {
-        effectiveStyle.notReversed();
+        effectiveStyle = effectiveStyle.notReversed();
       } else {
-        effectiveStyle.reversed();
+        effectiveStyle = effectiveStyle.reversed();
       }
 
       this.innerElement.style(innerElementFocusedStyle);

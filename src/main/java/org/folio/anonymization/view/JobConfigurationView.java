@@ -63,7 +63,6 @@ public class JobConfigurationView implements TUIView {
           .scrollbar()
           .fill()
           .onKeyEvent(k -> {
-            log.info("got {}", k);
             if (k.isSelect()) {
               int idx = Math.min(tree.selected(), tree.lastFlatEntries().size() - 1);
               TreeNode<TreeNodeJobReference> node = tree.lastFlatEntries().get(idx).node();

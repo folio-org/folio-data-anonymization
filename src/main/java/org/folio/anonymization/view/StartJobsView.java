@@ -78,7 +78,7 @@ public class StartJobsView implements TUIView {
         .sorted()
         .toList();
 
-    this.progress.setTotalQty(jobsToBuild.size());
+    this.progress.setTotalQty(Math.max(1, jobsToBuild.size()));
 
     List<Job> jobs = new ArrayList<>(jobsToBuild.size());
     for (int i = 0; i < jobsToBuild.size(); i++) {
@@ -95,6 +95,7 @@ public class StartJobsView implements TUIView {
         // be a little gentle to not completely start slamming the DB
         Thread.sleep(50);
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         throw new RuntimeException(e);
       }
     }

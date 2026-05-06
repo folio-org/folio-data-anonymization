@@ -73,7 +73,7 @@ public class JobExecutionView implements TUIView {
               column(
                 lazy(() ->
                   lineGauge()
-                    .ratio((double) this.jobs.stream().filter(Job::isCompleted).count() / this.jobs.size())
+                    .ratio((double) this.jobs.stream().filter(Job::isCompleted).count() / Math.max(1, this.jobs.size()))
                     .filledColor(Color.GREEN)
                     .unfilledColor(Color.YELLOW)
                 )
@@ -358,15 +358,19 @@ public class JobExecutionView implements TUIView {
         lineGauge()
           .percent(100)
           .filledColor(Color.GREEN)
-          .constraint(Constraint.percentage((int) Math.floor(((double) completedParts / totalParts) * 100)))
+          .constraint(
+            Constraint.percentage((int) Math.floor(((double) completedParts / Math.max(1, totalParts)) * 100))
+          )
       );
     }
     gaugeRow.add(
       lineGauge()
-        .ratio((double) inProgressParts / (totalParts - completedParts))
+        .ratio((double) inProgressParts / Math.max(1, totalParts - completedParts))
         .filledColor(Color.YELLOW)
         .constraint(
-          Constraint.percentage((int) Math.floor(((double) (totalParts - completedParts) / totalParts) * 100))
+          Constraint.percentage(
+            (int) Math.floor(((double) (totalParts - completedParts) / Math.max(1, totalParts)) * 100)
+          )
         )
     );
 
