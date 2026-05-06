@@ -1,6 +1,7 @@
 package org.folio.anonymization.jobs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
@@ -12,6 +13,7 @@ import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobPart;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
@@ -29,12 +31,21 @@ class UserCredentialsAnonymizationTest {
     );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
-    ConcurrentLinkedQueue<?> overwriteParts = job.getParts().get("overwrite");
+    ConcurrentLinkedQueue<?> prepareParts = job.getParts().get("prepare");
+    assertNotNull(prepareParts);
+    assertEquals(4, prepareParts.size());
 
-    assertEquals(4, overwriteParts.size());
-    assertEquals(4, overwriteParts.stream().filter(ReplaceJSONBValuePart.class::isInstance).count());
-    assertTrue(overwriteParts.stream().anyMatch(part -> ((JobPart) part).getLabel().contains("$.hash")));
-    assertTrue(overwriteParts.stream().anyMatch(part -> ((JobPart) part).getLabel().contains("$.salt")));
+    List<JobPart> generatedOverwriteParts = prepareParts
+      .stream()
+      .map(BatchGenerationFromTablePart.class::cast)
+      .map(BatchGenerationFromTablePart::getFactory)
+      .map(factory -> factory.build("", null, 0, 1))
+      .toList();
+
+    assertEquals(4, generatedOverwriteParts.size());
+    assertEquals(4, generatedOverwriteParts.stream().filter(ReplaceJSONBValuePart.class::isInstance).count());
+    assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("$.hash")));
+    assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("$.salt")));
   }
 
   @Test
@@ -46,7 +57,7 @@ class UserCredentialsAnonymizationTest {
     );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
-    assertTrue(job.getParts().get("overwrite").isEmpty());
+    assertTrue(job.getParts().getOrDefault("prepare", new ConcurrentLinkedQueue<>()).isEmpty());
   }
 
   private static UserCredentialsAnonymization createFactoryWithContext() throws Exception {
