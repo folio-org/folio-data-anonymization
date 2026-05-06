@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import lombok.Data;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.db.ModuleTable;
+import org.folio.anonymization.domain.db.TableIDs;
 import org.folio.anonymization.domain.db.TableReference;
 import org.folio.anonymization.util.NumberUtils;
 
@@ -56,6 +57,10 @@ public class JobConfigurationProperty {
   ) {
     return fields
       .stream()
+      .map(f -> {
+        TableIDs.getIdFor(f);
+        return f;
+      })
       .map(field -> {
         Optional<ModuleTable> foundTable = tenantInfo
           .availableTables()

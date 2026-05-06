@@ -68,6 +68,14 @@ public class JobConfigurationView implements TUIView {
               TreeNode<TreeNodeJobReference> node = tree.lastFlatEntries().get(idx).node();
               node.data().toggle();
               return EventResult.HANDLED;
+            } else if (k.isChar('*')) {
+              tree
+                .lastFlatEntries()
+                .stream()
+                .filter(e -> e.depth() == 0)
+                .map(e -> e.node().data())
+                .forEach(TreeNodeJobReference::toggle);
+              return EventResult.HANDLED;
             }
             return EventResult.UNHANDLED;
           });
@@ -170,6 +178,7 @@ public class JobConfigurationView implements TUIView {
       hotkeys.add(text("[↑↓] Navigate").bold());
       hotkeys.add(text("[→←] Show/hide options").bold());
       hotkeys.add(text("[Space] Toggle").bold());
+      hotkeys.add(text("[*] Toggle all").bold());
     }
 
     return hotkeys;
