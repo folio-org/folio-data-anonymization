@@ -67,7 +67,7 @@ class ProfilePictureAnonymizationTest {
     ProfilePictureAnonymization anonymization = new ProfilePictureAnonymization();
     Field contextField = ProfilePictureAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, job -> {}, Runnable::run));
+    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null,  Runnable::run));
     Field resourceLoaderField = ProfilePictureAnonymization.class.getDeclaredField("resourceLoader");
     resourceLoaderField.setAccessible(true);
     resourceLoaderField.set(anonymization, new DefaultResourceLoader());

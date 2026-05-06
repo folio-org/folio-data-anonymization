@@ -8,6 +8,8 @@ For more information, read [this page on which data are in scope](https://folio-
 
 It is recommended to vacuum the database before and after running this tool to ensure accurate table size information and optimal performance.
 
+Logs are in `logs/application.log`.
+
 ## Issue tracking
 
 See [DANON](https://issues.folio.org/projects/DANON) in the [FOLIO issue tracker](https://folio-org.atlassian.net/).

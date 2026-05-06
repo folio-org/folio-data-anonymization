@@ -4,11 +4,8 @@ import static org.jooq.impl.DSL.condition;
 import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.inline;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Function;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
@@ -75,7 +72,10 @@ public class ProfilePictureAnonymization implements JobFactory {
         context,
         configuration,
         ctx -> {
-          Job job = new Job(ctx, List.of("update-configuration", "update-settings", "prepare-replace-pictures", "replace-pictures"));
+          Job job = new Job(
+            ctx,
+            List.of("update-configuration", "update-settings", "prepare-replace-pictures", "replace-pictures")
+          );
           if (JobConfigurationProperty.isOn(ctx.settings(), "update-configuration")) {
             job.scheduleParts("update-configuration", buildConfigUpdateParts(tenant, "configuration"));
           }
@@ -83,8 +83,9 @@ public class ProfilePictureAnonymization implements JobFactory {
             job.scheduleParts("update-settings", buildConfigUpdateParts(tenant, "settings"));
           }
           if (JobConfigurationProperty.isOn(ctx.settings(), "replace-pictures")) {
-            List<SeedValue> seeds = ProfilePictureSeedCsvLoader.load(resourceLoader.getResource(PROFILE_PICTURE_SEED_LOCATION));
-            int runOffset = seeds.size() > 1 ? ThreadLocalRandom.current().nextInt(seeds.size()) : 0;
+            List<SeedValue> seeds = ProfilePictureSeedCsvLoader.load(
+              resourceLoader.getResource(PROFILE_PICTURE_SEED_LOCATION)
+            );
 
             job.scheduleParts(
               "prepare-replace-pictures",
@@ -153,19 +154,5 @@ public class ProfilePictureAnonymization implements JobFactory {
         field("to_jsonb({0})", JSONB.class, inline(true))
       )
     );
-  }
-
-  private static List<byte[]> replacementColumn(
-    List<SeedValue> seeds,
-    int offset,
-    int size,
-    Function<SeedValue, byte[]> extractor
-  ) {
-    List<byte[]> values = new ArrayList<>(size);
-    int seedCount = seeds.size();
-    for (int i = 0; i < size; i++) {
-      values.add(extractor.apply(seeds.get((offset + i) % seedCount)));
-    }
-    return values;
   }
 }

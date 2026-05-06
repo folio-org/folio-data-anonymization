@@ -42,7 +42,7 @@ public class UtilRepository {
   /**
    * Get a list of table sizes in schemas starting with the given prefix. These are approximate
    * and based on the information found in pg_class, and may not be available if the table
-   * has not been been ANALYZEd or VACUUMed.
+   * has not been ANALYZEd or VACUUMed.
    */
   public List<ModuleTable> getTablesSizesBySchemaPrefix(String prefix) {
     return create

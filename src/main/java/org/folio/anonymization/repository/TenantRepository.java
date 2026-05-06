@@ -6,6 +6,7 @@ import static org.jooq.impl.DSL.table;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.log4j.Log4j2;
@@ -67,7 +68,7 @@ public class TenantRepository {
         new Tenant(
           record.get("name", String.class),
           record.get("name", String.class),
-          record.get("description", String.class),
+          Objects.requireNonNullElse(record.get("description", String.class), ""),
           null,
           false
         )

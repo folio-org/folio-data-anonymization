@@ -1,5 +1,10 @@
 package org.folio.anonymization.domain.job;
 
+import static dev.tamboui.toolkit.Toolkit.row;
+import static dev.tamboui.toolkit.Toolkit.spacer;
+import static dev.tamboui.toolkit.Toolkit.text;
+
+import dev.tamboui.toolkit.element.StyledElement;
 import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +20,7 @@ public class JobConfigurationProperty {
 
   private final Object key;
 
-  private final String label;
+  private final StyledElement<?> label;
 
   @Nullable
   private Boolean booleanValue;
@@ -23,20 +28,18 @@ public class JobConfigurationProperty {
   private final boolean disabled;
 
   public JobConfigurationProperty(String label) {
-    this.key = label;
-    this.label = label;
-    this.booleanValue = true;
-    this.disabled = false;
+    this(label, label);
   }
 
   public JobConfigurationProperty(String key, String label) {
-    this.key = key;
-    this.label = label;
-    this.booleanValue = true;
-    this.disabled = false;
+    this(key, label, true, false);
   }
 
   public JobConfigurationProperty(Object key, String label, boolean defaultValue, boolean disabled) {
+    this(key, text(label), defaultValue, disabled);
+  }
+
+  public JobConfigurationProperty(Object key, StyledElement<?> label, boolean defaultValue, boolean disabled) {
     this.key = key;
     this.label = label;
     this.booleanValue = defaultValue;
@@ -63,14 +66,24 @@ public class JobConfigurationProperty {
         if (foundTable.isEmpty()) {
           return new JobConfigurationProperty(
             field,
-            String.format("mod_%s (not available for tenant)", field.toString()),
+            row(
+              text("mod_"),
+              text(field.toString()).crossedOut(),
+              spacer(1),
+              text("(not available for tenant)").italic()
+            ),
             true,
             true
           );
         } else {
           return new JobConfigurationProperty(
             field,
-            String.format("mod_%s (%s rows)", field.toString(), NumberUtils.abbreviate(foundTable.get().size())),
+            row(
+              text("mod_"),
+              text(field.toString()),
+              spacer(1),
+              text(String.format("(%s rows)", NumberUtils.abbreviate(foundTable.get().size()))).italic()
+            ),
             true,
             false
           );
@@ -95,14 +108,24 @@ public class JobConfigurationProperty {
         if (foundTable.isEmpty()) {
           return new JobConfigurationProperty(
             table,
-            String.format("mod_%s (not available for tenant)", table.toString()),
+            row(
+              text("mod_"),
+              text(table.toString()).crossedOut(),
+              spacer(1),
+              text("(not available for tenant)").italic()
+            ),
             true,
             true
           );
         } else {
           return new JobConfigurationProperty(
             table,
-            String.format("mod_%s (%s rows)", table.toString(), NumberUtils.abbreviate(foundTable.get().size())),
+            row(
+              text("mod_"),
+              text(table.toString()),
+              spacer(1),
+              text(String.format("(%s rows)", NumberUtils.abbreviate(foundTable.get().size()))).italic()
+            ),
             true,
             false
           );
