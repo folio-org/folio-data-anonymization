@@ -83,7 +83,7 @@ public class UserCredentialsAnonymization implements JobFactory {
     return List.of(
       new JobBuilder(
         "User credentials anonymization",
-        "Replaces login credential hash/salt values with fixed anonymized constants.",
+        "Replaces all user login credentials with password 'folio'",
         tenant,
         context,
         configuration,
