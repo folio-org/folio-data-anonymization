@@ -15,6 +15,7 @@ import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.controller.TUIState.State;
+import org.folio.anonymization.view.EndView;
 import org.folio.anonymization.view.JobConfigurationView;
 import org.folio.anonymization.view.JobExecutionView;
 import org.folio.anonymization.view.LoadingJobsView;
@@ -39,6 +40,7 @@ public class TUIController extends ToolkitApp {
   private final JobConfigurationView jobConfigurationView;
   private final StartJobsView startJobsView;
   private final JobExecutionView jobExecutionView;
+  private final EndView endView;
   private final QuitConfirmationView quitConfirmationView;
   private final ShutdownView shutdownView;
 
@@ -54,7 +56,11 @@ public class TUIController extends ToolkitApp {
     return column(this.getView().render(this.runner()), this.keyOptions())
       .onKeyEvent(e -> {
         if (e.isQuit()) {
-          state.attemptToQuit();
+          if (state.getState() == State.END) {
+            this.quit();
+          } else {
+            state.attemptToQuit();
+          }
           return EventResult.HANDLED;
         }
         return EventResult.UNHANDLED;
@@ -85,6 +91,7 @@ public class TUIController extends ToolkitApp {
       case JOB_CONFIGURATION -> jobConfigurationView;
       case JOB_KICKOFF -> startJobsView;
       case JOB_EXECUTION -> jobExecutionView;
+      case END -> endView;
       case QUIT_CONFIRMATION -> quitConfirmationView;
       case SHUTTING_DOWN -> shutdownView;
       default -> throw new IllegalStateException("Unexpected state: " + state.getState());
