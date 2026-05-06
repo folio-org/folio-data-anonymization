@@ -4,6 +4,8 @@ import java.sql.SQLTransientConnectionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.exception.UncheckedException;
 import org.folio.anonymization.domain.folio.Tenant;
@@ -25,7 +27,10 @@ public abstract class JobPart implements Supplier<JobPart> {
       .build()
   );
 
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
   protected Job job;
+
   protected String stage;
   /** label for the individual part; MUST be unique */
   protected final String label;

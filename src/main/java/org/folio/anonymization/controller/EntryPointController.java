@@ -36,7 +36,7 @@ public class EntryPointController {
       .toList();
     log.info("Found {} available jobs", builders.size());
 
-    JobBuilder toTest = builders.stream().filter(b -> b.name().contains("Account number")).findFirst().orElseThrow();
+    JobBuilder toTest = builders.stream().filter(b -> b.name().contains("Profile picture")).findFirst().orElseThrow();
     toTest.configuration().stream().filter(c -> c.getKey().equals("drop-table")).forEach(s -> s.setBooleanValue(false));
     log.info("Running job...");
     toTest.build().execute();
