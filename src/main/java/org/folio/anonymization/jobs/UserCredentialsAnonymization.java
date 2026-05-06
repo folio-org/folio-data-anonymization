@@ -97,7 +97,7 @@ public class UserCredentialsAnonymization implements JobFactory {
                 new BatchGenerationFromTablePart<>(
                   "Prepare to replace login.auth_credentials.jsonb->'$.hash'",
                   AUTH_CREDENTIALS_ID,
-                  String.class,
+                  Object.class,
                   JobConfig.BATCH_SIZE,
                   "overwrite",
                   (label, condition, start, end) ->
@@ -111,7 +111,7 @@ public class UserCredentialsAnonymization implements JobFactory {
                 new BatchGenerationFromTablePart<>(
                   "Prepare to replace login.auth_credentials.jsonb->'$.salt'",
                   AUTH_CREDENTIALS_ID,
-                  String.class,
+                  Object.class,
                   JobConfig.BATCH_SIZE,
                   "overwrite",
                   (label, condition, start, end) ->
@@ -133,7 +133,7 @@ public class UserCredentialsAnonymization implements JobFactory {
                 new BatchGenerationFromTablePart<>(
                   "Prepare to replace login.auth_credentials_history.jsonb->'$.hash'",
                   AUTH_CREDENTIALS_HISTORY_ID,
-                  String.class,
+                  Object.class,
                   JobConfig.BATCH_SIZE,
                   "overwrite",
                   (label, condition, start, end) ->
@@ -147,7 +147,7 @@ public class UserCredentialsAnonymization implements JobFactory {
                 new BatchGenerationFromTablePart<>(
                   "Prepare to replace login.auth_credentials_history.jsonb->'$.salt'",
                   AUTH_CREDENTIALS_HISTORY_ID,
-                  String.class,
+                  Object.class,
                   JobConfig.BATCH_SIZE,
                   "overwrite",
                   (label, condition, start, end) ->
