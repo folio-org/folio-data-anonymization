@@ -28,17 +28,15 @@ public class JobConfigurationProperty {
   private final boolean disabled;
 
   public JobConfigurationProperty(String label) {
-    this.key = label;
-    this.label = text(label);
-    this.booleanValue = true;
-    this.disabled = false;
+    this(label, label);
   }
 
   public JobConfigurationProperty(String key, String label) {
-    this.key = key;
-    this.label = text(label);
-    this.booleanValue = true;
-    this.disabled = false;
+    this(key, label, true, false);
+  }
+
+  public JobConfigurationProperty(Object key, String label, boolean defaultValue, boolean disabled) {
+    this(key, text(label), defaultValue, disabled);
   }
 
   public JobConfigurationProperty(Object key, StyledElement<?> label, boolean defaultValue, boolean disabled) {
