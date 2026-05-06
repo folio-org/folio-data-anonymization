@@ -32,7 +32,7 @@ class PatronPinAnonymizationTest {
     assertNotNull(prepareParts);
     assertEquals(1, prepareParts.size());
 
-    BatchGenerationFromTablePart<?> batchPart = (BatchGenerationFromTablePart<?>) prepareParts.getFirst();
+    BatchGenerationFromTablePart<?> batchPart = (BatchGenerationFromTablePart<?>) prepareParts.peek();
     JobPart overwritePart = batchPart.getFactory().build("", null, 0, 1);
 
     assertTrue(overwritePart instanceof ReplaceJSONBValuePart);
