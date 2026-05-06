@@ -54,7 +54,6 @@ public class TableIDs {
     Pair.of(new FieldReference("erm_usage", "usage_data_providers", "id"), UUID.class),
     Pair.of(new FieldReference("feesfines", "feefineactions", "id"), UUID.class),
     Pair.of(new FieldReference("inn_reach", "agency_location_ac_mapping", "id"), UUID.class),
-    Pair.of(new FieldReference("inn_reach", "agency_location_location_mapping", "id"), UUID.class),
     Pair.of(new FieldReference("inn_reach", "agency_location_lsc_mapping", "id"), UUID.class),
     Pair.of(new FieldReference("inn_reach", "agency_location_mapping", "id"), UUID.class),
     Pair.of(new FieldReference("inn_reach", "central_patron_type_mapping", "id"), UUID.class),

@@ -27,7 +27,7 @@ public class URLRedaction implements JobFactory {
     new FieldReference("organizations_storage", "contacts", "jsonb", "$.urls[*].value"),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.contacts.urls[*].value"),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts.urls[*].value"),
-    new FieldReference("organizations_storage", "interface", "jsonb", "$.uri"),
+    new FieldReference("organizations_storage", "interfaces", "jsonb", "$.uri"),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.urls[*].value"),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.agreements[*].referenceUrl"),
     new FieldReference("organizations_storage", "privileged_contacts", "jsonb", "$.urls[*].value")
@@ -42,7 +42,7 @@ public class URLRedaction implements JobFactory {
       new JobBuilder(
         "URL redaction",
         "Redacts external service and organization contact URL values by replacing all alphanumeric " +
-                   "characters with 'X', 'x', and '1'.",
+        "characters with 'X', 'x', and '1'.",
         tenant,
         context,
         JobConfigurationProperty.fromFieldList(FIELDS, tenant),

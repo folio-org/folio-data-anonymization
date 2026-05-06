@@ -32,7 +32,7 @@ class URLRedactionTest {
       new ModuleTable("licenses", "document_attachment", 100),
       new ModuleTable("organizations_storage", "contacts", 100),
       new ModuleTable("organizations_storage", "organizations", 100),
-      new ModuleTable("organizations_storage", "interface", 100),
+      new ModuleTable("organizations_storage", "interfaces", 100),
       new ModuleTable("organizations_storage", "privileged_contacts", 100)
     );
     List<? extends JobPart> parts = getParts(job, "redact");
