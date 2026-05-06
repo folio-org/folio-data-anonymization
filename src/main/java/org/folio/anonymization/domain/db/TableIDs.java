@@ -114,6 +114,7 @@ public class TableIDs {
     Pair.of(new FieldReference("users", "custom_fields", "id"), UUID.class),
     Pair.of(new FieldReference("users", "departments", "id"), UUID.class),
     Pair.of(new FieldReference("users", "groups", "id"), UUID.class),
+    Pair.of(new FieldReference("users", "profile_picture", "id"), UUID.class),
     Pair.of(new FieldReference("users", "proxyfor", "id"), UUID.class),
     Pair.of(new FieldReference("users", "staging_users", "id"), UUID.class),
     Pair.of(new FieldReference("users", "user_tenant", "id"), UUID.class),

@@ -2,14 +2,19 @@ package org.folio.anonymization.jobs.templates;
 
 import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.name;
+import static org.jooq.impl.DSL.row;
 import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.DSL.table;
 import static org.jooq.impl.DSL.using;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import lombok.Getter;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.db.TableIDs;
+import org.folio.anonymization.domain.db.TableReference;
 import org.folio.anonymization.domain.job.JobPart;
 import org.folio.anonymization.util.DBUtils;
 import org.jooq.Condition;
@@ -17,7 +22,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.Query;
-import org.jooq.Record1;
+import org.jooq.Record;
 import org.jooq.Select;
 import org.jooq.Sequence;
 import org.jooq.Table;
@@ -41,20 +46,57 @@ public class ReplaceValueFromListPart extends JobPart {
 
   private static final int INSERT_BATCH_SIZE = 100;
 
-  private final FieldReference field;
+  private final List<FieldReference> fields;
   private final Condition condition;
 
   @Getter // for testing
-  private final List<String> replacements;
+  private final List<List<?>> replacements;
+
+  private List<Field<?>> valueFields;
 
   public ReplaceValueFromListPart(String label, FieldReference field, Condition condition, List<String> replacements) {
+    this(label, List.of(field), condition, List.of(replacements), List.of(field("value", String.class)));
+  }
+
+  /**
+   * Replace multiple values at once. {@code fields}, {@code replacements}, and {@code replacementFields} must have the same size.
+   * Each inner column within {@code replacements} must also be the same size.
+   *
+   * @param label job label
+   * @param fields list of fields to replace
+   * @param condition condition to use (for batching)
+   * @param replacements list of list of replacement values
+   * @param valueFields list of temporary fields to use for replacements (eg {@code field("value", String.class)})
+   */
+  public ReplaceValueFromListPart(
+    String label,
+    List<FieldReference> fields,
+    Condition condition,
+    List<List<?>> replacements,
+    List<Field<?>> valueFields
+  ) {
     super(label);
-    this.field = field;
+    this.fields = fields;
     this.condition = condition;
     this.replacements = replacements;
+    this.valueFields = valueFields;
 
-    if (replacements.isEmpty()) {
+    if (replacements.stream().anyMatch(List::isEmpty)) {
       throw new IllegalArgumentException("I can't replace values with nothing!");
+    }
+
+    if (fields.size() != replacements.size() || fields.size() != valueFields.size()) {
+      throw new IllegalArgumentException("Fields, replacements, and valueFields must have the same size!");
+    }
+
+    TableReference table = fields.get(0).tableReference();
+    if (fields.stream().anyMatch(f -> !f.tableReference().equals(table))) {
+      throw new IllegalArgumentException("All fields must be from the same table!");
+    }
+
+    int numReplacementsAvailable = replacements.get(0).size();
+    if (replacements.stream().anyMatch(r -> r.size() != numReplacementsAvailable)) {
+      throw new IllegalArgumentException("All inner lists of replacements must have the same size!");
     }
   }
 
@@ -72,19 +114,20 @@ public class ReplaceValueFromListPart extends JobPart {
         ctx.createSequence(replacementsSequence).startWith(0).minvalue(0).execute();
 
         Field<Integer> replacementsSequenceField = DBUtils.getSequenceField(tempTable);
-        Field<String> valueField = field("value", String.class);
 
         ctx
           .createTemporaryTable(tempTable)
-          .columns(replacementsSequenceField, valueField)
+          .columns(Stream.concat(Stream.of(replacementsSequenceField), valueFields.stream()).toList())
           .primaryKey(replacementsSequenceField)
           .onCommitDrop()
           .execute();
 
         // populate new temporary table
-        List<Query> queries = replacements
-          .stream()
-          .map(value -> ctx.insertInto(tempTable).columns(valueField).values(value))
+        List<Query> queries = IntStream
+          .range(0, replacements.get(0).size())
+          .mapToObj(i ->
+            ctx.insertInto(tempTable).columns(valueFields).values(replacements.stream().map(r -> r.get(i)).toList())
+          )
           .map(Query.class::cast)
           .toList();
 
@@ -94,14 +137,9 @@ public class ReplaceValueFromListPart extends JobPart {
           ctx.batch(batch).execute();
         }
 
-        int replacementCount = replacements.size();
-
-        Select<? extends Record1<?>> select;
         Sequence<Integer> insertionSequence = DBUtils.getSequence(tempTable2RefOnly);
-        if (replacementCount == 1) {
-          // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
-          select = select(valueField).from(tempTable).limit(1);
-        } else {
+        int replacementCount = replacements.get(0).size();
+        if (replacementCount != 1) {
           ctx
             .createSequence(insertionSequence)
             .startWith(0)
@@ -109,9 +147,36 @@ public class ReplaceValueFromListPart extends JobPart {
             .maxvalue(replacementCount - 1)
             .cycle()
             .execute();
+        }
 
-          select =
-            select(valueField)
+        // using a single correlated row-valued scalar subquery guarantees that all SET columns come from the SAME replacements row,
+        // and that nextval() is called exactly once per updated row
+        List<Field<?>> selectExprs = new ArrayList<>(fields.size());
+        List<Field<?>> setTargets = new ArrayList<>(fields.size());
+        Condition updateCondition = this.condition;
+        for (int i = 0; i < fields.size(); i++) {
+          FieldReference field = fields.get(i);
+          Field<?> rawValue = valueFields.get(i);
+          setTargets.add(field.baseColumn(this.tenant()));
+          if (field.jsonPath() == null) {
+            selectExprs.add(rawValue);
+            updateCondition = updateCondition.and(field.baseColumn(this.tenant()).isNotNull());
+          } else {
+            selectExprs.add(field.jsonbSet(this.tenant(), inner -> field("to_jsonb({0})", JSONB.class, rawValue)));
+          }
+        }
+
+        Select<? extends Record> sourceSelect;
+        if (replacementCount == 1) {
+          // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
+          sourceSelect =
+            select(selectExprs)
+              .from(tempTable)
+              .where(TableIDs.getIdFor(fields.get(0), this.tenant()).isNotNull())
+              .limit(1);
+        } else {
+          sourceSelect =
+            select(selectExprs)
               // must query the next value from the insertion sequence in the from clause
               // to ensure it only runs once per subquery execution
               .from(tempTable, select(insertionSequence.nextval().as("chosen_seq")))
@@ -120,26 +185,16 @@ public class ReplaceValueFromListPart extends JobPart {
                   .eq(field("chosen_seq", Integer.class))
                   // we must bind to the outer column in some way or this will not be re-executed for each update
                   // (thanks postgres for cleverly optimizing! 🙃)
-                  .and(TableIDs.getIdFor(field, this.tenant()).isNotNull())
+                  .and(TableIDs.getIdFor(fields.get(0), this.tenant()).isNotNull())
               );
         }
-        // do the actual update
-        if (field.jsonPath() == null) {
-          ctx
-            .update(field.table(this.tenant()))
-            .set(field.baseColumn(this.tenant()), select)
-            .where(field.baseColumn(this.tenant()).isNotNull().and(this.condition))
-            .execute();
-        } else {
-          ctx
-            .update(field.table(this.tenant()))
-            .set(
-              field.baseColumn(this.tenant()),
-              field.jsonbSet(this.tenant(), i -> field("to_jsonb(({0}))", JSONB.class, select))
-            )
-            .where(this.condition)
-            .execute();
-        }
+
+        // do the actual update — row-value assignment guarantees one shared replacements row per target row
+        ctx
+          .update(fields.get(0).table(this.tenant()))
+          .set(row(setTargets.toArray(new Field<?>[0])), sourceSelect)
+          .where(updateCondition)
+          .execute();
 
         ctx.dropTemporaryTable(tempTable).cascade().execute();
         ctx.dropSequence(replacementsSequence).execute();
