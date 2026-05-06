@@ -22,7 +22,10 @@ class FirstNameAnonymizationTest {
 
   @Test
   void buildSchedulesFirstNameReplacementBatchParts() throws Exception {
-    Job job = buildJobWithTables(new ModuleTable("users", "users", 100), new ModuleTable("users", "staging_users", 100));
+    Job job = buildJobWithTables(
+      new ModuleTable("users", "users", 100),
+      new ModuleTable("users", "staging_users", 100)
+    );
     List<? extends BatchGenerationFromTablePart<?>> parts = getPrepareParts(job);
     assertEquals(4, parts.size());
 
@@ -48,7 +51,7 @@ class FirstNameAnonymizationTest {
     FirstNameAnonymization anonymization = new FirstNameAnonymization();
     Field contextField = FirstNameAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, job -> {}, Runnable::run));
+    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
     return anonymization;
   }
 

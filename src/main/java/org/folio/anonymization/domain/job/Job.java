@@ -90,10 +90,8 @@ public final class Job {
         log.error("Job '{}': encountered an error in part '{}':", name, part.getLabel(), e);
       }
       this.checkNextStageEligibility();
-      this.context.executionContext().jobNotifier().onStatusUpdate(this);
       return null;
     });
-    this.context.executionContext().jobNotifier().onStatusUpdate(this);
   }
 
   /**
@@ -104,7 +102,6 @@ public final class Job {
   public void skipPart(JobPart part) {
     this.currentlyExecuting.remove(part.getLabel());
     this.checkNextStageEligibility();
-    this.context.executionContext().jobNotifier().onStatusUpdate(this);
   }
 
   protected void checkNextStageEligibility() {
@@ -115,7 +112,6 @@ public final class Job {
         this.executeNextStage();
       }
     }
-    this.context.executionContext().jobNotifier().onStatusUpdate(this);
   }
 
   public synchronized Job scheduleParts(String destinationStage, List<? extends JobPart> jobParts) {
