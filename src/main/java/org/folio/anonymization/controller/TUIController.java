@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.controller.TUIState.State;
 import org.folio.anonymization.view.JobConfigurationView;
+import org.folio.anonymization.view.JobExecutionView;
 import org.folio.anonymization.view.LoadingJobsView;
 import org.folio.anonymization.view.LoadingTenantsView;
 import org.folio.anonymization.view.QuitConfirmationView;
@@ -37,6 +38,7 @@ public class TUIController extends ToolkitApp {
   private final LoadingJobsView loadingJobsView;
   private final JobConfigurationView jobConfigurationView;
   private final StartJobsView startJobsView;
+  private final JobExecutionView jobExecutionView;
   private final QuitConfirmationView quitConfirmationView;
   private final ShutdownView shutdownView;
 
@@ -82,6 +84,7 @@ public class TUIController extends ToolkitApp {
       case JOB_LOADING -> loadingJobsView;
       case JOB_CONFIGURATION -> jobConfigurationView;
       case JOB_KICKOFF -> startJobsView;
+      case JOB_EXECUTION -> jobExecutionView;
       case QUIT_CONFIRMATION -> quitConfirmationView;
       case SHUTTING_DOWN -> shutdownView;
       default -> throw new IllegalStateException("Unexpected state: " + state.getState());

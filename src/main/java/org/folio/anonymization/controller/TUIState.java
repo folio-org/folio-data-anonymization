@@ -1,5 +1,6 @@
 package org.folio.anonymization.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.EqualsAndHashCode;
@@ -10,6 +11,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
+import org.folio.anonymization.domain.job.JobPart;
 import org.springframework.stereotype.Component;
 
 @Log4j2
@@ -47,6 +49,9 @@ public class TUIState {
   // from StartJobsView
   private List<Job> jobs;
 
+  // reported by JobExecutionView
+  private List<JobPart> skippedParts = new ArrayList<>();
+
   // for ShutdownView
   @Setter
   private boolean readyToQuit = false;
@@ -83,6 +88,10 @@ public class TUIState {
     this.state = State.JOB_EXECUTION;
 
     log.info("Jobs have been started! Moving to JOB_EXECUTION...");
+  }
+
+  public void reportSkippedPart(JobPart part) {
+    this.skippedParts.add(part);
   }
 
   public void attemptToQuit() {
