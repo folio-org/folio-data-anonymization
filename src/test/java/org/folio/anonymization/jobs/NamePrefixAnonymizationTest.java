@@ -22,7 +22,10 @@ class NamePrefixAnonymizationTest {
 
   @Test
   void buildSchedulesNamePrefixReplacementBatchParts() throws Exception {
-    Job job = buildJobWithTables(new ModuleTable("oa", "party", 100), new ModuleTable("organizations_storage", "contacts", 100));
+    Job job = buildJobWithTables(
+      new ModuleTable("oa", "party", 100),
+      new ModuleTable("organizations_storage", "contacts", 100)
+    );
     List<? extends BatchGenerationFromTablePart<?>> parts = getPrepareParts(job);
     assertEquals(2, parts.size());
 
@@ -46,7 +49,7 @@ class NamePrefixAnonymizationTest {
     NamePrefixAnonymization anonymization = new NamePrefixAnonymization();
     Field contextField = NamePrefixAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, job -> {}, Runnable::run));
+    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
     return anonymization;
   }
 

@@ -24,11 +24,11 @@ class FinancialInformationAnonymizationTest {
 
   @Test
   void buildSchedulesBankTransactionRedactionParts() throws Exception {
-    Job job = buildJobWithTables(0, new ModuleTable("feesfines", "feefineactions", 100), new ModuleTable(
-      "organizations_storage",
-      "banking_information",
-      100
-    ));
+    Job job = buildJobWithTables(
+      0,
+      new ModuleTable("feesfines", "feefineactions", 100),
+      new ModuleTable("organizations_storage", "banking_information", 100)
+    );
     List<? extends BatchGenerationFromTablePart<?>> parts = getParts(job, "prepare");
     assertEquals(2, parts.size());
     assertHasLabel(parts, "$.transactionInformation");
@@ -37,11 +37,11 @@ class FinancialInformationAnonymizationTest {
 
   @Test
   void buildSchedulesAccountNumberAnonymizationParts() throws Exception {
-    Job job = buildJobWithTables(1, new ModuleTable("organizations_storage", "banking_information", 100), new ModuleTable(
-      "organizations_storage",
-      "organizations",
-      100
-    ));
+    Job job = buildJobWithTables(
+      1,
+      new ModuleTable("organizations_storage", "banking_information", 100),
+      new ModuleTable("organizations_storage", "organizations", 100)
+    );
     List<? extends BatchGenerationFromTablePart<?>> parts = getParts(job, "enumerate-prep");
     assertEquals(2, parts.size());
     assertHasLabel(parts, "$.bankAccountNumber");
@@ -81,7 +81,7 @@ class FinancialInformationAnonymizationTest {
     FinancialInformationAnonymization anonymization = new FinancialInformationAnonymization();
     Field contextField = FinancialInformationAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, job -> {}, Runnable::run));
+    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
     return anonymization;
   }
 

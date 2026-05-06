@@ -91,10 +91,8 @@ public final class Job implements Comparable<Job> {
         log.error("Job '{}': encountered an error in part '{}':", name, part.getLabel(), e);
       }
       this.checkNextStageEligibility();
-      this.context.executionContext().jobNotifier().onStatusUpdate(this);
       return null;
     });
-    this.context.executionContext().jobNotifier().onStatusUpdate(this);
   }
 
   public Optional<Pair<JobPart, Throwable>> getFailedPart() {
@@ -120,7 +118,6 @@ public final class Job implements Comparable<Job> {
     log.info("Job '{}': skipping part '{}'.", name, part.getLabel());
     this.currentlyExecuting.remove(part.getLabel());
     this.checkNextStageEligibility();
-    this.context.executionContext().jobNotifier().onStatusUpdate(this);
   }
 
   protected void checkNextStageEligibility() {
@@ -131,7 +128,6 @@ public final class Job implements Comparable<Job> {
         this.executeNextStage();
       }
     }
-    this.context.executionContext().jobNotifier().onStatusUpdate(this);
   }
 
   public synchronized Job scheduleParts(String destinationStage, List<? extends JobPart> jobParts) {

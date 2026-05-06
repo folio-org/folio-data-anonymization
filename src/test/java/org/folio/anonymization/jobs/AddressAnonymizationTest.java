@@ -50,7 +50,7 @@ class AddressAnonymizationTest {
     AddressAnonymization anonymization = new AddressAnonymization();
     Field contextField = AddressAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, job -> {}, Runnable::run));
+    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
     return anonymization;
   }
 
