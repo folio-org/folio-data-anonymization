@@ -157,6 +157,7 @@ public class JobExecutionView implements TUIView {
     this.initialize(false);
 
     this.checkFailedPart();
+    this.checkAllCompleted();
 
     if (this.failure != null) {
       return this.failure;
@@ -180,6 +181,12 @@ public class JobExecutionView implements TUIView {
           }
           return EventResult.UNHANDLED;
         });
+    }
+  }
+
+  private void checkAllCompleted() {
+    if (this.jobs.stream().allMatch(Job::isCompleted)) {
+      this.state.finish();
     }
   }
 
@@ -386,23 +393,16 @@ public class JobExecutionView implements TUIView {
     hotkeys.add(text("[v] Change view").bold());
 
     if (this.view == 1) {
-      hotkeys.add(text("[R] Refresh part lists").bold());
+      hotkeys.add(text("[R] Refresh parts").bold());
       if (this.showCompletedJobs) {
-        hotkeys.add(text("[H] Hide completed jobs").bold());
+        hotkeys.add(text("[H] Hide completed").bold());
       } else {
-        hotkeys.add(text("[H] Show completed jobs").bold());
+        hotkeys.add(text("[H] Show completed").bold());
       }
-    }
 
-    // hotkeys.add(text("[G] Go").fg(Color.GREEN).bold());
-    // hotkeys.add(text("[tab] Change focus").bold());
-    // if (isTenantListFocused(runner)) {
-    //   hotkeys.add(text("[↑↓] Select tenant").bold());
-    // } else {
-    //   hotkeys.add(text("[↑↓] Navigate").bold());
-    //   hotkeys.add(text("[→←] Show/hide options").bold());
-    //   hotkeys.add(text("[Space] Toggle").bold());
-    // }
+      hotkeys.add(text("[↑↓] Navigate").bold());
+      hotkeys.add(text("[→←] Expand/collapse").bold());
+    }
 
     return hotkeys;
   }

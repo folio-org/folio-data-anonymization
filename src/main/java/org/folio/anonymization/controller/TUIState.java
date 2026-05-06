@@ -94,6 +94,12 @@ public class TUIState {
     this.skippedParts.add(part);
   }
 
+  public void finish() {
+    this.state = State.END;
+
+    log.info("All jobs have been completed! Moving to END...");
+  }
+
   public void attemptToQuit() {
     if (state == State.QUIT_CONFIRMATION) {
       return;
