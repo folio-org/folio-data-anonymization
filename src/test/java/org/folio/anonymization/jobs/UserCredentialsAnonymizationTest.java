@@ -13,7 +13,6 @@ import org.folio.anonymization.domain.job.JobPart;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
-import org.folio.anonymization.jobs.templates.ReplaceValuePart;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
@@ -26,20 +25,16 @@ class UserCredentialsAnonymizationTest {
     UserCredentialsAnonymization anonymization = createFactoryWithContext();
     TenantExecutionContext tenant = new TenantExecutionContext(
       TEST_TENANT,
-      List.of(
-        new ModuleTable("login", "auth_credentials", 10),
-        new ModuleTable("login", "auth_credentials_history", 10),
-        new ModuleTable("users", "patronpin", 10)
-      )
+      List.of(new ModuleTable("login", "auth_credentials", 10), new ModuleTable("login", "auth_credentials_history", 10))
     );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
     ConcurrentLinkedQueue<?> overwriteParts = job.getParts().get("overwrite");
 
-    assertEquals(5, overwriteParts.size());
-    assertEquals(4, overwriteParts.stream().filter(ReplaceValuePart.class::isInstance).count());
-    assertEquals(1, overwriteParts.stream().filter(ReplaceJSONBValuePart.class::isInstance).count());
-    assertTrue(overwriteParts.stream().anyMatch(part -> ((JobPart) part).getLabel().contains("$.pin")));
+    assertEquals(4, overwriteParts.size());
+    assertEquals(4, overwriteParts.stream().filter(ReplaceJSONBValuePart.class::isInstance).count());
+    assertTrue(overwriteParts.stream().anyMatch(part -> ((JobPart) part).getLabel().contains("$.hash")));
+    assertTrue(overwriteParts.stream().anyMatch(part -> ((JobPart) part).getLabel().contains("$.salt")));
   }
 
   @Test
