@@ -48,7 +48,7 @@ class URLRedactionTest {
     assertHasLabel(parts, "organizations_storage.contacts.jsonb->'$.urls[*].value'");
     assertHasLabel(parts, "organizations_storage.organizations.jsonb->'$.contacts.urls[*].value'");
     assertHasLabel(parts, "organizations_storage.organizations.jsonb->'$.privilegedContacts.urls[*].value'");
-    assertHasLabel(parts, "organizations_storage.interface.jsonb->'$.uri'");
+    assertHasLabel(parts, "organizations_storage.interfaces.jsonb->'$.uri'");
     assertHasLabel(parts, "organizations_storage.organizations.jsonb->'$.urls[*].value'");
     assertHasLabel(parts, "organizations_storage.organizations.jsonb->'$.agreements[*].referenceUrl'");
     assertHasLabel(parts, "organizations_storage.privileged_contacts.jsonb->'$.urls[*].value'");
