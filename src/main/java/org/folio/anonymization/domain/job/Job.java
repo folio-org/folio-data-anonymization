@@ -1,6 +1,7 @@
 package org.folio.anonymization.domain.job;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -90,15 +91,17 @@ public final class Job implements Comparable<Job> {
         log.error("Job '{}': encountered an error in part '{}':", name, part.getLabel(), e);
       }
       this.checkNextStageEligibility();
-      this.context.executionContext().jobNotifier().onStatusUpdate(this);
       return null;
     });
-    this.context.executionContext().jobNotifier().onStatusUpdate(this);
   }
 
-  public boolean requiresIntervention() {
+  public Optional<Pair<JobPart, Throwable>> getFailedPart() {
     synchronized (currentlyExecuting) {
-      return this.currentlyExecuting.values().stream().anyMatch(pair -> pair.getRight().isCompletedExceptionally());
+      return this.currentlyExecuting.values()
+        .stream()
+        .filter(pair -> pair.getRight().isCompletedExceptionally())
+        .findFirst()
+        .map(p -> Pair.of(p.getLeft(), p.getRight().exceptionNow()));
     }
   }
 
@@ -112,9 +115,9 @@ public final class Job implements Comparable<Job> {
    * be killed, but providing this API just in case.
    */
   public void skipPart(JobPart part) {
+    log.info("Job '{}': skipping part '{}'.", name, part.getLabel());
     this.currentlyExecuting.remove(part.getLabel());
     this.checkNextStageEligibility();
-    this.context.executionContext().jobNotifier().onStatusUpdate(this);
   }
 
   protected void checkNextStageEligibility() {
@@ -125,7 +128,6 @@ public final class Job implements Comparable<Job> {
         this.executeNextStage();
       }
     }
-    this.context.executionContext().jobNotifier().onStatusUpdate(this);
   }
 
   public synchronized Job scheduleParts(String destinationStage, List<? extends JobPart> jobParts) {

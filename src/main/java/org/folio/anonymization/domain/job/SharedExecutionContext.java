@@ -3,4 +3,4 @@ package org.folio.anonymization.domain.job;
 import java.util.concurrent.Executor;
 import org.jooq.DSLContext;
 
-public record SharedExecutionContext(DSLContext create, JobNotifier jobNotifier, Executor executor) {}
+public record SharedExecutionContext(DSLContext create, Executor executor) {}

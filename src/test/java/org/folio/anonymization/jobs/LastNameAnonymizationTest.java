@@ -56,7 +56,7 @@ class LastNameAnonymizationTest {
     LastNameAnonymization anonymization = new LastNameAnonymization();
     Field contextField = LastNameAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, job -> {}, Runnable::run));
+    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
     return anonymization;
   }
 
