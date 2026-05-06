@@ -2,14 +2,13 @@ package org.folio.anonymization.jobs.templates;
 
 import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.name;
+import static org.jooq.impl.DSL.row;
 import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.DSL.table;
 import static org.jooq.impl.DSL.using;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.Getter;
@@ -150,46 +149,52 @@ public class ReplaceValueFromListPart extends JobPart {
             .execute();
         }
 
-        List<Select<? extends Record>> selects = new ArrayList<>(fields.size());
-        for (int i = 0; i < fields.size(); i++) {
-          if (replacementCount == 1) {
-            // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
-            selects.add(select(valueFields.get(i)).from(tempTable).limit(1));
-          } else {
-            selects.add(
-              select(valueFields.get(i))
-                // must query the next value from the insertion sequence in the from clause
-                // to ensure it only runs once per subquery execution
-                .from(tempTable, select(insertionSequence.nextval().as("chosen_seq")))
-                .where(
-                  replacementsSequenceField
-                    .eq(field("chosen_seq", Integer.class))
-                    // we must bind to the outer column in some way or this will not be re-executed for each update
-                    // (thanks postgres for cleverly optimizing! 🙃)
-                    .and(TableIDs.getIdFor(fields.get(i), this.tenant()).isNotNull())
-                )
-            );
-          }
-        }
-
-        Map<Field<?>, Object> updateFields = new HashMap<>();
+        // using a single correlated row-valued scalar subquery guarantees that all SET columns come from the SAME replacements row,
+        // and that nextval() is called exactly once per updated row
+        List<Field<?>> selectExprs = new ArrayList<>(fields.size());
+        List<Field<?>> setTargets = new ArrayList<>(fields.size());
         Condition updateCondition = this.condition;
         for (int i = 0; i < fields.size(); i++) {
           FieldReference field = fields.get(i);
-          Select<?> select = selects.get(i);
+          Field<?> rawValue = valueFields.get(i);
+          setTargets.add(field.baseColumn(this.tenant()));
           if (field.jsonPath() == null) {
-            updateFields.put(field.baseColumn(this.tenant()), select);
+            selectExprs.add(rawValue);
             updateCondition = updateCondition.and(field.baseColumn(this.tenant()).isNotNull());
           } else {
-            updateFields.put(
-              field.baseColumn(this.tenant()),
-              field.jsonbSet(this.tenant(), inner -> field("to_jsonb(({0}))", JSONB.class, select))
-            );
+            selectExprs.add(field.jsonbSet(this.tenant(), inner -> field("to_jsonb({0})", JSONB.class, rawValue)));
           }
         }
 
-        // do the actual update
-        ctx.update(fields.get(0).table(this.tenant())).set(updateFields).where(updateCondition).execute();
+        Select<? extends Record> sourceSelect;
+        if (replacementCount == 1) {
+          // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
+          sourceSelect =
+            select(selectExprs)
+              .from(tempTable)
+              .where(TableIDs.getIdFor(fields.get(0), this.tenant()).isNotNull())
+              .limit(1);
+        } else {
+          sourceSelect =
+            select(selectExprs)
+              // must query the next value from the insertion sequence in the from clause
+              // to ensure it only runs once per subquery execution
+              .from(tempTable, select(insertionSequence.nextval().as("chosen_seq")))
+              .where(
+                replacementsSequenceField
+                  .eq(field("chosen_seq", Integer.class))
+                  // we must bind to the outer column in some way or this will not be re-executed for each update
+                  // (thanks postgres for cleverly optimizing! 🙃)
+                  .and(TableIDs.getIdFor(fields.get(0), this.tenant()).isNotNull())
+              );
+        }
+
+        // do the actual update — row-value assignment guarantees one shared replacements row per target row
+        ctx
+          .update(fields.get(0).table(this.tenant()))
+          .set(row(setTargets.toArray(new Field<?>[0])), sourceSelect)
+          .where(updateCondition)
+          .execute();
 
         ctx.dropTemporaryTable(tempTable).cascade().execute();
         ctx.dropSequence(replacementsSequence).execute();
