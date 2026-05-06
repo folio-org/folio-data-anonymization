@@ -1,6 +1,7 @@
 package org.folio.anonymization.domain.job;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -12,7 +13,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 @Data
 @Log4j2
-public final class Job {
+public final class Job implements Comparable<Job> {
 
   private final String name;
   private final String description;
@@ -96,12 +97,27 @@ public final class Job {
     this.context.executionContext().jobNotifier().onStatusUpdate(this);
   }
 
+  public Optional<Pair<JobPart, Throwable>> getFailedPart() {
+    synchronized (currentlyExecuting) {
+      return this.currentlyExecuting.values()
+        .stream()
+        .filter(pair -> pair.getRight().isCompletedExceptionally())
+        .findFirst()
+        .map(p -> Pair.of(p.getLeft(), p.getRight().exceptionNow()));
+    }
+  }
+
+  public boolean isCompleted() {
+    return this.currentStageIndex >= this.stages.size();
+  }
+
   /**
    * Should only be used for error recovery where a part will simply not work
    * and is preventing further execution. Most cases the whole Job should probably
    * be killed, but providing this API just in case.
    */
   public void skipPart(JobPart part) {
+    log.info("Job '{}': skipping part '{}'.", name, part.getLabel());
     this.currentlyExecuting.remove(part.getLabel());
     this.checkNextStageEligibility();
     this.context.executionContext().jobNotifier().onStatusUpdate(this);
@@ -128,5 +144,13 @@ public final class Job {
 
   public boolean isDone() {
     return this.currentStageIndex >= this.stages.size();
+  }
+
+  @Override
+  public int compareTo(Job other) {
+    if (!this.context.tenant().tenant().id().equals(other.context.tenant().tenant().id())) {
+      return this.context.tenant().tenant().id().compareTo(other.context.tenant().tenant().id());
+    }
+    return this.name.compareTo(other.name);
   }
 }
