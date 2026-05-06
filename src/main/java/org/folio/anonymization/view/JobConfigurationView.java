@@ -188,7 +188,7 @@ public class JobConfigurationView implements TUIView {
       } else if (unavailable != 0) {
         row.add(text(" (" + unavailable + " unavailable)").dim());
       }
-      row.add(text(" ".repeat(Math.max(1, ref.job().description().length() - ref.job.name().length() + 2))));
+      row.add(text(" ".repeat(Math.max(1, ref.job().description().length() - ref.job().name().length() + 2))));
 
       if (node.isExpanded()) {
         return column(row, text(" " + ref.job().description()).italic()).style(ref.getStyle());
