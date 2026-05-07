@@ -25,7 +25,9 @@ import org.folio.anonymization.view.ShutdownView;
 import org.folio.anonymization.view.StartJobsView;
 import org.folio.anonymization.view.TUIView;
 import org.folio.anonymization.view.TenantSelectionView;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
@@ -33,6 +35,8 @@ import org.springframework.stereotype.Controller;
 @Controller
 @AllArgsConstructor
 public class TUIController extends ToolkitApp {
+
+  private final ApplicationContext ctx;
 
   private final LoadingTenantsView loadingTenantsView;
   private final TenantSelectionView tenantSelectionView;
@@ -102,5 +106,11 @@ public class TUIController extends ToolkitApp {
   public void entryPoint() throws Exception {
     System.err.println("You should see an interface shortly...");
     this.run();
+  }
+
+  @Override
+  protected void onStop() {
+    System.err.println("Shutting down... (safe to Ctrl+C if this takes too long)");
+    SpringApplication.exit(ctx, () -> 0);
   }
 }
