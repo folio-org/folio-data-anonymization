@@ -1,6 +1,7 @@
 package org.folio.anonymization.jobs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
@@ -9,8 +10,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.folio.anonymization.domain.db.ModuleTable;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.Job;
+import org.folio.anonymization.domain.job.JobPart;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
+import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
@@ -32,14 +35,23 @@ class BulkOperationsAnonymizationTest {
     );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
-    ConcurrentLinkedQueue<?> overwriteParts = job.getParts().get("overwrite");
+    ConcurrentLinkedQueue<?> prepareParts = job.getParts().get("prepare");
+    assertNotNull(prepareParts);
+    assertEquals(5, prepareParts.size());
 
-    assertEquals(5, overwriteParts.size());
-    assertTrue(overwriteParts.stream().anyMatch(part -> ((org.folio.anonymization.domain.job.JobPart) part).getLabel().contains("fql_query")));
-    assertTrue(overwriteParts.stream().anyMatch(part -> ((org.folio.anonymization.domain.job.JobPart) part).getLabel().contains("identifier")));
-    assertTrue(overwriteParts.stream().anyMatch(part -> ((org.folio.anonymization.domain.job.JobPart) part).getLabel().contains("initial_value")));
-    assertTrue(overwriteParts.stream().anyMatch(part -> ((org.folio.anonymization.domain.job.JobPart) part).getLabel().contains("updated_value")));
-    assertTrue(overwriteParts.stream().anyMatch(part -> ((org.folio.anonymization.domain.job.JobPart) part).getLabel().contains("entity_type=USER")));
+    List<JobPart> generatedOverwriteParts = prepareParts
+      .stream()
+      .map(BatchGenerationFromTablePart.class::cast)
+      .map(BatchGenerationFromTablePart::getFactory)
+      .map(factory -> factory.build("", null, 0, 1))
+      .toList();
+
+    assertEquals(5, generatedOverwriteParts.size());
+    assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("fql_query")));
+    assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("identifier")));
+    assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("initial_value")));
+    assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("updated_value")));
+    assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("entity_type=USER")));
   }
 
   @Test
@@ -51,7 +63,7 @@ class BulkOperationsAnonymizationTest {
     );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
-    assertTrue(job.getParts().getOrDefault("overwrite", new ConcurrentLinkedQueue<>()).isEmpty());
+    assertTrue(job.getParts().getOrDefault("prepare", new ConcurrentLinkedQueue<>()).isEmpty());
   }
 
   private static BulkOperationsAnonymization createFactoryWithContext() throws Exception {
