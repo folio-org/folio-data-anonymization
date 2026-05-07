@@ -11,9 +11,10 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.Data;
 import org.folio.anonymization.domain.db.FieldReference;
+import org.folio.anonymization.domain.db.GlobalFieldReference;
 import org.folio.anonymization.domain.db.ModuleTable;
-import org.folio.anonymization.domain.db.TableIDs;
 import org.folio.anonymization.domain.db.TableReference;
+import org.folio.anonymization.repository.UtilRepository;
 import org.folio.anonymization.util.NumberUtils;
 
 @Data
@@ -55,13 +56,30 @@ public class JobConfigurationProperty {
     List<FieldReference> fields,
     TenantExecutionContext tenantInfo
   ) {
+    return fromFieldList(fields, tenantInfo, null);
+  }
+
+  public static List<JobConfigurationProperty> fromFieldList(
+    List<? extends FieldReference> fields,
+    TenantExecutionContext tenantInfo,
+    UtilRepository utilRepository
+  ) {
     return fields
       .stream()
-      .map(f -> {
-        TableIDs.getIdFor(f);
-        return f;
-      })
       .map(field -> {
+        if (field instanceof GlobalFieldReference) {
+          if (utilRepository.doesTableExist(field.schema(), field.table())) {
+            return new JobConfigurationProperty(field, row(text(field.toString())), true, false);
+          } else {
+            return new JobConfigurationProperty(
+              field,
+              row(text(field.toString()).crossedOut(), spacer(1), text("(not available)").italic()),
+              true,
+              true
+            );
+          }
+        }
+
         Optional<ModuleTable> foundTable = tenantInfo
           .availableTables()
           .stream()

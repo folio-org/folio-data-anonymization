@@ -39,6 +39,17 @@ public class UtilRepository {
     return doesSchemaExist(DBUtils.getSchemaName(tenantName, normalizedModuleName));
   }
 
+  public boolean doesTableExist(String schemaName, String tableName) {
+    return (
+      create
+        .selectOne()
+        .from(name("information_schema", "tables"))
+        .where(field("table_schema", String.class).eq(schemaName).and(field("table_name", String.class).eq(tableName)))
+        .fetchOne() !=
+      null
+    );
+  }
+
   /**
    * Get a list of table sizes in schemas starting with the given prefix. These are approximate
    * and based on the information found in pg_class, and may not be available if the table
