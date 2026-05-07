@@ -1,5 +1,6 @@
 package org.folio.anonymization.jobs;
 
+import static org.jooq.impl.DSL.trueCondition;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -43,7 +44,7 @@ class BulkOperationsAnonymizationTest {
       .stream()
       .map(BatchGenerationFromTablePart.class::cast)
       .map(BatchGenerationFromTablePart::getFactory)
-      .map(factory -> factory.build("", null, 0, 1))
+      .map(factory -> factory.build("", trueCondition(), 0, 1))
       .toList();
 
     assertEquals(5, generatedOverwriteParts.size());
