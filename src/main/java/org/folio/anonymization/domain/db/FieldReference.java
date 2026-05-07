@@ -5,6 +5,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.text.StringSubstitutor;
 import org.folio.anonymization.domain.folio.Tenant;
@@ -22,7 +25,16 @@ import org.jooq.impl.DSL;
  * new FieldReference("users", "users", "id", null);
  * new FieldReference("users", "users", "jsonb", "$.id");
  */
-public record FieldReference(String schema, String table, String column, String jsonPath) {
+@Getter
+@AllArgsConstructor
+@Accessors(fluent = true)
+public class FieldReference {
+
+  private final String schema;
+  private final String table;
+  private final String column;
+  private final String jsonPath;
+
   public FieldReference(String schema, String table, String column) {
     this(schema, table, column, null);
   }
