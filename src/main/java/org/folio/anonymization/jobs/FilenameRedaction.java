@@ -3,6 +3,7 @@ package org.folio.anonymization.jobs;
 import java.util.List;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
+import org.folio.anonymization.domain.db.GlobalFieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
 import org.folio.anonymization.domain.job.JobConfigurationProperty;
@@ -11,6 +12,7 @@ import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.RedactPart;
+import org.folio.anonymization.repository.UtilRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class FilenameRedaction implements JobFactory {
 
   private static final List<FieldReference> FIELDS = List.of(
+    new GlobalFieldReference("data_import_global", "queue_items", "file_path"),
     new FieldReference("agreements", "file_upload", "fu_filename"),
     new FieldReference("data_export", "file_definitions", "jsonb", "$.filename"),
     new FieldReference("data_export", "file_definitions", "jsonb", "$.sourcePath"),
@@ -59,6 +62,9 @@ public class FilenameRedaction implements JobFactory {
   @Autowired
   private SharedExecutionContext context;
 
+  @Autowired
+  private UtilRepository utilRepository;
+
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
@@ -67,13 +73,14 @@ public class FilenameRedaction implements JobFactory {
         "Redacts filenames and S3 paths by replacing all alphanumeric characters with 'X' and '1'.",
         tenant,
         context,
-        JobConfigurationProperty.fromFieldList(FIELDS, tenant),
+        JobConfigurationProperty.fromFieldList(FIELDS, tenant, utilRepository),
         ctx ->
           new Job(ctx, List.of("prepare", "redact"))
             .scheduleParts(
               "prepare",
               JobConfigurationProperty
                 .getEnabledFields(ctx.settings())
+                .filter(field -> !(field instanceof GlobalFieldReference))
                 .map(field ->
                   new BatchGenerationFromTablePart<>(
                     "Prepare to redact " + field.toString(),
@@ -82,6 +89,24 @@ public class FilenameRedaction implements JobFactory {
                     "redact",
                     (label, condition, start, end) ->
                       new RedactPart("Redact " + field.toString() + " on " + label, field, condition)
+                  )
+                )
+                .toList()
+            )
+            // too messy to attempt to batch this table which should be minimal (ephemeral and only hold in-progress jobs)
+            .scheduleParts(
+              "redact",
+              JobConfigurationProperty
+                .getEnabledFields(ctx.settings())
+                .filter(GlobalFieldReference.class::isInstance)
+                .map(GlobalFieldReference.class::cast)
+                .map(field ->
+                  new RedactPart(
+                    "Redact " + field.toString(),
+                    field,
+                    new GlobalFieldReference("data_import_global", "queue_items", "tenant")
+                      .field(null, String.class)
+                      .eq(tenant.tenant().id())
                   )
                 )
                 .toList()

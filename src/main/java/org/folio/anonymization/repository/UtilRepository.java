@@ -41,6 +41,17 @@ public class UtilRepository {
     return doesSchemaExist(DBUtils.getSchemaName(tenantName, normalizedModuleName));
   }
 
+  public boolean doesTableExist(String schemaName, String tableName) {
+    return (
+      create
+        .selectOne()
+        .from(name("information_schema", "tables"))
+        .where(field("table_schema", String.class).eq(schemaName).and(field("table_name", String.class).eq(tableName)))
+        .fetchOne() !=
+      null
+    );
+  }
+
   public boolean doesColumnExist(FieldReference field, Tenant tenant) {
     return (
       create

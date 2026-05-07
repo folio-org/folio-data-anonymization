@@ -6,6 +6,7 @@ import static org.jooq.impl.DSL.inline;
 
 import java.util.List;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
@@ -17,25 +18,24 @@ import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.folio.anonymization.jobs.templates.ReplaceValueFromListPart;
-import org.folio.anonymization.util.ProfilePictureSeedCsvLoader;
-import org.folio.anonymization.util.ProfilePictureSeedCsvLoader.SeedValue;
+import org.folio.anonymization.service.ProfilePictureSeedCsvLoader;
+import org.folio.anonymization.service.ProfilePictureSeedCsvLoader.SeedValue;
 import org.jooq.Condition;
 import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
 @Component
+@AllArgsConstructor
 public class ProfilePictureAnonymization implements JobFactory {
 
   private static final String PROFILE_PICTURE_ENCRYPTION_KEY = "anonymizedanonymizedanonymizedan";
-  private static final String PROFILE_PICTURE_SEED_LOCATION = "classpath:seed/profile-picture-seed.csv";
 
   @Autowired
   private SharedExecutionContext context;
 
   @Autowired
-  private ResourceLoader resourceLoader;
+  private ProfilePictureSeedCsvLoader profilePictureSeedCsvLoader;
 
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
@@ -83,9 +83,7 @@ public class ProfilePictureAnonymization implements JobFactory {
             job.scheduleParts("update-settings", buildConfigUpdateParts(tenant, "settings"));
           }
           if (JobConfigurationProperty.isOn(ctx.settings(), "replace-pictures")) {
-            List<SeedValue> seeds = ProfilePictureSeedCsvLoader.load(
-              resourceLoader.getResource(PROFILE_PICTURE_SEED_LOCATION)
-            );
+            List<SeedValue> seeds = profilePictureSeedCsvLoader.load();
 
             job.scheduleParts(
               "prepare-replace-pictures",
