@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.function.Function;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.With;
 import lombok.experimental.Accessors;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.text.StringSubstitutor;
@@ -25,6 +26,7 @@ import org.jooq.impl.DSL;
  * new FieldReference("users", "users", "id", null);
  * new FieldReference("users", "users", "jsonb", "$.id");
  */
+@With
 @Getter
 @AllArgsConstructor
 @Accessors(fluent = true)

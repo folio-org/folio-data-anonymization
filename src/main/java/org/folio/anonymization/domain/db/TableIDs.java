@@ -22,8 +22,23 @@ public class TableIDs {
   private static final List<Pair<FieldReference, Class<?>>> TABLE_ID_FIELD_LIST = List.of(
     Pair.of(new FieldReference("agreements", "agreement_relationship", "ar_id"), String.class),
     Pair.of(new FieldReference("agreements", "alternate_name", "an_id"), String.class),
+    Pair.of(new FieldReference("agreements", "comparison_job", "id"), String.class),
+    Pair.of(new FieldReference("agreements", "custom_property_blob", "id"), Integer.class),
+    Pair.of(new FieldReference("agreements", "custom_property_definition", "pd_id"), String.class),
+    Pair.of(new FieldReference("agreements", "custom_property_integer", "id"), Integer.class),
+    Pair.of(
+      new FieldReference("agreements", "custom_property_multi_integer_value", "custom_property_multi_integer_id"),
+      Integer.class
+    ),
+    Pair.of(
+      new FieldReference("agreements", "custom_property_multi_text_value", "custom_property_multi_text_id"),
+      Integer.class
+    ),
+    Pair.of(new FieldReference("agreements", "custom_property_text", "id"), Integer.class),
+    Pair.of(new FieldReference("agreements", "custom_property", "id"), Integer.class),
     Pair.of(new FieldReference("agreements", "document_attachment", "da_id"), String.class),
     Pair.of(new FieldReference("agreements", "entitlement", "ent_id"), String.class),
+    Pair.of(new FieldReference("agreements", "file_object", "fo_id"), String.class),
     Pair.of(new FieldReference("agreements", "file_upload", "fu_id"), String.class),
     Pair.of(new FieldReference("agreements", "kbart_import_job", "id"), String.class),
     Pair.of(new FieldReference("agreements", "license_amendment_status", "las_id"), String.class),
@@ -119,11 +134,26 @@ public class TableIDs {
     Pair.of(new FieldReference("kb_ebsco_java", "resources", "id"), UUID.class),
     Pair.of(new FieldReference("kb_ebsco_java", "usage_consolidation_settings", "id"), UUID.class),
     Pair.of(new FieldReference("licenses", "alternate_name", "an_id"), String.class),
+    Pair.of(new FieldReference("licenses", "custom_property", "id"), Integer.class),
+    Pair.of(new FieldReference("licenses", "custom_property_definition", "pd_id"), String.class),
+    Pair.of(new FieldReference("licenses", "custom_property_blob", "id"), Integer.class),
+    Pair.of(new FieldReference("licenses", "custom_property_integer", "id"), Integer.class),
+    Pair.of(
+      new FieldReference("licenses", "custom_property_multi_integer_value", "custom_property_multi_integer_id"),
+      Integer.class
+    ),
+    Pair.of(
+      new FieldReference("licenses", "custom_property_multi_text_value", "custom_property_multi_text_id"),
+      Integer.class
+    ),
+    Pair.of(new FieldReference("licenses", "custom_property_text", "id"), Integer.class),
     Pair.of(new FieldReference("licenses", "document_attachment", "da_id"), String.class),
+    Pair.of(new FieldReference("licenses", "file_object", "fo_id"), String.class),
     Pair.of(new FieldReference("licenses", "file_upload", "fu_id"), String.class),
     Pair.of(new FieldReference("licenses", "license_org_role", "lior_id"), String.class),
     Pair.of(new FieldReference("licenses", "license_org", "sao_id"), String.class),
     Pair.of(new FieldReference("licenses", "org", "org_id"), String.class),
+    Pair.of(new FieldReference("licenses", "refdata_value", "rdv_id"), String.class),
     Pair.of(new FieldReference("lists", "list_details", "id"), UUID.class),
     Pair.of(new FieldReference("lists", "list_refresh_details", "id"), UUID.class),
     Pair.of(new FieldReference("lists", "list_versions", "id"), UUID.class),
@@ -140,6 +170,7 @@ public class TableIDs {
     Pair.of(new FieldReference("oa", "publication_request_history", "prh_id"), String.class),
     Pair.of(new FieldReference("oa", "publication_status", "ps_id"), String.class),
     Pair.of(new FieldReference("oai_pmh", "configuration_settings", "id"), UUID.class),
+    Pair.of(new FieldReference("orders_storage", "custom_fields", "id"), UUID.class),
     Pair.of(new FieldReference("orders_storage", "export_history", "id"), UUID.class),
     Pair.of(new FieldReference("orders_storage", "pieces", "id"), UUID.class),
     Pair.of(new FieldReference("orders_storage", "po_line", "id"), UUID.class),
@@ -169,9 +200,26 @@ public class TableIDs {
     Pair.of(new FieldReference("serials_management", "enumeration_numeric_leveltmrf", "enltmrf_id"), String.class),
     Pair.of(new FieldReference("serials_management", "predicted_piece_set", "pps_id"), String.class),
     Pair.of(new FieldReference("serials_management", "serial_note", "sn_id"), String.class),
+    Pair.of(new FieldReference("service_interaction", "custom_property_definition", "pd_id"), String.class),
+    Pair.of(new FieldReference("service_interaction", "custom_property", "id"), Integer.class),
+    Pair.of(new FieldReference("service_interaction", "custom_property_blob", "id"), Integer.class),
+    Pair.of(new FieldReference("service_interaction", "custom_property_integer", "id"), Integer.class),
+    Pair.of(
+      new FieldReference("service_interaction", "custom_property_multi_text_value", "custom_property_multi_text_id"),
+      Integer.class
+    ),
+    Pair.of(new FieldReference("service_interaction", "custom_property_text", "id"), Integer.class),
     Pair.of(new FieldReference("service_interaction", "dashboard", "dshb_id"), String.class),
     Pair.of(new FieldReference("service_interaction", "refdata_value", "rdv_id"), String.class),
     Pair.of(new FieldReference("service_interaction", "widget_instance", "wins_id"), String.class),
+    Pair.of(
+      new FieldReference(
+        "service_interaction",
+        "custom_property_multi_integer_value",
+        "custom_property_multi_integer_id"
+      ),
+      Integer.class
+    ),
     Pair.of(new FieldReference("source_record_manager", "job_execution", "id"), UUID.class),
     Pair.of(new FieldReference("tags", "tags", "id"), UUID.class),
     Pair.of(new FieldReference("template_engine", "template", "id"), UUID.class),

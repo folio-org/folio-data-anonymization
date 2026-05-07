@@ -92,7 +92,7 @@ public class JobConfigurationProperty {
           return new JobConfigurationProperty(
             field,
             row(
-              text("mod_"),
+              text("mod_").crossedOut(),
               text(field.toString()).crossedOut(),
               spacer(1),
               text("(not available for tenant)").italic()
@@ -134,7 +134,7 @@ public class JobConfigurationProperty {
           return new JobConfigurationProperty(
             table,
             row(
-              text("mod_"),
+              text("mod_").crossedOut(),
               text(table.toString()).crossedOut(),
               spacer(1),
               text("(not available for tenant)").italic()

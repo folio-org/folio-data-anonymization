@@ -1,6 +1,7 @@
 package org.folio.anonymization.util;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.Function;
@@ -180,6 +181,55 @@ public class RandomValueUtils {
           return FAKER.get().internet().userAgent();
         }
       })
+      .toList();
+  }
+
+  /** return columns for name (unique), label, and description */
+  public static List<List<?>> groovyCustomFieldDefinitions(int start, int end) {
+    List<String> names = new ArrayList<>(end - start);
+    List<String> labels = new ArrayList<>(end - start);
+    List<String> descriptions = new ArrayList<>(end - start);
+
+    IntStream
+      .range(start, end)
+      .forEach(i -> {
+        names.add("customfield" + i);
+        labels.add("CF %s (%s)".formatted(i, String.join(" ", FAKER.get().lorem().words(3))));
+        descriptions.add(
+          "This is a description for custom field %s!\n%s".formatted(i, FAKER.get().lorem().paragraph(1))
+        );
+      });
+
+    return List.of(names, labels, descriptions);
+  }
+
+  public static String pickListName() {
+    return FAKER.get().word().adjective() + " custom anonymized pick list";
+  }
+
+  /**
+   * return columns for value (unique) and label
+   *
+   * @param i the index of the pick list as a whole (values must be unique across them)
+   */
+  public static List<List<?>> pickListValues(int i, int start, int end) {
+    List<String> values = new ArrayList<>(end - start);
+    List<String> labels = new ArrayList<>(end - start);
+
+    IntStream
+      .range(start, end)
+      .forEach(j -> {
+        values.add("anonymized_pick_list_value_" + i + "_" + j);
+        labels.add(String.join(" ", FAKER.get().lorem().words(2)));
+      });
+
+    return List.of(values, labels);
+  }
+
+  public static List<String> customFieldNames(int max) {
+    return IntStream
+      .range(0, max)
+      .mapToObj(i -> FAKER.get().word().adjective() + " " + FAKER.get().word().adjective())
       .toList();
   }
 }
