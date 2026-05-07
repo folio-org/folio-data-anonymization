@@ -77,7 +77,9 @@ public final class Job implements Comparable<Job> {
     part.setJob(this);
     CompletableFuture<JobPart> future = CompletableFuture.supplyAsync(part, this.context.executionContext().executor());
 
-    if (!isRetry && this.currentlyExecuting.put(part.getLabel(), Pair.of(part, future)) != null) {
+    Pair<JobPart, CompletableFuture<JobPart>> original =
+      this.currentlyExecuting.put(part.getLabel(), Pair.of(part, future));
+    if (!isRetry && original != null) {
       throw log.throwing(
         new IllegalStateException("Job '%s': part '%s' was found more than once".formatted(name, part.getLabel()))
       );
