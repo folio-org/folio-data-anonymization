@@ -222,7 +222,7 @@ public class FreeTextRedaction implements JobFactory {
     "user_friendly_query"
   );
 
-  private static final List<FieldReference> MISC_FELDS = List.of(
+  private static final List<FieldReference> MISC_FIELDS = List.of(
     new FieldReference("agreements", "document_attachment", "da_location"),
     new FieldReference("bulk_operations", "bulk_operation", "user_friendly_query"),
     new FieldReference("inn_reach", "transaction_local_hold", "patron_home_library"),
@@ -262,7 +262,7 @@ public class FreeTextRedaction implements JobFactory {
         Triple.of(
           "Free text redaction — miscellaneous fields",
           "Redacts free text fields which contain irregular PII not covered by other categories.",
-          MISC_FELDS
+          MISC_FIELDS
         )
       )
       .map(t ->
