@@ -170,6 +170,7 @@ public class TableIDs {
     Pair.of(new FieldReference("oa", "publication_request_history", "prh_id"), String.class),
     Pair.of(new FieldReference("oa", "publication_status", "ps_id"), String.class),
     Pair.of(new FieldReference("oai_pmh", "configuration_settings", "id"), UUID.class),
+    Pair.of(new FieldReference("orders_storage", "custom_fields", "id"), UUID.class),
     Pair.of(new FieldReference("orders_storage", "export_history", "id"), UUID.class),
     Pair.of(new FieldReference("orders_storage", "pieces", "id"), UUID.class),
     Pair.of(new FieldReference("orders_storage", "po_line", "id"), UUID.class),

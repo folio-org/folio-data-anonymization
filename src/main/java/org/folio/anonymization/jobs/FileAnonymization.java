@@ -2,6 +2,7 @@ package org.folio.anonymization.jobs;
 
 import static org.jooq.impl.DSL.field;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Stream;
 import org.folio.anonymization.config.JobConfig;
@@ -116,7 +117,7 @@ public class FileAnonymization implements JobFactory {
           .toList()
       );
     } else if (POSTGRES_LO_FIELDS.contains(field)) {
-      return new ReplaceOIDPart(label, field, condition, "Replaced during anonymization".getBytes());
+      return new ReplaceOIDPart(label, field, condition, "Replaced during anonymization".getBytes(StandardCharsets.UTF_8));
     } else {
       throw new IllegalArgumentException("No replacements defined for field: " + field);
     }

@@ -113,7 +113,8 @@ public class BatchGenerationFromTablePart<T> extends JobPart {
     Field<Integer> rowNum = rowNumber().over(orderBy(field)).as("rn");
     Field<Integer> total = count().over().as("total");
 
-    Table<?> numbered = this.create().select(field.as("v"), rowNum, total).from(table).where(condition).asTable("numbered");
+    Table<?> numbered =
+      this.create().select(field.as("v"), rowNum, total).from(table).where(condition).asTable("numbered");
 
     @SuppressWarnings("unchecked")
     Field<T> v = (Field<T>) numbered.field("v");
@@ -136,11 +137,11 @@ public class BatchGenerationFromTablePart<T> extends JobPart {
     for (int i = 0; i < values.size(); i++) {
       T startValueInclusive = values.get(i);
       String prettyEndValue = "end";
-      Condition condition = field.greaterOrEqual(startValueInclusive);
+      Condition childCondition = field.greaterOrEqual(startValueInclusive);
       if (i + 1 < values.size()) {
         T endValueExclusive = values.get(i + 1);
         prettyEndValue = endValueExclusive.toString();
-        condition = condition.and(field.lessThan(endValueExclusive));
+        childCondition = childCondition.and(field.lessThan(endValueExclusive));
       }
 
       this.job.scheduleParts(
@@ -148,7 +149,7 @@ public class BatchGenerationFromTablePart<T> extends JobPart {
           List.of(
             factory.build(
               "(%s to %s)".formatted(i == 0 ? "start" : startValueInclusive.toString(), prettyEndValue),
-              condition,
+              childCondition.and(this.condition),
               i * batchSize,
               Math.min((i + 1) * batchSize, totalCount)
             )

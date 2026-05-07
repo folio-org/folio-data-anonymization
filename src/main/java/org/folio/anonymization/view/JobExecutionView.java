@@ -167,6 +167,7 @@ public class JobExecutionView implements TUIView {
         .fill()
         .onKeyEvent(k -> {
           if (k.isCharIgnoreCase('v')) {
+            this.initialize(true);
             this.view = (this.view + 1) % this.views.size();
             return EventResult.HANDLED;
           }

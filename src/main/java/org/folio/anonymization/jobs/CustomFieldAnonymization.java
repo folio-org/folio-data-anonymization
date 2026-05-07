@@ -4,10 +4,15 @@ import static dev.tamboui.toolkit.Toolkit.row;
 import static dev.tamboui.toolkit.Toolkit.spacer;
 import static dev.tamboui.toolkit.Toolkit.text;
 import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.DSL.selectDistinct;
+import static org.jooq.impl.DSL.val;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.config.JobConfig;
@@ -31,14 +36,24 @@ import org.folio.anonymization.util.NumberUtils;
 import org.folio.anonymization.util.RandomValueUtils;
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Log4j2
 @Component
-public class GroovyStyleCustomFieldAnonymization implements JobFactory {
+public class CustomFieldAnonymization implements JobFactory {
+
+  // from https://github.com/folio-org/folio-custom-fields/blob/master/ramls/customFieldTypes.json
+  private static final Set<String> RMB_FIELD_REDACT_TYPES = Set.of("TEXTBOX_SHORT", "TEXTBOX_LONG");
+  private static final Set<String> RMB_FIELD_PICKLIST_TYPES = Set.of(
+    "RADIO_BUTTON",
+    "SINGLE_SELECT_DROPDOWN",
+    "MULTI_SELECT_DROPDOWN"
+  );
 
   private static final List<String> GROOVY_MODULES = List.of("agreements", "licenses", "service_interaction");
+  private static final List<String> RMB_MODULES = List.of("orders_storage", "users");
   private static final List<FieldReference> FIELDS = List.of(
     new FieldReference("agreements", "custom_property_blob", "value"),
     new FieldReference("agreements", "custom_property_integer", "value"),
@@ -50,11 +65,14 @@ public class GroovyStyleCustomFieldAnonymization implements JobFactory {
     new FieldReference("licenses", "custom_property_multi_integer_value", "value_big_integer"),
     new FieldReference("licenses", "custom_property_multi_text_value", "value_string"),
     new FieldReference("licenses", "custom_property_text", "value"),
+    new FieldReference("orders_storage", "po_line", "jsonb", "$.customFields"),
+    new FieldReference("orders_storage", "purchase_order", "jsonb", "$.customFields"),
     new FieldReference("service_interaction", "custom_property_blob", "value"),
     new FieldReference("service_interaction", "custom_property_integer", "value"),
     new FieldReference("service_interaction", "custom_property_multi_integer_value", "value_big_integer"),
     new FieldReference("service_interaction", "custom_property_multi_text_value", "value_string"),
-    new FieldReference("service_interaction", "custom_property_text", "value")
+    new FieldReference("service_interaction", "custom_property_text", "value"),
+    new FieldReference("users", "users", "jsonb", "$.customFields")
   );
 
   @Autowired
@@ -68,13 +86,17 @@ public class GroovyStyleCustomFieldAnonymization implements JobFactory {
         "*SEE BELOW FOR LIMITATIONS* Replaces the names and descriptions of custom fields with random values.",
         tenant,
         context,
-        GROOVY_MODULES
-          .stream()
+        Stream
+          .concat(GROOVY_MODULES.stream(), RMB_MODULES.stream())
+          .sorted()
           .map(module -> {
             Optional<ModuleTable> table = tenant
               .availableTables()
               .stream()
-              .filter(t -> module.equals(t.schema()) && "custom_property_definition".equals(t.table()))
+              .filter(t ->
+                module.equals(t.schema()) &&
+                ("custom_property_definition".equals(t.table()) || "custom_fields".equals(t.table()))
+              )
               .findAny();
 
             if (table.isEmpty()) {
@@ -86,6 +108,19 @@ public class GroovyStyleCustomFieldAnonymization implements JobFactory {
                   text("(not available for tenant)").italic()
                 ),
                 true,
+                false
+              );
+            } else if (RMB_MODULES.contains(module)) {
+              return new JobConfigurationProperty(
+                module,
+                row(
+                  text("mod_" + module + " custom property definitions"),
+                  spacer(1),
+                  text("*does not update refId (may reveal original name)*").yellow(),
+                  spacer(1),
+                  text(String.format("(%s rows)", NumberUtils.abbreviate(table.get().size()))).italic()
+                ),
+                false,
                 false
               );
             } else {
@@ -102,59 +137,102 @@ public class GroovyStyleCustomFieldAnonymization implements JobFactory {
             }
           })
           .toList(),
-        ctx -> {
-          Job job = new Job(ctx, List.of("prepare", "overwrite"));
-
-          job.scheduleParts(
-            "prepare",
-            ctx
-              .settings()
-              .stream()
-              .filter(JobConfigurationProperty::isOn)
-              .map(JobConfigurationProperty::getKey)
-              .filter(String.class::isInstance)
-              .map(String.class::cast)
-              .map(module -> {
-                TableReference table = new TableReference(module, "custom_property_definition");
-                return new BatchGenerationFromTablePart<>(
-                  "Prepare to overwrite custom field definitions in " + table.toString(),
-                  table,
-                  JobConfig.BATCH_SIZE,
-                  "overwrite",
-                  (label, condition, start, end) ->
-                    new ReplaceValueFromListPart(
-                      "Replace custom field definitions in " + table.schema() + " on " + label,
-                      List.of(table.field("pd_name"), table.field("pd_label"), table.field("pd_description")),
-                      condition,
-                      RandomValueUtils.groovyCustomFieldDefinitions(start, end),
-                      List.of(
-                        field("new_name", String.class),
-                        field("new_label", String.class),
-                        field("new_description", String.class)
+        ctx ->
+          new Job(ctx, List.of("prepare", "overwrite"))
+            .scheduleParts(
+              "prepare",
+              ctx
+                .settings()
+                .stream()
+                .filter(JobConfigurationProperty::isOn)
+                .map(JobConfigurationProperty::getKey)
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .filter(GROOVY_MODULES::contains)
+                .map(module -> {
+                  TableReference table = new TableReference(module, "custom_property_definition");
+                  return new BatchGenerationFromTablePart<>(
+                    "Prepare to overwrite custom field definitions in " + table.toString(),
+                    table,
+                    JobConfig.BATCH_SIZE,
+                    "overwrite",
+                    (label, condition, start, end) ->
+                      new ReplaceValueFromListPart(
+                        "Replace custom field definitions in " + table.schema() + " on " + label,
+                        List.of(table.field("pd_name"), table.field("pd_label"), table.field("pd_description")),
+                        condition,
+                        RandomValueUtils.groovyCustomFieldDefinitions(start, end),
+                        List.of(
+                          field("new_name", String.class),
+                          field("new_label", String.class),
+                          field("new_description", String.class)
+                        )
                       )
+                  );
+                })
+                .toList()
+            )
+            .scheduleParts(
+              "prepare",
+              ctx
+                .settings()
+                .stream()
+                .filter(JobConfigurationProperty::isOn)
+                .map(JobConfigurationProperty::getKey)
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .filter(RMB_MODULES::contains)
+                .flatMap(module -> {
+                  TableReference table = new TableReference(module, "custom_fields");
+                  return Stream.of(
+                    new BatchGenerationFromTablePart<>(
+                      "Prepare to overwrite custom field names in " + table.toString(),
+                      table,
+                      JobConfig.BATCH_SIZE,
+                      "overwrite",
+                      (label, condition, start, end) ->
+                        new ReplaceValueFromListPart(
+                          "Replace custom field names in " + table.schema() + " on " + label,
+                          table.field("jsonb").withJsonPath("$.name"),
+                          condition,
+                          RandomValueUtils.customFieldNames(Math.max(5, end - start))
+                        )
+                    ),
+                    new BatchGenerationFromTablePart<>(
+                      "Prepare to redact custom field help text in " + table.toString(),
+                      table,
+                      JobConfig.BATCH_SIZE,
+                      "overwrite",
+                      (label, condition, start, end) ->
+                        new RedactPart(
+                          "Redact custom field help texts in " + table.schema() + " on " + label,
+                          table.field("jsonb").withJsonPath("$.helpText"),
+                          condition
+                        )
                     )
-                );
-              })
-              .toList()
-          );
-
-          return job;
-        }
+                  );
+                })
+                .toList()
+            )
       ),
       new JobBuilder(
         "Custom property values",
-        "Replaces text and integer values of custom fields with random values.",
+        "Redact or replace text, integer, and pick list values of custom fields with random values.",
         tenant,
         context,
         Stream
           .concat(
-            GROOVY_MODULES
-              .stream()
+            Stream
+              .concat(GROOVY_MODULES.stream(), RMB_MODULES.stream())
+              .sorted()
               .map(module -> {
                 Optional<ModuleTable> table = tenant
                   .availableTables()
                   .stream()
-                  .filter(t -> module.equals(t.schema()) && "custom_property_definition".equals(t.table()))
+                  .filter(t ->
+                    module.equals(t.schema()) &&
+                    ("custom_property_definition".equals(t.table()) || "custom_fields".equals(t.table()))
+                  )
                   .findAny();
 
                 if (table.isEmpty()) {
@@ -183,7 +261,47 @@ public class GroovyStyleCustomFieldAnonymization implements JobFactory {
         ctx -> {
           Job job = new Job(
             ctx,
-            List.of("prepare", "overwrite", "prepare-picklist-values", "overwrite-picklist-values")
+            List.of(
+              "prepare-enumerate-rmb",
+              "prepare",
+              "overwrite",
+              "prepare-picklist-values",
+              "overwrite-picklist-values"
+            )
+          );
+
+          job.scheduleParts(
+            "prepare-picklist-values",
+            ctx
+              .settings()
+              .stream()
+              .filter(JobConfigurationProperty::isOn)
+              .map(JobConfigurationProperty::getKey)
+              .filter(String.class::isInstance)
+              .map(String.class::cast)
+              .filter(RMB_MODULES::contains)
+              .map(module ->
+                new BatchGenerationFromTablePart<UUID>(
+                  "Prepare to redact picklist values in " + module,
+                  new FieldReference(module, "custom_fields", "id"),
+                  UUID.class,
+                  JobConfig.BATCH_SIZE,
+                  "overwrite-picklist-values",
+                  (label, condition, start, end) ->
+                    new RedactPart(
+                      "Redact picklist values in " + module + " on " + label,
+                      new FieldReference(module, "custom_fields", "jsonb", "$.selectField.options.values[*].value"),
+                      condition
+                    ),
+                  field(
+                    "{0}->>'type'",
+                    String.class,
+                    new FieldReference(module, "custom_fields", "jsonb").baseColumn(tenant.tenant(), JSONB.class)
+                  )
+                    .in(RMB_FIELD_PICKLIST_TYPES)
+                )
+              )
+              .toList()
           );
 
           job.scheduleParts(
@@ -195,6 +313,7 @@ public class GroovyStyleCustomFieldAnonymization implements JobFactory {
               .map(JobConfigurationProperty::getKey)
               .filter(String.class::isInstance)
               .map(String.class::cast)
+              .filter(GROOVY_MODULES::contains)
               .flatMap(module -> {
                 TableReference refdataDefinitions = new TableReference(module, "custom_property_refdata_definition");
                 TableReference refdataCategories = new TableReference(module, "refdata_category");
@@ -228,7 +347,7 @@ public class GroovyStyleCustomFieldAnonymization implements JobFactory {
                               "Replace pick list name in " + module + " for ID " + refdataCategoryIdValue,
                               refdataCategories.field("rdc_description"),
                               refdataIdField.eq(refdataCategoryIdValue),
-                              field("'{0}'", String.class, RandomValueUtils.pickListName())
+                              val(RandomValueUtils.pickListName())
                             )
                           )
                         )
@@ -283,6 +402,7 @@ public class GroovyStyleCustomFieldAnonymization implements JobFactory {
             "prepare",
             JobConfigurationProperty
               .getEnabledFields(ctx.settings())
+              .filter(f -> f.jsonPath() == null) // filter out RMB custom fields (handled separately)
               .map(field ->
                 new BatchGenerationFromTablePart<>(
                   "Prepare to overwrite " + field.toString(),
@@ -292,6 +412,46 @@ public class GroovyStyleCustomFieldAnonymization implements JobFactory {
                   (label, condition, start, end) -> getOverwritePart(field, label, condition, start, end)
                 )
               )
+              .toList()
+          );
+
+          job.scheduleParts(
+            "prepare-enumerate-rmb",
+            JobConfigurationProperty
+              .getEnabledFields(ctx.settings())
+              .filter(f -> f.jsonPath() != null) // filter out Groovy custom fields (handled separately)
+              .map(field -> {
+                FieldReference baseDefinitionField = field.withTable("custom_fields").withColumn("jsonb");
+                // find the custom fields we actually want to modify
+                return new BatchGenerationFromEachRowPart<>(
+                  "Enumerate text-valued RMB custom fields for " + field.toString(),
+                  select(baseDefinitionField.withJsonPath("$.refId").field(tenant.tenant(), String.class).as("refId"))
+                    .from(baseDefinitionField.table(tenant.tenant()))
+                    .where(
+                      field("{0}->>'type'", String.class, baseDefinitionField.baseColumn(tenant.tenant(), JSONB.class))
+                        .in(RMB_FIELD_REDACT_TYPES)
+                    ),
+                  (r, i) -> {
+                    job.scheduleParts(
+                      "prepare",
+                      List.of(
+                        new BatchGenerationFromTablePart<>(
+                          "Prepare to redact " + field.toString() + " for refId " + r.get("refId"),
+                          field.withJsonPath(field.jsonPath() + "." + r.get("refId")),
+                          JobConfig.BATCH_SIZE,
+                          "overwrite",
+                          (label, condition, start, end) ->
+                            new RedactPart(
+                              "Redact " + field.toString() + " with refId " + r.get("refId") + " on " + label,
+                              field.withJsonPath(field.jsonPath() + "." + r.get("refId")),
+                              condition
+                            )
+                        )
+                      )
+                    );
+                  }
+                );
+              })
               .toList()
           );
 
@@ -307,7 +467,7 @@ public class GroovyStyleCustomFieldAnonymization implements JobFactory {
         "Replace " + field.toString() + " PG large objects on " + rangeLabel,
         field,
         condition,
-        "Replaced during anonymization".getBytes()
+        "Replaced during anonymization".getBytes(StandardCharsets.UTF_8)
       );
       case "custom_property_multi_text_value", "custom_property_text" -> new RedactPart(
         "Redact " + field.toString() + " on " + rangeLabel,

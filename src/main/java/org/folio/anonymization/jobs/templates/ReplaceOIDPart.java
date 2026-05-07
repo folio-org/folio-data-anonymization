@@ -34,6 +34,7 @@ public class ReplaceOIDPart extends JobPart {
     this.create()
       .transaction(configuration -> {
         DSLContext ctx = using(configuration);
+        Condition condition = this.condition.and(this.field.baseColumn(this.tenant()).isNotNull());
 
         // FDs from lo_open will auto-close at the end of the transaction, so we don't have to worry about cleaning them up
         // 0x00020000 = INV_WRITE, from postgres source code
@@ -42,7 +43,7 @@ public class ReplaceOIDPart extends JobPart {
             field("lo_truncate(lo_open({0}, 0x00020000), 0)", Integer.class, this.field.baseColumn(this.tenant()))
           )
           .from(this.field.table(this.tenant()))
-          .where(this.condition)
+          .where(condition)
           .execute();
 
         ctx
@@ -55,7 +56,7 @@ public class ReplaceOIDPart extends JobPart {
             )
           )
           .from(this.field.table(this.tenant()))
-          .where(this.condition)
+          .where(condition)
           .execute();
       });
   }
