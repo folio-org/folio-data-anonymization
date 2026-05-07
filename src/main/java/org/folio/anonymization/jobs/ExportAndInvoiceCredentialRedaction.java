@@ -3,6 +3,7 @@ package org.folio.anonymization.jobs;
 import java.util.List;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
+import org.folio.anonymization.domain.db.TableIDs;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
 import org.folio.anonymization.domain.job.JobConfigurationProperty;
@@ -61,22 +62,10 @@ public class ExportAndInvoiceCredentialRedaction implements JobFactory {
     new FieldReference("invoice_storage", "export_config_credentials", "jsonb", "$.password")
   );
 
-  private static final FieldReference EXPORT_CONFIG_ID = new FieldReference("data_export_spring", "export_config", "id");
-  private static final FieldReference JOB_ID = new FieldReference("data_export_spring", "job", "id");
-  private static final FieldReference BATCH_VOUCHER_EXPORT_CONFIGS_ID = new FieldReference(
-    "invoice_storage",
-    "batch_voucher_export_configs",
-    "id"
-  );
-  private static final FieldReference EXPORT_CONFIG_CREDENTIALS_ID = new FieldReference(
-    "invoice_storage",
-    "export_config_credentials",
-    "id"
-  );
-
   @Autowired
   private SharedExecutionContext context;
 
+  @SuppressWarnings("unchecked")
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
@@ -95,8 +84,8 @@ public class ExportAndInvoiceCredentialRedaction implements JobFactory {
                 .map(targetField ->
                   new BatchGenerationFromTablePart<>(
                     "Prepare to redact " + targetField.toString(),
-                    batchIdField(targetField),
-                    Object.class,
+                    TableIDs.getIdFor(targetField).getLeft(),
+                    (Class<Object>) TableIDs.getIdFor(targetField).getRight(),
                     JobConfig.BATCH_SIZE,
                     "redact",
                     (label, condition, start, end) ->
@@ -107,27 +96,5 @@ public class ExportAndInvoiceCredentialRedaction implements JobFactory {
             )
       )
     );
-  }
-
-  private static FieldReference batchIdField(FieldReference field) {
-    if ("data_export_spring".equals(field.schema())) {
-      if ("export_config".equals(field.table())) {
-        return EXPORT_CONFIG_ID;
-      }
-      if ("job".equals(field.table())) {
-        return JOB_ID;
-      }
-    }
-
-    if ("invoice_storage".equals(field.schema())) {
-      if ("batch_voucher_export_configs".equals(field.table())) {
-        return BATCH_VOUCHER_EXPORT_CONFIGS_ID;
-      }
-      if ("export_config_credentials".equals(field.table())) {
-        return EXPORT_CONFIG_CREDENTIALS_ID;
-      }
-    }
-
-    throw new IllegalArgumentException("No batch ID field configured for " + field);
   }
 }
