@@ -36,7 +36,7 @@ class URLRedactionTest {
       new ModuleTable("organizations_storage", "privileged_contacts", 100)
     );
     List<? extends JobPart> parts = getParts(job, "redact");
-    assertEquals(14, parts.size());
+    assertEquals(16, parts.size());
 
     assertHasLabel(parts, "agreements.document_attachment.da_url");
     assertHasLabel(parts, "agreements.package_description_url.pdu_url");
