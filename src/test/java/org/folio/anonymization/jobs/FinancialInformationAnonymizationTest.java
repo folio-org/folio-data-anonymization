@@ -40,12 +40,14 @@ class FinancialInformationAnonymizationTest {
     Job job = buildJobWithTables(
       1,
       new ModuleTable("organizations_storage", "banking_information", 100),
-      new ModuleTable("organizations_storage", "organizations", 100)
+      new ModuleTable("organizations_storage", "organizations", 100),
+      new ModuleTable("orders_storage", "po_line", 100)
     );
     List<? extends BatchGenerationFromTablePart<?>> parts = getParts(job, "enumerate-prep");
-    assertEquals(2, parts.size());
+    assertEquals(3, parts.size());
     assertHasLabel(parts, "$.bankAccountNumber");
     assertHasLabel(parts, "$.accounts[*].accountNo");
+    assertHasLabel(parts, "$.vendorDetail[*].vendorAcoount");
   }
 
   @Test
