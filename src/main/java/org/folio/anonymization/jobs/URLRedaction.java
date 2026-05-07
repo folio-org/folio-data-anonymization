@@ -28,6 +28,8 @@ public class URLRedaction implements JobFactory {
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.contacts.urls[*].value"),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts.urls[*].value"),
     new FieldReference("organizations_storage", "interfaces", "jsonb", "$.uri"),
+    new FieldReference("organizations_storage", "interfaces", "jsonb", "$.locallyStored"),
+    new FieldReference("organizations_storage", "interfaces", "jsonb", "$.onlineLocation"),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.urls[*].value"),
     new FieldReference("organizations_storage", "organizations", "jsonb", "$.agreements[*].referenceUrl"),
     new FieldReference("organizations_storage", "privileged_contacts", "jsonb", "$.urls[*].value")

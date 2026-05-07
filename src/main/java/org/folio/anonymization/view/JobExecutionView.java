@@ -284,7 +284,9 @@ public class JobExecutionView implements TUIView {
     TreeNodeJobReference ref = node.data();
 
     if (ref.part() != null) {
-      if (ref.part().getCompleted().get()) {
+      if (this.state.getSkippedParts().contains(ref.part())) {
+        return text(ref.part().getLabel()).red();
+      } else if (ref.part().getCompleted().get()) {
         return text(ref.part().getLabel()).green();
       } else if (ref.part().getExecuting().get()) {
         return text(ref.part().getLabel()).yellow();

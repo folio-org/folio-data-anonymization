@@ -7,7 +7,9 @@ import static org.jooq.impl.DSL.table;
 
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
+import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.db.ModuleTable;
+import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.util.DBUtils;
 import org.jooq.DSLContext;
 import org.jooq.Table;
@@ -45,6 +47,21 @@ public class UtilRepository {
         .selectOne()
         .from(name("information_schema", "tables"))
         .where(field("table_schema", String.class).eq(schemaName).and(field("table_name", String.class).eq(tableName)))
+        .fetchOne() !=
+      null
+    );
+  }
+
+  public boolean doesColumnExist(FieldReference field, Tenant tenant) {
+    return (
+      create
+        .selectOne()
+        .from(name("information_schema", "columns"))
+        .where(
+          field("table_schema", String.class).eq(DBUtils.getSchemaName(tenant.id(), field.schema())),
+          field("table_name", String.class).eq(field.table()),
+          field("column_name", String.class).eq(field.column())
+        )
         .fetchOne() !=
       null
     );
