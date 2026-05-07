@@ -1,4 +1,4 @@
-package org.folio.anonymization.util;
+package org.folio.anonymization.service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,21 +8,25 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import lombok.experimental.UtilityClass;
-import org.springframework.core.io.Resource;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
 
-@UtilityClass
+@Service
+@AllArgsConstructor
 public class ProfilePictureSeedCsvLoader {
+
+  private final SeedFileService seedFileService;
 
   public record SeedValue(byte[] profilePictureBlob, byte[] hmac) {}
 
-  public static List<SeedValue> load(Resource seedCsvResource) {
-    if (seedCsvResource == null) {
-      throw new IllegalArgumentException("Profile picture seed CSV resource is required.");
-    }
-
+  public List<SeedValue> load() {
     try (
-      BufferedReader reader = new BufferedReader(new InputStreamReader(seedCsvResource.getInputStream(), StandardCharsets.UTF_8))
+      BufferedReader reader = new BufferedReader(
+        new InputStreamReader(
+          seedFileService.getSeedFileAsInputStream("profile-picture-seed.csv"),
+          StandardCharsets.UTF_8
+        )
+      )
     ) {
       List<List<String>> rows = parseCsvRows(reader);
       if (rows.isEmpty()) {

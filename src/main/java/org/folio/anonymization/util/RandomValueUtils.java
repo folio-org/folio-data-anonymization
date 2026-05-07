@@ -9,6 +9,7 @@ import java.util.stream.IntStream;
 import lombok.experimental.UtilityClass;
 import net.datafaker.Faker;
 import org.apache.commons.codec.binary.Base32;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 
 @UtilityClass
@@ -33,6 +34,14 @@ public class RandomValueUtils {
   private static final Base32 B32 = new Base32();
 
   private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-z0-9]");
+
+  public static String encodeHexUppercase(byte[] bytes) {
+    return Hex.encodeHexString(bytes).toUpperCase();
+  }
+
+  public static String encodeBase64(byte[] bytes) {
+    return B64.encodeToString(bytes);
+  }
 
   public static Function<Integer, List<String>> codeLikeValueGenerator(int startSeed) {
     return qty ->
