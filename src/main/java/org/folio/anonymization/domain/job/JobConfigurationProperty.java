@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.Data;
+import lombok.With;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.db.ModuleTable;
 import org.folio.anonymization.domain.db.TableIDs;
@@ -17,6 +18,7 @@ import org.folio.anonymization.domain.db.TableReference;
 import org.folio.anonymization.util.NumberUtils;
 
 @Data
+@With
 public class JobConfigurationProperty {
 
   private final Object key;

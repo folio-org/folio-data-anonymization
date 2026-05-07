@@ -1,5 +1,9 @@
 package org.folio.anonymization.jobs;
 
+import static dev.tamboui.toolkit.Toolkit.row;
+import static dev.tamboui.toolkit.Toolkit.spacer;
+import static dev.tamboui.toolkit.Toolkit.text;
+
 import java.util.List;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Triple;
@@ -13,6 +17,7 @@ import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.RedactPart;
+import org.folio.anonymization.repository.UtilRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -104,7 +109,6 @@ public class FreeTextRedaction implements JobFactory {
     new FieldReference("orders_storage", "purchase_order", "jsonb", "$.notes[*]"),
     new FieldReference("orders_storage", "purchase_order", "jsonb", "$.ongoing.notes"),
     new FieldReference("orders_storage", "routing_list", "jsonb", "$.notes"),
-    new FieldReference("orders_storage", "routing_list", "jsonb", "$.notes"),
     new FieldReference("orders_storage", "titles", "jsonb", "$.receivingNote"),
     new FieldReference("organizations_storage", "banking_information", "jsonb", "$.notes"),
     new FieldReference("organizations_storage", "contacts", "jsonb", "$.notes"),
@@ -147,82 +151,85 @@ public class FreeTextRedaction implements JobFactory {
   );
 
   private static final List<FieldReference> LABELS_AND_DESCRIPTION_FIELDS = List.of(
-    new FieldReference("mod_agreements", "document_attachment", "da_name"),
-    new FieldReference("mod_agreements", "entitlement", "ent_description"),
-    new FieldReference("mod_agreements", "persistent_job", "job_name"),
-    new FieldReference("mod_agreements", "refdata_value", "rdv_label"),
-    new FieldReference("mod_agreements", "subscription_agreement", "sa_name"),
-    new FieldReference("mod_circulation_storage", "cancellation_reason", "jsonb", "$.description"),
-    new FieldReference("mod_circulation_storage", "cancellation_reason", "jsonb", "$.publicDescription"),
-    new FieldReference("mod_data_export", "job_profiles", "jsonb", "$.description"),
-    new FieldReference("mod_data_export", "mapping_profiles", "jsonb", "$.description"),
-    new FieldReference("mod_data_import", "default_file_extensions", "jsonb", "$.description"),
-    new FieldReference("mod_di_converter_storage", "action_profiles", "jsonb", "$.description"),
-    new FieldReference("mod_di_converter_storage", "job_profiles", "jsonb", "$.description"),
-    new FieldReference("mod_di_converter_storage", "mapping_profiles", "jsonb", "$.description"),
-    new FieldReference("mod_di_converter_storage", "match_profiles", "jsonb", "$.description"),
-    new FieldReference("mod_di_converter_storage", "profile_snapshots", "jsonb", "$.content.description"),
-    new FieldReference("mod_feesfines", "manual_block_templates", "jsonb", "$.blockTemplate.desc"),
-    new FieldReference("mod_feesfines", "manualblocks", "jsonb", "$.desc"),
-    new FieldReference("mod_feesfines", "waives", "jsonb", "$.description"),
-    new FieldReference("mod_kb_ebsco_java", "access_types", "name"),
-    new FieldReference("mod_kb_ebsco_java", "access_types", "description"),
-    new FieldReference("mod_kb_ebsco_java", "providers", "name"),
-    new FieldReference("mod_kb_ebsco_java", "kb_credentials", "name"),
-    new FieldReference("mod_kb_ebsco_java", "resources", "name"),
-    new FieldReference("mod_licenses", "document_attachment", "da_name"),
-    new FieldReference("mod_oa", "address", "add_name"),
-    new FieldReference("mod_oa", "charge", "ch_description"),
-    new FieldReference("mod_oa", "checklist_item_description", "clid_label"),
-    new FieldReference("mod_oa", "checklist_item_description", "clid_description"),
-    new FieldReference("mod_orders_storage", "routing_list", "jsonb", "$.names"),
-    new FieldReference("mod_orders_storage", "prefixes", "jsonb", "$.description"),
-    new FieldReference("mod_orders_storage", "prefixes", "jsonb", "$.name"),
-    new FieldReference("mod_orders_storage", "suffixes", "jsonb", "$.description"),
-    new FieldReference("mod_orders_storage", "suffixes", "jsonb", "$.name"),
-    new FieldReference("mod_orders_storage", "export_history", "jsonb", "$.jobName"),
-    new FieldReference("mod_orders_storage", "po_line", "jsonb", "$.description"),
-    new FieldReference("mod_orders_storage", "po_line", "jsonb", "$.poLineDescription"),
-    new FieldReference("mod_organizations_storage", "contacts", "jsonb", "$.emails[*].description"),
-    new FieldReference("mod_organizations_storage", "contacts", "jsonb", "$.urls[*].description"),
-    new FieldReference("mod_organizations_storage", "organizations", "jsonb", "$.contacts.emails[*].description"),
-    new FieldReference("mod_organizations_storage", "organizations", "jsonb", "$.contacts.urls[*].description"),
-    new FieldReference(
-      "mod_organizations_storage",
-      "organizations",
-      "jsonb",
-      "$.privilegedContacts.emails[*].description"
-    ),
-    new FieldReference(
-      "mod_organizations_storage",
-      "organizations",
-      "jsonb",
-      "$.privilegedContacts.urls[*].description"
-    ),
-    new FieldReference("mod_organizations_storage", "interface_credentials", "jsonb", "$.name"),
-    new FieldReference("mod_organizations_storage", "organizations", "jsonb", "$.description"),
-    new FieldReference("mod_organizations_storage", "organizations", "jsonb", "$.aliases[*].description"),
-    new FieldReference("mod_organizations_storage", "organizations", "jsonb", "$.urls[*].description"),
-    new FieldReference("mod_organizations_storage", "organizations", "jsonb", "$.emails[*].description"),
-    new FieldReference("mod_organizations_storage", "organizations", "jsonb", "$.agreements[*].name"),
-    new FieldReference("mod_organizations_storage", "organizations", "jsonb", "$.accounts[*].name"),
-    new FieldReference("mod_organizations_storage", "organizations", "jsonb", "$.accounts[*].description"),
-    new FieldReference("mod_organizations_storage", "organizations", "jsonb", "$.changelogs[*].description"),
-    new FieldReference("mod_organizations_storage", "privileged_contacts", "jsonb", "$.emails[*].description"),
-    new FieldReference("mod_organizations_storage", "privileged_contacts", "jsonb", "$.urls[*].description"),
-    new FieldReference("mod_roles_keycloak", "role", "description"),
-    new FieldReference("mod_service_interaction", "refdata_value", "rdv_label"),
-    new FieldReference("mod_service_interaction", "dashboard", "dashb_name"),
-    new FieldReference("mod_service_interaction", "dashboard", "dashb_description"),
-    new FieldReference("mod_service_interaction", "widget_instance", "wins_name"),
-    new FieldReference("mod_tags", "tags", "jsonb", "$.description"),
-    new FieldReference("mod_template_engine", "template", "jsonb", "$.description")
+    new FieldReference("agreements", "document_attachment", "da_name"),
+    new FieldReference("agreements", "entitlement", "ent_description"),
+    new FieldReference("agreements", "persistent_job", "job_name"),
+    new FieldReference("agreements", "refdata_value", "rdv_label"),
+    new FieldReference("agreements", "subscription_agreement", "sa_name"),
+    new FieldReference("circulation_storage", "cancellation_reason", "jsonb", "$.description"),
+    new FieldReference("circulation_storage", "cancellation_reason", "jsonb", "$.publicDescription"),
+    new FieldReference("data_export", "job_profiles", "jsonb", "$.description"),
+    new FieldReference("data_export", "mapping_profiles", "jsonb", "$.description"),
+    new FieldReference("data_import", "default_file_extensions", "jsonb", "$.description"),
+    new FieldReference("di_converter_storage", "action_profiles", "jsonb", "$.description"),
+    new FieldReference("di_converter_storage", "job_profiles", "jsonb", "$.description"),
+    new FieldReference("di_converter_storage", "mapping_profiles", "jsonb", "$.description"),
+    new FieldReference("di_converter_storage", "match_profiles", "jsonb", "$.description"),
+    new FieldReference("di_converter_storage", "profile_snapshots", "jsonb", "$.content.description"),
+    new FieldReference("feesfines", "manual_block_templates", "jsonb", "$.blockTemplate.desc"),
+    new FieldReference("feesfines", "manualblocks", "jsonb", "$.desc"),
+    new FieldReference("feesfines", "waives", "jsonb", "$.description"),
+    new FieldReference("kb_ebsco_java", "access_types", "name"),
+    new FieldReference("kb_ebsco_java", "access_types", "description"),
+    new FieldReference("kb_ebsco_java", "providers", "name"),
+    new FieldReference("kb_ebsco_java", "kb_credentials", "name"),
+    new FieldReference("kb_ebsco_java", "resources", "name"),
+    new FieldReference("licenses", "document_attachment", "da_name"),
+    new FieldReference("lists", "list_details", "name"),
+    new FieldReference("lists", "list_details", "description"),
+    new FieldReference("lists", "list_versions", "name"),
+    new FieldReference("lists", "list_versions", "description"),
+    new FieldReference("oa", "address", "add_name"),
+    new FieldReference("oa", "charge", "ch_description"),
+    new FieldReference("oa", "checklist_item_definition", "clid_label"),
+    new FieldReference("oa", "checklist_item_definition", "clid_description"),
+    new FieldReference("orders_storage", "routing_list", "jsonb", "$.names"),
+    new FieldReference("orders_storage", "prefixes", "jsonb", "$.description"),
+    new FieldReference("orders_storage", "prefixes", "jsonb", "$.name"),
+    new FieldReference("orders_storage", "suffixes", "jsonb", "$.description"),
+    new FieldReference("orders_storage", "suffixes", "jsonb", "$.name"),
+    new FieldReference("orders_storage", "export_history", "jsonb", "$.jobName"),
+    new FieldReference("orders_storage", "po_line", "jsonb", "$.description"),
+    new FieldReference("orders_storage", "po_line", "jsonb", "$.poLineDescription"),
+    new FieldReference("organizations_storage", "contacts", "jsonb", "$.emails[*].description"),
+    new FieldReference("organizations_storage", "contacts", "jsonb", "$.urls[*].description"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.contacts.emails[*].description"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.contacts.urls[*].description"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts.emails[*].description"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.privilegedContacts.urls[*].description"),
+    new FieldReference("organizations_storage", "interface_credentials", "jsonb", "$.name"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.description"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.aliases[*].description"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.urls[*].description"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.emails[*].description"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.agreements[*].name"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.accounts[*].name"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.accounts[*].description"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.changelogs[*].description"),
+    new FieldReference("organizations_storage", "privileged_contacts", "jsonb", "$.emails[*].description"),
+    new FieldReference("organizations_storage", "privileged_contacts", "jsonb", "$.urls[*].description"),
+    new FieldReference("roles_keycloak", "role", "description"),
+    new FieldReference("service_interaction", "refdata_value", "rdv_label"),
+    new FieldReference("service_interaction", "dashboard", "dashb_name"),
+    new FieldReference("service_interaction", "dashboard", "dashb_description"),
+    new FieldReference("service_interaction", "widget_instance", "wins_name"),
+    new FieldReference("tags", "tags", "jsonb", "$.description"),
+    new FieldReference("template_engine", "template", "jsonb", "$.description")
+  );
+
+  private static final FieldReference LISTS_USER_FRIENDLY_QUERY = new FieldReference(
+    "lists",
+    "list_details",
+    "user_friendly_query"
   );
 
   private static final List<FieldReference> MISC_FELDS = List.of(
     new FieldReference("agreements", "document_attachment", "da_location"),
+    new FieldReference("bulk_operations", "bulk_operation", "user_friendly_query"),
     new FieldReference("inn_reach", "transaction_local_hold", "patron_home_library"),
     new FieldReference("licenses", "document_attachment", "da_location"),
+    LISTS_USER_FRIENDLY_QUERY,
+    new FieldReference("lists", "list_versions", "user_friendly_query"), // removed at the same time, so both will exist or neither
     new FieldReference("oa", "party", "p_institution_level_2"),
     new FieldReference("oa", "correspondence", "prc_content"),
     new FieldReference("oa", "correspondence", "prc_correspondent"),
@@ -232,8 +239,15 @@ public class FreeTextRedaction implements JobFactory {
   @Autowired
   private SharedExecutionContext context;
 
+  @Autowired
+  private UtilRepository utilRepository;
+
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
+    boolean modListsUserFriendlyQueryExists = utilRepository.doesColumnExist(
+      LISTS_USER_FRIENDLY_QUERY,
+      tenant.tenant()
+    );
     return Stream
       .of(
         Triple.of(
@@ -258,7 +272,10 @@ public class FreeTextRedaction implements JobFactory {
           t.getMiddle(),
           tenant,
           context,
-          JobConfigurationProperty.fromFieldList(t.getRight(), tenant),
+          disableUserFriendlyQueryColumnsIfNeeded(
+            JobConfigurationProperty.fromFieldList(t.getRight(), tenant),
+            modListsUserFriendlyQueryExists
+          ),
           ctx ->
             new Job(ctx, List.of("prepare", "redact"))
               .scheduleParts(
@@ -280,5 +297,36 @@ public class FreeTextRedaction implements JobFactory {
         )
       )
       .toList();
+  }
+
+  private List<JobConfigurationProperty> disableUserFriendlyQueryColumnsIfNeeded(
+    List<JobConfigurationProperty> fromFieldList,
+    boolean doesColumnExist
+  ) {
+    if (!doesColumnExist) {
+      return fromFieldList
+        .stream()
+        .map(setting -> {
+          if (
+            setting.getKey() instanceof FieldReference field &&
+            field.schema().equals("lists") &&
+            field.column().equals("user_friendly_query")
+          ) {
+            return setting
+              .withDisabled(true)
+              .withLabel(
+                row(
+                  text("mod_"),
+                  text(field.toString()).crossedOut(),
+                  spacer(1),
+                  text("(not available for tenant)").italic()
+                )
+              );
+          }
+          return setting;
+        })
+        .toList();
+    }
+    return fromFieldList;
   }
 }
