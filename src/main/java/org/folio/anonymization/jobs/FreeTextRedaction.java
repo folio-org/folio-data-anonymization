@@ -26,6 +26,8 @@ public class FreeTextRedaction implements JobFactory {
 
   private static final List<FieldReference> NOTE_AND_COMMENT_FIELDS = List.of(
     new FieldReference("agreements", "agreement_relationship", "ar_note"),
+    new FieldReference("agreements", "custom_property", "note"),
+    new FieldReference("agreements", "custom_property", "public_note"),
     new FieldReference("agreements", "document_attachment", "da_note"),
     new FieldReference("agreements", "entitlement", "ent_note"),
     new FieldReference("agreements", "entitlement", "ent_description"),
@@ -88,6 +90,8 @@ public class FreeTextRedaction implements JobFactory {
     new FieldReference("inventory_storage", "audit_item", "jsonb", "$.record.circulationNotes[*].note"),
     new FieldReference("invoice_storage", "invoice_lines", "jsonb", "$.comment"),
     new FieldReference("invoice_storage", "invoices", "jsonb", "$.note"),
+    new FieldReference("licenses", "custom_property", "note"),
+    new FieldReference("licenses", "custom_property", "public_note"),
     new FieldReference("licenses", "document_attachment", "da_note"),
     new FieldReference("licenses", "license_org", "sao_note"),
     new FieldReference("licenses", "license_org_role", "lior_note"),
@@ -147,6 +151,8 @@ public class FreeTextRedaction implements JobFactory {
     new FieldReference("serials_management", "predicted_piece_set", "pps_note"),
     new FieldReference("serials_management", "enumeration_numeric_leveltmrf", "etltmrf_internal_note"),
     new FieldReference("serials_management", "serial_note", "sn_note"),
+    new FieldReference("service_interaction", "custom_property", "note"),
+    new FieldReference("service_interaction", "custom_property", "public_note"),
     new FieldReference("tlr", "ecs_tlr", "patron_comments")
   );
 

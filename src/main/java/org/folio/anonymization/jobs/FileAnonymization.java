@@ -3,15 +3,18 @@ package org.folio.anonymization.jobs;
 import static org.jooq.impl.DSL.field;
 
 import java.util.List;
+import java.util.stream.Stream;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
 import org.folio.anonymization.domain.job.JobConfigurationProperty;
 import org.folio.anonymization.domain.job.JobFactory;
+import org.folio.anonymization.domain.job.JobPart;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
+import org.folio.anonymization.jobs.templates.ReplaceOIDPart;
 import org.folio.anonymization.jobs.templates.ReplaceValueFromListPart;
 import org.folio.anonymization.service.SeedFileService;
 import org.folio.anonymization.util.RandomValueUtils;
@@ -29,6 +32,11 @@ public class FileAnonymization implements JobFactory {
     "documents",
     "document_data"
   );
+  private static final List<FieldReference> POSTGRES_LO_FIELDS = List.of(
+    new FieldReference("agreements", "file_object", "file_contents"),
+    new FieldReference("agreements", "comparison_job", "cj_file_contents"),
+    new FieldReference("licenses", "file_object", "file_contents")
+  );
 
   @Autowired
   private SharedExecutionContext context;
@@ -45,7 +53,12 @@ public class FileAnonymization implements JobFactory {
         tenant,
         context,
         JobConfigurationProperty.fromFieldList(
-          List.of(BATCH_PRINT_HEX_FIELD, ERM_USAGE_BYTES_FIELD, INVOICE_STORAGE_B64_FIELD),
+          Stream
+            .concat(
+              Stream.of(BATCH_PRINT_HEX_FIELD, ERM_USAGE_BYTES_FIELD, INVOICE_STORAGE_B64_FIELD),
+              POSTGRES_LO_FIELDS.stream()
+            )
+            .toList(),
           tenant
         ),
         ctx ->
@@ -70,7 +83,7 @@ public class FileAnonymization implements JobFactory {
     );
   }
 
-  private ReplaceValueFromListPart getPart(String label, FieldReference field, Condition condition) {
+  private JobPart getPart(String label, FieldReference field, Condition condition) {
     if (field.equals(BATCH_PRINT_HEX_FIELD)) {
       return new ReplaceValueFromListPart(
         label,
@@ -102,6 +115,8 @@ public class FileAnonymization implements JobFactory {
           .map(s -> "data:application/pdf;base64," + s)
           .toList()
       );
+    } else if (POSTGRES_LO_FIELDS.contains(field)) {
+      return new ReplaceOIDPart(label, field, condition, "Replaced during anonymization".getBytes());
     } else {
       throw new IllegalArgumentException("No replacements defined for field: " + field);
     }

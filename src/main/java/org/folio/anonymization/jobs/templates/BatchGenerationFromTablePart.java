@@ -4,6 +4,7 @@ import static org.jooq.impl.DSL.count;
 import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.orderBy;
 import static org.jooq.impl.DSL.rowNumber;
+import static org.jooq.impl.DSL.trueCondition;
 
 import java.util.List;
 import lombok.Getter;
@@ -32,6 +33,7 @@ public class BatchGenerationFromTablePart<T> extends JobPart {
   private final Class<T> tableIdType;
   private final int batchSize;
   private final String childrenJobStage;
+  private final Condition condition;
 
   @Getter // for testing
   private final BatchPartFactory factory;
@@ -42,7 +44,8 @@ public class BatchGenerationFromTablePart<T> extends JobPart {
     Class<T> tableIdType,
     int batchSize,
     String childrenJobStage,
-    BatchPartFactory factory
+    BatchPartFactory factory,
+    Condition condition
   ) {
     super(label);
     this.tableId = tableId;
@@ -50,6 +53,18 @@ public class BatchGenerationFromTablePart<T> extends JobPart {
     this.batchSize = batchSize;
     this.childrenJobStage = childrenJobStage;
     this.factory = factory;
+    this.condition = condition;
+  }
+
+  public BatchGenerationFromTablePart(
+    String label,
+    FieldReference tableId,
+    Class<T> tableIdType,
+    int batchSize,
+    String childrenJobStage,
+    BatchPartFactory factory
+  ) {
+    this(label, tableId, tableIdType, batchSize, childrenJobStage, factory, trueCondition());
   }
 
   @SuppressWarnings("unchecked")
@@ -98,7 +113,7 @@ public class BatchGenerationFromTablePart<T> extends JobPart {
     Field<Integer> rowNum = rowNumber().over(orderBy(field)).as("rn");
     Field<Integer> total = count().over().as("total");
 
-    Table<?> numbered = this.create().select(field.as("v"), rowNum, total).from(table).asTable("numbered");
+    Table<?> numbered = this.create().select(field.as("v"), rowNum, total).from(table).where(condition).asTable("numbered");
 
     @SuppressWarnings("unchecked")
     Field<T> v = (Field<T>) numbered.field("v");
