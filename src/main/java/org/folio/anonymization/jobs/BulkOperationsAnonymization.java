@@ -6,6 +6,7 @@ import static org.jooq.impl.DSL.inline;
 import java.util.List;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
+import org.folio.anonymization.domain.db.TableReference;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
 import org.folio.anonymization.domain.job.JobConfigurationProperty;
@@ -13,9 +14,9 @@ import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
+import org.folio.anonymization.jobs.templates.DeletePart;
 import org.folio.anonymization.jobs.templates.RedactPart;
 import org.folio.anonymization.jobs.templates.ReplaceValuePart;
-import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -64,11 +65,7 @@ public class BulkOperationsAnonymization implements JobFactory {
     "bulk_operation_rule_details",
     "updated_value"
   );
-  private static final FieldReference PROFILE_RULE_COLLECTION = new FieldReference(
-    "bulk_operations",
-    "profile",
-    "bulk_operation_rule_collection"
-  );
+  private static final TableReference PROFILE_TABLE = new TableReference("bulk_operations", "profile");
   private static final FieldReference PROFILE_ENTITY_TYPE = new FieldReference("bulk_operations", "profile", "entity_type");
 
   @Autowired
@@ -108,7 +105,7 @@ public class BulkOperationsAnonymization implements JobFactory {
       ),
       new JobConfigurationProperty(
         CLEAR_PROFILE_RULE_COLLECTION,
-        "Replace mod_bulk_operations.profile.bulk_operation_rule_collection with [] for USER entity_type",
+        "Delete mod_bulk_operations.profile rows for USER entity_type",
         true,
         !hasProfileTable
       )
@@ -117,7 +114,7 @@ public class BulkOperationsAnonymization implements JobFactory {
     return List.of(
       new JobBuilder(
         "Bulk operations anonymization",
-        "Redacts bulk operation free-text identifiers and clears user profile rule collections.",
+        "Redacts bulk operation free-text identifiers and deletes USER profile rows.",
         tenant,
         context,
         configuration,
@@ -216,17 +213,16 @@ public class BulkOperationsAnonymization implements JobFactory {
               "prepare",
               List.of(
                 new BatchGenerationFromTablePart<>(
-                  "Prepare to replace bulk_operations.profile.bulk_operation_rule_collection where entity_type=USER",
+                  "Prepare to delete bulk_operations.profile rows where entity_type=USER",
                   PROFILE_ID,
                   Object.class,
                   JobConfig.BATCH_SIZE,
                   "overwrite",
                   (label, condition, start, end) ->
-                    new ReplaceValuePart(
-                      "Replace bulk_operations.profile.bulk_operation_rule_collection where entity_type=USER on " + label,
-                      PROFILE_RULE_COLLECTION,
-                      condition.and(PROFILE_ENTITY_TYPE.baseColumn(ctx.tenant().tenant(), String.class).eq("USER")),
-                      field("'[]'::jsonb", JSONB.class)
+                    new DeletePart(
+                      "Delete bulk_operations.profile rows where entity_type=USER on " + label,
+                      PROFILE_TABLE,
+                      condition.and(PROFILE_ENTITY_TYPE.baseColumn(ctx.tenant().tenant(), String.class).eq("USER"))
                     )
                 )
               )
