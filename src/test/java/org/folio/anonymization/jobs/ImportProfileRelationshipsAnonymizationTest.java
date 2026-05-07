@@ -41,7 +41,7 @@ class ImportProfileRelationshipsAnonymizationTest {
 
     List<? extends BatchGenerationFromTablePart<?>> parts = prepareParts
       .stream()
-      .map(BatchGenerationFromTablePart.class::cast)
+      .map(part -> (BatchGenerationFromTablePart<?>) part)
       .toList();
     assertTrue(parts.stream().anyMatch(part -> part.getLabel().contains("$.parentProfiles")));
     assertTrue(parts.stream().anyMatch(part -> part.getLabel().contains("$.childProfiles")));
