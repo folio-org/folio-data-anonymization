@@ -18,27 +18,29 @@ import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
-class BulkOperationsAnonymizationTest {
+class BulkOperationsAndListsAnonymizationTest {
 
   private static final Tenant TEST_TENANT = new Tenant("test", "Test", "Test tenant", null, false);
 
   @Test
   void buildSchedulesAllPartsWhenTablesExist() throws Exception {
-    BulkOperationsAnonymization anonymization = createFactoryWithContext();
+    BulkOperationsAndListsAnonymization anonymization = createFactoryWithContext();
     TenantExecutionContext tenant = new TenantExecutionContext(
       TEST_TENANT,
       List.of(
         new ModuleTable("bulk_operations", "bulk_operation", 10),
         new ModuleTable("bulk_operations", "bulk_operation_execution_content", 10),
         new ModuleTable("bulk_operations", "bulk_operation_rule_details", 10),
-        new ModuleTable("bulk_operations", "profile", 10)
+        new ModuleTable("bulk_operations", "profile", 10),
+        new ModuleTable("lists", "list_details", 10),
+        new ModuleTable("lists", "list_versions", 10)
       )
     );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
     ConcurrentLinkedQueue<?> prepareParts = job.getParts().get("prepare");
     assertNotNull(prepareParts);
-    assertEquals(5, prepareParts.size());
+    assertEquals(7, prepareParts.size());
 
     List<JobPart> generatedOverwriteParts = prepareParts
       .stream()
@@ -47,8 +49,10 @@ class BulkOperationsAnonymizationTest {
       .map(factory -> factory.build("", trueCondition(), 0, 1))
       .toList();
 
-    assertEquals(5, generatedOverwriteParts.size());
-    assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("fql_query")));
+    assertEquals(7, generatedOverwriteParts.size());
+    assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("bulk_operation.fql_query")));
+    assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("list_details.fql_query")));
+    assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("list_versions.fql_query")));
     assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("identifier")));
     assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("initial_value")));
     assertTrue(generatedOverwriteParts.stream().anyMatch(part -> part.getLabel().contains("updated_value")));
@@ -57,7 +61,7 @@ class BulkOperationsAnonymizationTest {
 
   @Test
   void buildSkipsPartsWhenTablesMissing() throws Exception {
-    BulkOperationsAnonymization anonymization = createFactoryWithContext();
+    BulkOperationsAndListsAnonymization anonymization = createFactoryWithContext();
     TenantExecutionContext tenant = new TenantExecutionContext(
       TEST_TENANT,
       List.of(new ModuleTable("users", "outbox_event_log", 10))
@@ -67,9 +71,9 @@ class BulkOperationsAnonymizationTest {
     assertTrue(job.getParts().getOrDefault("prepare", new ConcurrentLinkedQueue<>()).isEmpty());
   }
 
-  private static BulkOperationsAnonymization createFactoryWithContext() throws Exception {
-    BulkOperationsAnonymization anonymization = new BulkOperationsAnonymization();
-    Field contextField = BulkOperationsAnonymization.class.getDeclaredField("context");
+  private static BulkOperationsAndListsAnonymization createFactoryWithContext() throws Exception {
+    BulkOperationsAndListsAnonymization anonymization = new BulkOperationsAndListsAnonymization();
+    Field contextField = BulkOperationsAndListsAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
     contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
     return anonymization;

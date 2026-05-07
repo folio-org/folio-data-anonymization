@@ -21,12 +21,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class BulkOperationsAnonymization implements JobFactory {
+public class BulkOperationsAndListsAnonymization implements JobFactory {
 
-  private static final String REDACTED = "redacted";
   private static final String REDACTED_FQL_QUERY = "{\"$and\":[]}";
 
   private static final String REPLACE_FQL_QUERY = "replace-fql-query";
+  private static final String REPLACE_LIST_DETAILS_FQL_QUERY = "replace-list-details-fql-query";
+  private static final String REPLACE_LIST_VERSIONS_FQL_QUERY = "replace-list-versions-fql-query";
   private static final String REPLACE_EXEC_CONTENT_IDENTIFIER = "replace-execution-content-identifier";
   private static final String REPLACE_RULE_DETAILS_INITIAL = "replace-rule-details-initial-value";
   private static final String REPLACE_RULE_DETAILS_UPDATED = "replace-rule-details-updated-value";
@@ -43,6 +44,8 @@ public class BulkOperationsAnonymization implements JobFactory {
     "bulk_operation_rule_details",
     "id"
   );
+  private static final FieldReference LIST_DETAILS_ID = new FieldReference("lists", "list_details", "id");
+  private static final FieldReference LIST_VERSIONS_ID = new FieldReference("lists", "list_versions", "id");
   private static final FieldReference PROFILE_ID = new FieldReference("bulk_operations", "profile", "id");
 
   private static final FieldReference BULK_OPERATION_FQL_QUERY = new FieldReference(
@@ -50,6 +53,8 @@ public class BulkOperationsAnonymization implements JobFactory {
     "bulk_operation",
     "fql_query"
   );
+  private static final FieldReference LIST_DETAILS_FQL_QUERY = new FieldReference("lists", "list_details", "fql_query");
+  private static final FieldReference LIST_VERSIONS_FQL_QUERY = new FieldReference("lists", "list_versions", "fql_query");
   private static final FieldReference BULK_OPERATION_EXEC_CONTENT_IDENTIFIER = new FieldReference(
     "bulk_operations",
     "bulk_operation_execution_content",
@@ -77,6 +82,8 @@ public class BulkOperationsAnonymization implements JobFactory {
     boolean hasBulkOperationExecutionContentTable = hasTable(tenant, "bulk_operations", "bulk_operation_execution_content");
     boolean hasBulkOperationRuleDetailsTable = hasTable(tenant, "bulk_operations", "bulk_operation_rule_details");
     boolean hasProfileTable = hasTable(tenant, "bulk_operations", "profile");
+    boolean hasListDetailsTable = hasTable(tenant, "lists", "list_details");
+    boolean hasListVersionsTable = hasTable(tenant, "lists", "list_versions");
 
     List<JobConfigurationProperty> configuration = List.of(
       new JobConfigurationProperty(
@@ -84,6 +91,18 @@ public class BulkOperationsAnonymization implements JobFactory {
         "Replace mod_bulk_operations.bulk_operation.fql_query with redacted constant",
         true,
         !hasBulkOperationTable
+      ),
+      new JobConfigurationProperty(
+        REPLACE_LIST_DETAILS_FQL_QUERY,
+        "Replace mod_lists.list_details.fql_query with redacted constant",
+        true,
+        !hasListDetailsTable
+      ),
+      new JobConfigurationProperty(
+        REPLACE_LIST_VERSIONS_FQL_QUERY,
+        "Replace mod_lists.list_versions.fql_query with redacted constant",
+        true,
+        !hasListVersionsTable
       ),
       new JobConfigurationProperty(
         REPLACE_EXEC_CONTENT_IDENTIFIER,
@@ -113,8 +132,8 @@ public class BulkOperationsAnonymization implements JobFactory {
 
     return List.of(
       new JobBuilder(
-        "Bulk operations anonymization",
-        "Redacts bulk operation free-text identifiers and deletes USER profile rows.",
+        "Bulk operations and lists anonymization",
+        "Redacts bulk operation/list query fields and identifiers, and deletes USER profile rows.",
         tenant,
         context,
         configuration,
@@ -135,6 +154,50 @@ public class BulkOperationsAnonymization implements JobFactory {
                     new ReplaceValuePart(
                       "Replace bulk_operations.bulk_operation.fql_query on " + label,
                       BULK_OPERATION_FQL_QUERY,
+                      condition,
+                      field("cast({0} as text)", inline(REDACTED_FQL_QUERY))
+                    )
+                )
+              )
+            );
+          }
+
+          if (JobConfigurationProperty.isOn(ctx.settings(), REPLACE_LIST_DETAILS_FQL_QUERY)) {
+            job.scheduleParts(
+              "prepare",
+              List.of(
+                new BatchGenerationFromTablePart<>(
+                  "Prepare to replace lists.list_details.fql_query",
+                  LIST_DETAILS_ID,
+                  Object.class,
+                  JobConfig.BATCH_SIZE,
+                  "overwrite",
+                  (label, condition, start, end) ->
+                    new ReplaceValuePart(
+                      "Replace lists.list_details.fql_query on " + label,
+                      LIST_DETAILS_FQL_QUERY,
+                      condition,
+                      field("cast({0} as text)", inline(REDACTED_FQL_QUERY))
+                    )
+                )
+              )
+            );
+          }
+
+          if (JobConfigurationProperty.isOn(ctx.settings(), REPLACE_LIST_VERSIONS_FQL_QUERY)) {
+            job.scheduleParts(
+              "prepare",
+              List.of(
+                new BatchGenerationFromTablePart<>(
+                  "Prepare to replace lists.list_versions.fql_query",
+                  LIST_VERSIONS_ID,
+                  Object.class,
+                  JobConfig.BATCH_SIZE,
+                  "overwrite",
+                  (label, condition, start, end) ->
+                    new ReplaceValuePart(
+                      "Replace lists.list_versions.fql_query on " + label,
+                      LIST_VERSIONS_FQL_QUERY,
                       condition,
                       field("cast({0} as text)", inline(REDACTED_FQL_QUERY))
                     )
@@ -175,11 +238,10 @@ public class BulkOperationsAnonymization implements JobFactory {
                   JobConfig.BATCH_SIZE,
                   "overwrite",
                   (label, condition, start, end) ->
-                    new ReplaceValuePart(
+                    new RedactPart(
                       "Replace bulk_operations.bulk_operation_rule_details.initial_value on " + label,
                       BULK_OPERATION_RULE_DETAILS_INITIAL_VALUE,
-                      condition,
-                      field("cast({0} as text)", inline(REDACTED))
+                      condition
                     )
                 )
               )
@@ -197,11 +259,10 @@ public class BulkOperationsAnonymization implements JobFactory {
                   JobConfig.BATCH_SIZE,
                   "overwrite",
                   (label, condition, start, end) ->
-                    new ReplaceValuePart(
+                    new RedactPart(
                       "Replace bulk_operations.bulk_operation_rule_details.updated_value on " + label,
                       BULK_OPERATION_RULE_DETAILS_UPDATED_VALUE,
-                      condition,
-                      field("cast({0} as text)", inline(REDACTED))
+                      condition
                     )
                 )
               )
