@@ -92,8 +92,7 @@ public class FieldReference {
     // splits nested arrays into separate groups, e.g. $.foo.bar[*].baz becomes [[foo,bar],[baz]]
     List<List<String>> parts = Arrays
       .stream(Strings.CS.removeStart(Strings.CS.removeStart(jsonPath, "$."), "$[*].").split("\\[\\*\\]\\."))
-      .map(part -> part.split("\\."))
-      .map(Arrays::asList)
+      .map(part -> Arrays.stream(part.split("\\.(?![^\\[]*\\])")).map(p -> p.replaceAll("^\\['(.*)']$", "$1")).toList())
       .toList();
 
     List<Object> bindings = new ArrayList<>();
