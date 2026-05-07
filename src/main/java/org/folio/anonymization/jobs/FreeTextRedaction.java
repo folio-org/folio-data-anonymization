@@ -213,7 +213,6 @@ public class FreeTextRedaction implements JobFactory {
     new FieldReference("service_interaction", "dashboard", "dashb_name"),
     new FieldReference("service_interaction", "dashboard", "dashb_description"),
     new FieldReference("service_interaction", "widget_instance", "wins_name"),
-    new FieldReference("tags", "tags", "jsonb", "$.description"),
     new FieldReference("template_engine", "template", "jsonb", "$.description")
   );
 
