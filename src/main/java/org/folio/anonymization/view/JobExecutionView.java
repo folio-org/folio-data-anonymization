@@ -216,7 +216,7 @@ public class JobExecutionView implements TUIView {
       list.onKeyEvent(e -> {
         if (e.isSelect()) {
           if (list.selected() == 0) {
-            part.getJob().executePart(part);
+            part.getJob().executePart(part, true);
           } else {
             part.getJob().skipPart(part);
             this.state.reportSkippedPart(part);

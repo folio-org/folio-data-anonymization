@@ -65,7 +65,7 @@ public final class Job implements Comparable<Job> {
       .stream()
       .forEach(part -> {
         part.setStage(stage);
-        this.executePart(part);
+        this.executePart(part, false);
       });
 
     // in case there are no parts in the stage
@@ -73,12 +73,14 @@ public final class Job implements Comparable<Job> {
   }
 
   // declared as public to permit higher level interface to "re-execute" parts if needed
-  public void executePart(JobPart part) {
+  public void executePart(JobPart part, boolean isRetry) {
     part.setJob(this);
     CompletableFuture<JobPart> future = CompletableFuture.supplyAsync(part, this.context.executionContext().executor());
 
-    if (this.currentlyExecuting.put(part.getLabel(), Pair.of(part, future)) != null) {
-      log.throwing(
+    Pair<JobPart, CompletableFuture<JobPart>> original =
+      this.currentlyExecuting.put(part.getLabel(), Pair.of(part, future));
+    if (!isRetry && original != null) {
+      throw log.throwing(
         new IllegalStateException("Job '%s': part '%s' was found more than once".formatted(name, part.getLabel()))
       );
     }
