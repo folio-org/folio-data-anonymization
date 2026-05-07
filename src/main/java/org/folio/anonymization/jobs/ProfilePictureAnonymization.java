@@ -6,6 +6,7 @@ import static org.jooq.impl.DSL.inline;
 
 import java.util.List;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
+@AllArgsConstructor
 public class ProfilePictureAnonymization implements JobFactory {
 
   private static final String PROFILE_PICTURE_ENCRYPTION_KEY = "anonymizedanonymizedanonymizedan";
