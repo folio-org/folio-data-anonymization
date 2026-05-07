@@ -46,7 +46,8 @@ public class FinancialInformationAnonymization implements JobFactory {
 
   private static final List<FieldReference> GENERATED_FIELDS = List.of(
     new FieldReference("organizations_storage", "banking_information", "jsonb", "$.bankAccountNumber"),
-    new FieldReference("organizations_storage", "organizations", "jsonb", "$.accounts[*].accountNo")
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.accounts[*].accountNo"),
+    new FieldReference("orders_storage", "po_line", "jsonb", "$.vendorDetail[*].vendorAcoount")
   );
 
   private static final List<FieldReference> ROUTING_NUMBER_FIELDS = List.of(
