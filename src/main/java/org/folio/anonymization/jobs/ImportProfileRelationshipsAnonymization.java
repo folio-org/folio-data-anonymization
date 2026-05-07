@@ -31,7 +31,13 @@ public class ImportProfileRelationshipsAnonymization implements JobFactory {
     new FieldReference("di_converter_storage", "match_profiles", "jsonb", "$.childProfiles"),
     new FieldReference("di_converter_storage", "profile_snapshots", "jsonb", "$.parentProfiles"),
     new FieldReference("di_converter_storage", "profile_snapshots", "jsonb", "$.childProfiles"),
-    new FieldReference("di_converter_storage", "profile_snapshots", "jsonb", "$.childSnapshotWrappers")
+    new FieldReference("di_converter_storage", "profile_snapshots", "jsonb", "$.childSnapshotWrappers"),
+    new FieldReference(
+      "source_record_manager",
+      "job_execution",
+      "job_profile_snapshot_wrapper",
+      "$.childSnapshotWrappers"
+    )
   );
 
   @Autowired

@@ -30,14 +30,15 @@ class ImportProfileRelationshipsAnonymizationTest {
         new ModuleTable("di_converter_storage", "job_profiles", 10),
         new ModuleTable("di_converter_storage", "mapping_profiles", 10),
         new ModuleTable("di_converter_storage", "match_profiles", 10),
-        new ModuleTable("di_converter_storage", "profile_snapshots", 10)
+        new ModuleTable("di_converter_storage", "profile_snapshots", 10),
+        new ModuleTable("source_record_manager", "job_execution", 10)
       )
     );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
     ConcurrentLinkedQueue<?> prepareParts = job.getParts().get("prepare");
     assertNotNull(prepareParts);
-    assertEquals(11, prepareParts.size());
+    assertEquals(12, prepareParts.size());
 
     List<? extends BatchGenerationFromTablePart<?>> parts = prepareParts
       .stream()
