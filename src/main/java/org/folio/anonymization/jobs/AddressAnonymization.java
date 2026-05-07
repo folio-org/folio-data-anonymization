@@ -76,6 +76,7 @@ public class AddressAnonymization implements JobFactory {
     new FieldReference("organizations_storage", "privileged_contacts", "jsonb", "$.addresses[*].stateRegion"),
     new FieldReference("organizations_storage", "privileged_contacts", "jsonb", "$.addresses[*].zipCode"),
     new FieldReference("organizations_storage", "privileged_contacts", "jsonb", "$.addresses[*].country"),
+    new FieldReference("settings", "tenant_addresses", "address"),
     new FieldReference("users", "staging_users", "jsonb", "$.addressInfo.addressLine0"),
     new FieldReference("users", "staging_users", "jsonb", "$.addressInfo.addressLine1"),
     new FieldReference("users", "staging_users", "jsonb", "$.addressInfo.city"),
@@ -130,6 +131,10 @@ public class AddressAnonymization implements JobFactory {
   }
 
   private static List<String> replacementValues(FieldReference fieldReference, int size) {
+    if (fieldReference.schema().equals("settings")) {
+      return RandomValueUtils.fullAddresses(size);
+    }
+
     String path = fieldReference.jsonPath();
     if (path != null) {
       if (path.endsWith(".addressLine1") || path.endsWith(".addressLine0")) {
