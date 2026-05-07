@@ -113,6 +113,10 @@ public class RandomValueUtils {
       .toList();
   }
 
+  public static List<String> fullAddresses(int qty) {
+    return IntStream.range(0, qty).mapToObj(i -> FAKER.get().address().fullAddress()).toList();
+  }
+
   public static List<String> streetAddresses(int qty) {
     return IntStream.range(0, qty).mapToObj(i -> FAKER.get().address().streetAddress()).toList();
   }

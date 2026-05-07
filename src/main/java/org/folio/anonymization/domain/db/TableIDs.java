@@ -61,6 +61,7 @@ public class TableIDs {
     Pair.of(new FieldReference("circulation_storage", "cancellation_reason", "id"), UUID.class),
     Pair.of(new FieldReference("circulation_storage", "print_events", "id"), UUID.class),
     Pair.of(new FieldReference("circulation_storage", "request", "id"), UUID.class),
+    Pair.of(new FieldReference("configuration", "config_data", "id"), UUID.class),
     Pair.of(new FieldReference("consortia_keycloak", "inactive_user_tenant", "id"), UUID.class),
     Pair.of(new FieldReference("consortia_keycloak", "user_tenant", "id"), UUID.class),
     Pair.of(new FieldReference("copycat", "profile", "id"), UUID.class),
@@ -222,6 +223,7 @@ public class TableIDs {
       ),
       Integer.class
     ),
+    Pair.of(new FieldReference("settings", "tenant_addresses", "id"), UUID.class),
     Pair.of(new FieldReference("source_record_manager", "job_execution", "id"), UUID.class),
     Pair.of(new FieldReference("tags", "tags", "id"), UUID.class),
     Pair.of(new FieldReference("template_engine", "template", "id"), UUID.class),
