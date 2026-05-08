@@ -16,7 +16,7 @@ import org.jooq.Table;
  * - Insertion order will be based on the destination table column definitions
  *   and mapped 1:1 with the provided fields.
  * - Conflicts will be handled with the 'DO NOTHING' strategy.
-*/
+ */
 public class InsertIntoTablePart extends JobPart {
 
   private final Table<?> destinationTable;
