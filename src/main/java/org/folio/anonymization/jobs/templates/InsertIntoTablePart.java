@@ -10,12 +10,12 @@ import org.jooq.Select;
 import org.jooq.Table;
 
 /**
-* Job part to insert data into a table. Note the following caveats:
-* - This table for insertion MUST be present in the `public` schema and
-*   SHOULD have a tenant name prepended, if applicable
-* - Insertion order will be based on the destination table column definitions
-*   and mapped 1:1 with the provided fields.
-* - Conflicts will be handled with the 'DO NOTHING' strategy.
+ * Job part to insert data into a table. Note the following caveats:
+ * - This table for insertion MUST be present in the `public` schema and
+ *   SHOULD have a tenant name prepended, if applicable
+ * - Insertion order will be based on the destination table column definitions
+ *   and mapped 1:1 with the provided fields.
+ * - Conflicts will be handled with the 'DO NOTHING' strategy.
 */
 public class InsertIntoTablePart extends JobPart {
 
