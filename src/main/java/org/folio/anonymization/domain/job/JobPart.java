@@ -56,7 +56,7 @@ public abstract class JobPart implements Supplier<JobPart> {
     try {
       RETRY_TEMPLATE.execute(() -> {
         try {
-          // this.execute();
+          this.execute();
           this.completed.set(true);
         } catch (PessimisticLockingFailureException e) {
           log.warn("Job {} stage {} part {}: lock or connection failure. Retrying...", job.getName(), stage, label);
