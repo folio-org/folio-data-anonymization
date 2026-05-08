@@ -2,22 +2,20 @@ spring:
   application:
     name: data-anon
   datasource:
-    username: ${DB_USERNAME:folio}
-    password: ${DB_PASSWORD:postgres_password_123!}
-    url: jdbc:postgresql://${DB_HOST:rds-folio-etesting-data-anonymization.cluster-cdxr1geeeqbb.us-west-2.rds.amazonaws.com}:${DB_PORT:5432}/${DB_DATABASE:folio}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+    # session_replication_role=replica disables triggers/fk checks/etc for this session, speeding
+    # things and preventing some modules from attempting to update modification timestamps/etc
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_DATABASE:okapi_modules}?options=-c%20session_replication_role=replica
+
+    hikari:
+      # these should be kept in line with the number of threads (JobConfig) and
+      # the maximum amount of time we're currently blocking for DB queries (JooqConfig)
+      minimum-idle: 5
+      maximum-pool-size: 100
+      connection-timeout: 120000 # two minutes in MS
   sql:
     init:
-      # to boot up application despite of any DB connection issues
+      # to boot up application despite any DB connection issues
       continue-on-error: false
-  jpa:
-    hibernate:
-      ddl-auto: none
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
-
-logging:
-  level:
-    org:
-      jooq: DEBUG
