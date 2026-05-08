@@ -61,7 +61,9 @@ public class TableTruncation implements JobFactory {
     new TableReference("authtoken", "job"),
     new TableReference("authtoken", "refresh_tokens"),
     new TableReference("erm_usage", "aggregator_settings"),
-    new TableReference("kb_ebsco_java", "usage_consolidation_credentials")
+    new TableReference("kb_ebsco_java", "usage_consolidation_credentials"),
+    new TableReference("remote_storage", "system_user_parameters"), // not used
+    new TableReference("service_interaction", "db_key_pair") // automatically regenerated
   );
 
   @Autowired

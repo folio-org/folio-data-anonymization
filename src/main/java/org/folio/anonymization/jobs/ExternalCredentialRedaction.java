@@ -16,9 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ExportAndInvoiceCredentialRedaction implements JobFactory {
+public class ExternalCredentialRedaction implements JobFactory {
 
   private static final List<FieldReference> FIELDS = List.of(
+    new FieldReference("copycat", "profile", "jsonb", "$.authentication"),
     new FieldReference(
       "data_export_spring",
       "export_config",
@@ -55,11 +56,39 @@ public class ExportAndInvoiceCredentialRedaction implements JobFactory {
       "export_type_specific_parameters",
       "$.vendorEdiOrdersExportConfig.ediFtp.password"
     ),
+    new FieldReference("email", "settings", "jsonb", "$.host"),
+    new FieldReference("email", "settings", "jsonb", "$.username"),
+    new FieldReference("email", "settings", "jsonb", "$.password"),
+    new FieldReference("email", "settings", "jsonb", "$.from"),
+    new FieldReference("email", "settings", "jsonb", "$.value.host"),
+    new FieldReference("email", "settings", "jsonb", "$.value.username"),
+    new FieldReference("email", "settings", "jsonb", "$.value.password"),
+    new FieldReference("email", "settings", "jsonb", "$.value.from"),
+    new FieldReference("email", "smtp_configuration", "jsonb", "$.host"),
+    new FieldReference("email", "smtp_configuration", "jsonb", "$.username"),
+    new FieldReference("email", "smtp_configuration", "jsonb", "$.password"),
+    new FieldReference("email", "smtp_configuration", "jsonb", "$.from"),
+    new FieldReference("email", "smtp_configuration", "jsonb", "$.value.host"),
+    new FieldReference("email", "smtp_configuration", "jsonb", "$.value.username"),
+    new FieldReference("email", "smtp_configuration", "jsonb", "$.value.password"),
+    new FieldReference("email", "smtp_configuration", "jsonb", "$.value.from"),
+    new FieldReference("erm_usage", "usage_data_providers", "jsonb", "$.sushiCredentials.apiKey"),
+    new FieldReference("inn_reach", "central_server_credentials", "central_server_key"),
+    new FieldReference("inn_reach", "central_server_credentials", "central_server_secret"),
+    new FieldReference("inn_reach", "local_server_credentials", "local_server_key"),
+    new FieldReference("inn_reach", "local_server_credentials", "local_server_secret"),
     new FieldReference("invoice_storage", "batch_voucher_export_configs", "jsonb", "$.uploadURI"),
     new FieldReference("invoice_storage", "batch_voucher_export_configs", "jsonb", "$.ftpFormat"),
     new FieldReference("invoice_storage", "batch_voucher_export_configs", "jsonb", "$.ftpPort"),
     new FieldReference("invoice_storage", "export_config_credentials", "jsonb", "$.username"),
-    new FieldReference("invoice_storage", "export_config_credentials", "jsonb", "$.password")
+    new FieldReference("invoice_storage", "export_config_credentials", "jsonb", "$.password"),
+    new FieldReference("kb_ebsco_java", "kb_credentials", "api_key"),
+    new FieldReference("organizations_storage", "interfaces", "jsonb", "$.username"),
+    new FieldReference("organizations_storage", "interfaces", "jsonb", "$.password"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.edi.ediFtp.serverAddress"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.edi.ediFtp.username"),
+    new FieldReference("organizations_storage", "organizations", "jsonb", "$.edi.ediFtp.password"),
+    new FieldReference("remote_storage", "remote_storage_configurations", "api_key")
   );
 
   @Autowired
@@ -70,8 +99,8 @@ public class ExportAndInvoiceCredentialRedaction implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
-        "Export and invoice credential redaction",
-        "Redacts FTP endpoint and credential fields in data export spring and invoice storage tables.",
+        "External credential redaction",
+        "Redacts credentials for external services (FTP, INN-Reach, SMTP, Z39.50, etc.)",
         tenant,
         context,
         JobConfigurationProperty.fromFieldList(FIELDS, tenant),
