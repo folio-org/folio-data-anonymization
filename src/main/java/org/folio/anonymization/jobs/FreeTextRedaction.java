@@ -149,7 +149,7 @@ public class FreeTextRedaction implements JobFactory {
     new FieldReference("search", "item", "json", "$.administrativeNotes[*]"),
     new FieldReference("search", "item", "json", "$.circulationNotes[*].note"),
     new FieldReference("serials_management", "predicted_piece_set", "pps_note"),
-    new FieldReference("serials_management", "enumeration_numeric_leveltmrf", "etltmrf_internal_note"),
+    new FieldReference("serials_management", "enumeration_numeric_leveltmrf", "enltmrf_internal_note"),
     new FieldReference("serials_management", "serial_note", "sn_note"),
     new FieldReference("service_interaction", "custom_property", "note"),
     new FieldReference("service_interaction", "custom_property", "public_note"),
@@ -211,8 +211,8 @@ public class FreeTextRedaction implements JobFactory {
     new FieldReference("organizations_storage", "privileged_contacts", "jsonb", "$.urls[*].description"),
     new FieldReference("roles_keycloak", "role", "description"),
     new FieldReference("service_interaction", "refdata_value", "rdv_label"),
-    new FieldReference("service_interaction", "dashboard", "dashb_name"),
-    new FieldReference("service_interaction", "dashboard", "dashb_description"),
+    new FieldReference("service_interaction", "dashboard", "dshb_name"),
+    new FieldReference("service_interaction", "dashboard", "dshb_description"),
     new FieldReference("service_interaction", "widget_instance", "wins_name"),
     new FieldReference("template_engine", "template", "jsonb", "$.description")
   );

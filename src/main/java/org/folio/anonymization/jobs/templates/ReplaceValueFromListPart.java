@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.db.TableIDs;
 import org.folio.anonymization.domain.db.TableReference;
@@ -42,9 +44,8 @@ import org.jooq.Table;
  * - This does not guarantee that each insertion will present a unique value (nested arrays may cause replacements > values)
  * - This does not guarantee that each generated value will end up in the final result (not applicable rows may cause replacements < values)
  */
+@Log4j2
 public class ReplaceValueFromListPart extends JobPart {
-
-  private static final int INSERT_BATCH_SIZE = 100;
 
   private final List<FieldReference> fields;
   private final Condition condition;
@@ -131,8 +132,8 @@ public class ReplaceValueFromListPart extends JobPart {
           .map(Query.class::cast)
           .toList();
 
-        for (int i = 0; i < queries.size(); i += INSERT_BATCH_SIZE) {
-          int end = Math.min(i + INSERT_BATCH_SIZE, queries.size());
+        for (int i = 0; i < queries.size(); i += JobConfig.INSERT_BATCH_SIZE) {
+          int end = Math.min(i + JobConfig.INSERT_BATCH_SIZE, queries.size());
           List<Query> batch = queries.subList(i, end);
           ctx.batch(batch).execute();
         }

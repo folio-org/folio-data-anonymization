@@ -11,6 +11,7 @@ import static dev.tamboui.toolkit.Toolkit.text;
 import static dev.tamboui.toolkit.Toolkit.tree;
 import static dev.tamboui.toolkit.Toolkit.waveText;
 
+import com.zaxxer.hikari.HikariDataSource;
 import dev.tamboui.layout.Constraint;
 import dev.tamboui.layout.Flex;
 import dev.tamboui.style.Color;
@@ -32,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.Pair;
@@ -45,6 +47,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class JobExecutionView implements TUIView {
 
+  private final HikariDataSource dataSource;
+  private final ThreadPoolExecutor executor;
   private final TUIState state;
 
   private boolean initialized = false;
@@ -178,6 +182,28 @@ public class JobExecutionView implements TUIView {
           if (k.isCharIgnoreCase('h')) {
             this.showCompletedJobs = !this.showCompletedJobs;
             this.initialize(true);
+            return EventResult.HANDLED;
+          }
+          if (k.isCharIgnoreCase('<')) {
+            int newSize = Math.max(1, this.executor.getMaximumPoolSize() - 10);
+            this.executor.setCorePoolSize(newSize);
+            this.executor.setMaximumPoolSize(newSize);
+            return EventResult.HANDLED;
+          }
+          if (k.isCharIgnoreCase('>')) {
+            int newSize = this.executor.getMaximumPoolSize() + 10;
+            this.executor.setMaximumPoolSize(newSize);
+            this.executor.setCorePoolSize(newSize);
+            return EventResult.HANDLED;
+          }
+          if (k.isCharIgnoreCase('{')) {
+            int newSize = Math.max(1, this.dataSource.getMaximumPoolSize() - 10);
+            this.dataSource.setMaximumPoolSize(newSize);
+            return EventResult.HANDLED;
+          }
+          if (k.isCharIgnoreCase('}')) {
+            int newSize = this.dataSource.getMaximumPoolSize() + 10;
+            this.dataSource.setMaximumPoolSize(newSize);
             return EventResult.HANDLED;
           }
           return EventResult.UNHANDLED;
@@ -409,6 +435,22 @@ public class JobExecutionView implements TUIView {
 
       hotkeys.add(text("[↑↓] Navigate").bold());
       hotkeys.add(text("[→←] Expand/collapse").bold());
+      hotkeys.add(
+        row(
+          text("[<>] Thread pool size ("),
+          text(String.valueOf(this.executor.getMaximumPoolSize())).magenta(),
+          text(")")
+        )
+          .bold()
+      );
+      hotkeys.add(
+        row(
+          text("[{}] DB pool size ("),
+          text(String.valueOf(this.dataSource.getMaximumPoolSize())).magenta(),
+          text(")")
+        )
+          .bold()
+      );
     }
 
     return hotkeys;

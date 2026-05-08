@@ -1,7 +1,8 @@
 package org.folio.anonymization.config;
 
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.jooq.DSLContext;
@@ -16,14 +17,12 @@ public class JobConfig {
   public static final int INSERT_BATCH_SIZE = 5_000;
 
   @Bean
-  public Executor executor() {
-    // TODO: make this size configurable, maybe?
-    // and/or based on postgres config `max_connections`?
-    return Executors.newFixedThreadPool(100);
+  public ThreadPoolExecutor executor() {
+    return new ThreadPoolExecutor(100, 100, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
   }
 
   @Bean
-  public SharedExecutionContext sharedExecutionContext(DSLContext create, Executor executor) {
+  public SharedExecutionContext sharedExecutionContext(DSLContext create, ThreadPoolExecutor executor) {
     return new SharedExecutionContext(create, executor);
   }
 }
