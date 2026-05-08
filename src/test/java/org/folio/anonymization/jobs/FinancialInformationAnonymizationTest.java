@@ -47,7 +47,7 @@ class FinancialInformationAnonymizationTest {
     assertEquals(3, parts.size());
     assertHasLabel(parts, "$.bankAccountNumber");
     assertHasLabel(parts, "$.accounts[*].accountNo");
-    assertHasLabel(parts, "$.vendorDetail[*].vendorAcoount");
+    assertHasLabel(parts, "$.vendorDetail.vendorAccount");
   }
 
   @Test
