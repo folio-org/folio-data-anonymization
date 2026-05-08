@@ -6,7 +6,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.Pair;
@@ -29,9 +28,6 @@ public final class Job implements Comparable<Job> {
    * one early part to scan a database may add a list of result stages).
    */
   private final ConcurrentMap<String, ConcurrentLinkedQueue<JobPart>> parts = new ConcurrentHashMap<>();
-
-  /** State shared across job parts; recommended for inter-stage communication. */
-  private final ConcurrentMap<String, AtomicReference<Object>> state = new ConcurrentHashMap<>();
 
   private final ConcurrentMap<String, Pair<JobPart, CompletableFuture<JobPart>>> currentlyExecuting = new ConcurrentHashMap<>();
 
