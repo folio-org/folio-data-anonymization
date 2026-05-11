@@ -33,19 +33,12 @@
 
 	<distributionManagement>
 		<repository>
-			<id>folio-nexus</id>
-			<name>FOLIO Release Repository</name>
-			<url>https://repository.folio.org/repository/maven-releases/</url>
+			<id>github</id>
+			<name>GitHub Packages</name>
+			<url>https://maven.pkg.github.com/folio-org/folio-data-anonymization</url>
 			<uniqueVersion>false</uniqueVersion>
 			<layout>default</layout>
 		</repository>
-		<snapshotRepository>
-			<id>folio-nexus</id>
-			<name>FOLIO Snapshot Repository</name>
-			<uniqueVersion>true</uniqueVersion>
-			<url>https://repository.folio.org/repository/maven-snapshots/</url>
-			<layout>default</layout>
-		</snapshotRepository>
 	</distributionManagement>
 
 	<properties>
@@ -155,6 +148,11 @@
 	</dependencyManagement>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
 		<plugins>
 			<!-- TODO: remove this after our changes are merged; see lib/README.md -->
 			<plugin>

@@ -354,6 +354,10 @@ public class JobExecutionView implements TUIView {
     if (ref.job().isCompleted()) {
       return text(ref.job().getName()).green();
     } else {
+      String currentStage = ref
+        .job()
+        .getStages()
+        .get(Math.min(ref.job().getCurrentStageIndex(), ref.job().getStages().size() - 1));
       int totalParts = ref.job().getParts().values().stream().mapToInt(Collection::size).sum();
       int inProgressParts = ref
         .job()
@@ -371,7 +375,7 @@ public class JobExecutionView implements TUIView {
         .sum();
       return row(
         text(ref.job().getName()).yellow(),
-        text(" "),
+        text(" (" + currentStage + ") ").yellow(),
         getGauge(inProgressParts, completedParts, totalParts),
         text(" ")
       );

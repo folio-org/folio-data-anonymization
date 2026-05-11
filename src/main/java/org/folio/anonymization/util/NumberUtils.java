@@ -1,9 +1,20 @@
 package org.folio.anonymization.util;
 
+import static dev.tamboui.toolkit.Toolkit.text;
+
+import dev.tamboui.toolkit.elements.TextElement;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class NumberUtils {
+
+  public static TextElement abbreviateRowCount(int number) {
+    if (number > 1_000_000) {
+      return text(String.format("(%s rows)", NumberUtils.abbreviate(number))).italic().yellow();
+    } else {
+      return text(String.format("(%s rows)", NumberUtils.abbreviate(number))).italic();
+    }
+  }
 
   public static String abbreviate(int number) {
     if (number <= 0) {

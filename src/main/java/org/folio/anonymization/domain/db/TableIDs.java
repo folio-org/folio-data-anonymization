@@ -83,6 +83,8 @@ public class TableIDs {
     Pair.of(new FieldReference("di_converter_storage", "marc_field_protection_settings", "id"), UUID.class),
     Pair.of(new FieldReference("di_converter_storage", "match_profiles", "id"), UUID.class),
     Pair.of(new FieldReference("di_converter_storage", "profile_snapshots", "id"), UUID.class),
+    Pair.of(new FieldReference("email", "settings", "id"), UUID.class),
+    Pair.of(new FieldReference("email", "smtp_configuration", "id"), UUID.class),
     Pair.of(new FieldReference("entities_links", "authority_archive", "id"), UUID.class),
     Pair.of(new FieldReference("entities_links", "authority", "id"), UUID.class),
     Pair.of(new FieldReference("erm_usage", "counter_reports", "id"), UUID.class),

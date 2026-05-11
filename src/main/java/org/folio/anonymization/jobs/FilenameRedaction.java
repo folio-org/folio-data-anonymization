@@ -70,7 +70,7 @@ public class FilenameRedaction implements JobFactory {
     return List.of(
       new JobBuilder(
         "Filename and S3 path redaction",
-        "Redacts filenames and S3 paths by replacing all alphanumeric characters with 'X' and '1'.",
+        "Redacts filenames and S3 paths by replacing all alphanumeric characters",
         tenant,
         context,
         JobConfigurationProperty.fromFieldList(FIELDS, tenant, utilRepository),

@@ -39,11 +39,15 @@ public class FileAnonymization implements JobFactory {
     new FieldReference("licenses", "file_object", "file_contents")
   );
 
-  @Autowired
-  private SharedExecutionContext context;
+  private final SharedExecutionContext context;
+
+  private final List<byte[]> seedFiles;
 
   @Autowired
-  private SeedFileService seedFileService;
+  public FileAnonymization(SharedExecutionContext context, SeedFileService seedFileService) {
+    this.context = context;
+    this.seedFiles = seedFileService.getSeedFilesAsBytes("pdf-files/*.pdf");
+  }
 
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
@@ -90,18 +94,14 @@ public class FileAnonymization implements JobFactory {
         label,
         field,
         condition,
-        seedFileService
-          .getSeedFilesAsBytes("pdf-files/*.pdf")
-          .stream()
-          .map(RandomValueUtils::encodeHexUppercase)
-          .toList()
+        seedFiles.stream().map(RandomValueUtils::encodeHexUppercase).toList()
       );
     } else if (field.equals(ERM_USAGE_BYTES_FIELD)) {
       return new ReplaceValueFromListPart(
         label,
         List.of(field),
         condition,
-        List.of(seedFileService.getSeedFilesAsBytes("pdf-files/*.pdf")),
+        List.of(seedFiles),
         List.of(field("replacement", byte[].class))
       );
     } else if (field.equals(INVOICE_STORAGE_B64_FIELD)) {
@@ -109,15 +109,15 @@ public class FileAnonymization implements JobFactory {
         label,
         field,
         condition,
-        seedFileService
-          .getSeedFilesAsBytes("pdf-files/*.pdf")
-          .stream()
-          .map(RandomValueUtils::encodeBase64)
-          .map(s -> "data:application/pdf;base64," + s)
-          .toList()
+        seedFiles.stream().map(RandomValueUtils::encodeBase64).map(s -> "data:application/pdf;base64," + s).toList()
       );
     } else if (POSTGRES_LO_FIELDS.contains(field)) {
-      return new ReplaceOIDPart(label, field, condition, "Replaced during anonymization".getBytes(StandardCharsets.UTF_8));
+      return new ReplaceOIDPart(
+        label,
+        field,
+        condition,
+        "Replaced during anonymization".getBytes(StandardCharsets.UTF_8)
+      );
     } else {
       throw new IllegalArgumentException("No replacements defined for field: " + field);
     }

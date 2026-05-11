@@ -43,8 +43,7 @@ public class URLRedaction implements JobFactory {
     return List.of(
       new JobBuilder(
         "URL redaction",
-        "Redacts external service and organization contact URL values by replacing all alphanumeric " +
-        "characters with 'X', 'x', and '1'.",
+        "Redacts external service and organization contact URL values by replacing all alphanumeric characters",
         tenant,
         context,
         JobConfigurationProperty.fromFieldList(FIELDS, tenant),
