@@ -107,7 +107,7 @@ public class JobConfigurationProperty {
               text("mod_"),
               text(field.toString()),
               spacer(1),
-              text(String.format("(%s rows)", NumberUtils.abbreviate(foundTable.get().size()))).italic()
+              NumberUtils.abbreviateRowCount(foundTable.get().size())
             ),
             true,
             false
@@ -149,7 +149,7 @@ public class JobConfigurationProperty {
               text("mod_"),
               text(table.toString()),
               spacer(1),
-              text(String.format("(%s rows)", NumberUtils.abbreviate(foundTable.get().size()))).italic()
+              NumberUtils.abbreviateRowCount(foundTable.get().size())
             ),
             true,
             false

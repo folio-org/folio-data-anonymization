@@ -77,7 +77,7 @@ class ProfilePictureAnonymizationTest {
   private static class MockSeedFileService extends SeedFileService {
 
     public MockSeedFileService() {
-      super(null);
+      super();
     }
 
     @Override

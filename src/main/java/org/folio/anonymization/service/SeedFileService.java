@@ -8,21 +8,27 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 
+@Log4j2
 @Service
 @AllArgsConstructor
 public class SeedFileService {
 
-  private final ResourcePatternResolver resourceResolver;
+  // cannot access our resources via the default resolver when running on a different thread,
+  // so we have to create our own with an explicit classloader
+  private static final ResourcePatternResolver RESOLVER = new PathMatchingResourcePatternResolver(
+    new DefaultResourceLoader(SeedFileService.class.getClassLoader())
+  );
 
   public Stream<Resource> findSeedFiles(String locationPattern) {
     try {
-      return Arrays
-        .stream(resourceResolver.getResources("classpath:/seed/" + locationPattern))
-        .filter(Resource::isReadable);
+      return Arrays.stream(RESOLVER.getResources("classpath*:seed/" + locationPattern));
     } catch (IOException e) {
       throw new UncheckedIOException("Unable to look for resources", e);
     }
