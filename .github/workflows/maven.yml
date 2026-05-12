@@ -19,10 +19,12 @@ jobs:
       publish-module-descriptor: false
       do-docker: false
       do-sonar-scan: false # done at PR level
+      do-maven-deploy: false # done below
 
   run:
     name: Deploy to GitHub Packages
     if: ${{ github.ref_name == github.event.repository.default_branch }}
+    needs: maven
     runs-on: ubuntu-latest
 
     permissions:
@@ -39,7 +41,7 @@ jobs:
       - name: Setup Java for Nexus
         uses: actions/setup-java@v5
         with:
-          java-version: ${{ inputs.java-version}}
+          java-version: 21
           distribution: "temurin"
 
       - name: Cache Maven packages
