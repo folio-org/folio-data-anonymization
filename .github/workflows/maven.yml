@@ -10,15 +10,46 @@ permissions:
 
 jobs:
   maven:
-    uses: folio-org/.github/.github/workflows/maven.yml@test-gh-packages
+    uses: folio-org/.github/.github/workflows/maven.yml@1f1bceabcc1c926c5050d8bad7652f8f20699681 # v1
     # Only handle push events from the main branch or tags, to decrease PR noise
     if: github.ref_name == github.event.repository.default_branch ||
       github.event_name != 'push' || github.ref_type == 'tag' || github.actor == 'renovate[bot]'
     secrets: inherit # NOSONAR
-    permissions:
-      contents: read
-      packages: write
     with:
       publish-module-descriptor: false
       do-docker: false
       do-sonar-scan: false # done at PR level
+
+  run:
+    name: Deploy to GitHub Packages
+    if: ${{ github.ref_name == github.event.repository.default_branch }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout ${{ github.repository }}
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: recursive
+
+      - name: Setup Java for Nexus
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ inputs.java-version}}
+          distribution: "temurin"
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven
+
+      - name: Deploy to Nexus
+        run: mvn --batch-mode deploy -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
