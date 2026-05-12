@@ -87,7 +87,7 @@ public class TableTruncation implements JobFactory {
       ),
       new JobBuilder(
         "Ephemeral table truncation",
-        "Truncates temporary tables — such as outboxes, in-progress exports, or cached data — that cannot be safely anonymized",
+        "Truncates temporary tables that cannot be safely anonymized (outboxes, in-progress exports, caches, etc)",
         tenant,
         context,
         JobConfigurationProperty.fromTableList(EPHEMERAL_TABLES_TO_TRUNCATE, tenant),
