@@ -109,7 +109,7 @@ public class JobConfigurationProperty {
               spacer(1),
               NumberUtils.abbreviateRowCount(foundTable.get().size())
             ),
-            true,
+            foundTable.get().size() < 1_000_000,
             false
           );
         }

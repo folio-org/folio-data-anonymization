@@ -15,7 +15,6 @@ import org.folio.anonymization.domain.job.JobPart;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
-import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
 class BulkOperationsAndListsAnonymizationTest {
@@ -75,7 +74,7 @@ class BulkOperationsAndListsAnonymizationTest {
     BulkOperationsAndListsAnonymization anonymization = new BulkOperationsAndListsAnonymization();
     Field contextField = BulkOperationsAndListsAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
+    contextField.set(anonymization, SharedExecutionContext.forTests());
     return anonymization;
   }
 }

@@ -15,7 +15,6 @@ import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
-import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
 class PatronPinAnonymizationTest {
@@ -25,7 +24,10 @@ class PatronPinAnonymizationTest {
   @Test
   void buildSchedulesPatronPinPartWhenTableExists() throws Exception {
     PatronPinAnonymization anonymization = createFactoryWithContext();
-    TenantExecutionContext tenant = new TenantExecutionContext(TEST_TENANT, List.of(new ModuleTable("users", "patronpin", 10)));
+    TenantExecutionContext tenant = new TenantExecutionContext(
+      TEST_TENANT,
+      List.of(new ModuleTable("users", "patronpin", 10))
+    );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
     ConcurrentLinkedQueue<?> prepareParts = job.getParts().get("prepare");
@@ -42,7 +44,10 @@ class PatronPinAnonymizationTest {
   @Test
   void buildSkipsPatronPinPartWhenTableMissing() throws Exception {
     PatronPinAnonymization anonymization = createFactoryWithContext();
-    TenantExecutionContext tenant = new TenantExecutionContext(TEST_TENANT, List.of(new ModuleTable("users", "outbox_event_log", 10)));
+    TenantExecutionContext tenant = new TenantExecutionContext(
+      TEST_TENANT,
+      List.of(new ModuleTable("users", "outbox_event_log", 10))
+    );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
     assertTrue(job.getParts().getOrDefault("prepare", new ConcurrentLinkedQueue<>()).isEmpty());
@@ -52,7 +57,7 @@ class PatronPinAnonymizationTest {
     PatronPinAnonymization anonymization = new PatronPinAnonymization();
     Field contextField = PatronPinAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
+    contextField.set(anonymization, SharedExecutionContext.forTests());
     return anonymization;
   }
 }

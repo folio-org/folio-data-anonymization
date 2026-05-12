@@ -48,6 +48,8 @@ public class ConfigurationAnonymization implements JobFactory {
   @SuppressWarnings("unchecked")
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
+    byte[] keystore = seedFileService.getSeedFilesAsBytes("saml.jks").get(0);
+
     List<JobConfigurationProperty> options = new ArrayList<>();
     if (
       tenant
@@ -236,11 +238,7 @@ public class ConfigurationAnonymization implements JobFactory {
                   "[mod-config] Replace SAML keystore",
                   CONFIGURATION_FIELD.withJsonPath("$.value"),
                   module.eq("LOGIN-SAML-SSOCircle").and(configName.eq("saml")).and(code.eq("keystore.file")),
-                  field(
-                    "to_jsonb({0}::text)",
-                    JSONB.class,
-                    RandomValueUtils.encodeBase64(seedFileService.getSeedFilesAsBytes("saml.jks").get(0))
-                  )
+                  field("to_jsonb({0}::text)", JSONB.class, RandomValueUtils.encodeBase64(keystore))
                 ),
                 new ReplaceJSONBValuePart(
                   "[mod-config] Replace SAML keystore passwords",

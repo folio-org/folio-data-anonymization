@@ -14,7 +14,6 @@ import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
-import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
 class GenderAndPronounsAnonymizationTest {
@@ -58,7 +57,7 @@ class GenderAndPronounsAnonymizationTest {
     GenderAndPronounsAnonymization anonymization = new GenderAndPronounsAnonymization();
     Field contextField = GenderAndPronounsAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
+    contextField.set(anonymization, SharedExecutionContext.forTests());
     return anonymization;
   }
 

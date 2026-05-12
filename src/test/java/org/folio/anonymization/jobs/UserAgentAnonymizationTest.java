@@ -14,7 +14,6 @@ import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceValueFromListPart;
-import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
 class UserAgentAnonymizationTest {
@@ -52,7 +51,7 @@ class UserAgentAnonymizationTest {
     UserAgentAnonymization anonymization = new UserAgentAnonymization();
     Field contextField = UserAgentAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
+    contextField.set(anonymization, SharedExecutionContext.forTests());
     return anonymization;
   }
 

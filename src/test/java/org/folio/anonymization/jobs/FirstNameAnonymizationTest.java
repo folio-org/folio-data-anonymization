@@ -13,7 +13,6 @@ import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
-import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
 class FirstNameAnonymizationTest {
@@ -51,7 +50,7 @@ class FirstNameAnonymizationTest {
     FirstNameAnonymization anonymization = new FirstNameAnonymization();
     Field contextField = FirstNameAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
+    contextField.set(anonymization, SharedExecutionContext.forTests());
     return anonymization;
   }
 

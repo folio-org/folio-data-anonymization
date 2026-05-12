@@ -71,7 +71,9 @@ public final class Job implements Comparable<Job> {
   // declared as public to permit higher level interface to "re-execute" parts if needed
   public void executePart(JobPart part, boolean isRetry) {
     part.setJob(this);
-    CompletableFuture<JobPart> future = CompletableFuture.supplyAsync(part, this.context.executionContext().executor());
+
+    CompletableFuture<JobPart> future = new CompletableFuture<>();
+    this.context.executionContext().executor().execute(new JobPartRunner(future, part));
 
     Pair<JobPart, CompletableFuture<JobPart>> original =
       this.currentlyExecuting.put(part.getLabel(), Pair.of(part, future));
@@ -146,5 +148,19 @@ public final class Job implements Comparable<Job> {
       return this.context.tenant().tenant().id().compareTo(other.context.tenant().tenant().id());
     }
     return this.name.compareTo(other.name);
+  }
+
+  public record JobPartRunner(CompletableFuture<JobPart> cf, JobPart task)
+    implements Runnable, CompletableFuture.AsynchronousCompletionTask {
+    public void run() {
+      try {
+        if (!cf.isDone()) {
+          task.run();
+          cf.complete(task);
+        }
+      } catch (Throwable t) {
+        cf.completeExceptionally(t);
+      }
+    }
   }
 }

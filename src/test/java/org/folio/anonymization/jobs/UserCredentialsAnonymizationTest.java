@@ -15,7 +15,6 @@ import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
-import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
 class UserCredentialsAnonymizationTest {
@@ -27,7 +26,10 @@ class UserCredentialsAnonymizationTest {
     UserCredentialsAnonymization anonymization = createFactoryWithContext();
     TenantExecutionContext tenant = new TenantExecutionContext(
       TEST_TENANT,
-      List.of(new ModuleTable("login", "auth_credentials", 10), new ModuleTable("login", "auth_credentials_history", 10))
+      List.of(
+        new ModuleTable("login", "auth_credentials", 10),
+        new ModuleTable("login", "auth_credentials_history", 10)
+      )
     );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
@@ -64,7 +66,7 @@ class UserCredentialsAnonymizationTest {
     UserCredentialsAnonymization anonymization = new UserCredentialsAnonymization();
     Field contextField = UserCredentialsAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
+    contextField.set(anonymization, SharedExecutionContext.forTests());
     return anonymization;
   }
 }

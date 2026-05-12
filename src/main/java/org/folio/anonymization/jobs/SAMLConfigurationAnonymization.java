@@ -34,6 +34,7 @@ public class SAMLConfigurationAnonymization implements JobFactory {
 
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
+    byte[] keystore = seedFileService.getSeedFilesAsBytes("saml.jks").get(0);
     return List.of(
       new JobBuilder(
         "SAML configuration anonymization",
@@ -53,11 +54,7 @@ public class SAMLConfigurationAnonymization implements JobFactory {
                       "Replace SAML keystore",
                       CONFIGURATION_FIELD.withJsonPath("$.['keystore.file']"),
                       trueCondition(),
-                      field(
-                        "to_jsonb({0}::text)",
-                        JSONB.class,
-                        RandomValueUtils.encodeBase64(seedFileService.getSeedFilesAsBytes("saml.jks").get(0))
-                      )
+                      field("to_jsonb({0}::text)", JSONB.class, RandomValueUtils.encodeBase64(keystore))
                     ),
                     new ReplaceJSONBValuePart(
                       "Replace SAML keystore main password",

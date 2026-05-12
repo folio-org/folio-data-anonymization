@@ -15,7 +15,6 @@ import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.service.ProfilePictureSeedCsvLoader;
 import org.folio.anonymization.service.SeedFileService;
-import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
 class ProfilePictureAnonymizationTest {
@@ -56,19 +55,15 @@ class ProfilePictureAnonymizationTest {
     );
 
     Job job = anonymization.getBuilders(tenant).getFirst().build();
-    assertTrue(
-      job.getParts().getOrDefault("update-configuration", new ConcurrentLinkedQueue<>()).isEmpty()
-    );
+    assertTrue(job.getParts().getOrDefault("update-configuration", new ConcurrentLinkedQueue<>()).isEmpty());
     assertTrue(job.getParts().getOrDefault("update-settings", new ConcurrentLinkedQueue<>()).isEmpty());
-    assertTrue(
-      job.getParts().getOrDefault("prepare-replace-pictures", new ConcurrentLinkedQueue<>()).isEmpty()
-    );
+    assertTrue(job.getParts().getOrDefault("prepare-replace-pictures", new ConcurrentLinkedQueue<>()).isEmpty());
     assertTrue(job.getParts().getOrDefault("replace-pictures", new ConcurrentLinkedQueue<>()).isEmpty());
   }
 
   private static ProfilePictureAnonymization createFactoryWithContext() throws Exception {
     ProfilePictureAnonymization anonymization = new ProfilePictureAnonymization(
-      new SharedExecutionContext((DSLContext) null, Runnable::run),
+      SharedExecutionContext.forTests(),
       new ProfilePictureSeedCsvLoader(new MockSeedFileService())
     );
     return anonymization;

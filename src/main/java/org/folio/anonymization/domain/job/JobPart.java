@@ -2,7 +2,6 @@ package org.folio.anonymization.domain.job;
 
 import java.sql.SQLTransientConnectionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,7 @@ import org.springframework.dao.QueryTimeoutException;
 @Log4j2
 @SuperBuilder
 @RequiredArgsConstructor
-public abstract class JobPart implements Supplier<JobPart> {
+public abstract class JobPart implements Runnable {
 
   private static final RetryTemplate RETRY_TEMPLATE = new RetryTemplate(
     // retry for 30 seconds
@@ -49,7 +48,7 @@ public abstract class JobPart implements Supplier<JobPart> {
   private final AtomicBoolean completed = new AtomicBoolean(false);
 
   @Override
-  public final JobPart get() {
+  public final void run() {
     Thread.currentThread().setName("%s-%s-%s".formatted(job.getName(), stage, label));
     log.info("Job {} stage {}: starting job part: {}", job.getName(), stage, label);
     this.executing.set(true);
@@ -71,7 +70,6 @@ public abstract class JobPart implements Supplier<JobPart> {
       this.executing.set(false);
       Thread.currentThread().setName("parked");
     }
-    return this;
   }
 
   protected abstract void execute();

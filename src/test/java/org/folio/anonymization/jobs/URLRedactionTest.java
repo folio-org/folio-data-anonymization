@@ -13,7 +13,6 @@ import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobPart;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
-import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 
 class URLRedactionTest {
@@ -70,7 +69,7 @@ class URLRedactionTest {
     URLRedaction redaction = new URLRedaction();
     Field contextField = URLRedaction.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(redaction, new SharedExecutionContext((DSLContext) null, Runnable::run));
+    contextField.set(redaction, SharedExecutionContext.forTests());
     return redaction;
   }
 
