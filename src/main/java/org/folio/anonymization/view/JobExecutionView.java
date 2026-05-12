@@ -282,6 +282,7 @@ public class JobExecutionView implements TUIView {
             exceptionMessages
               .stream()
               .flatMap(s -> {
+                s = s.replaceAll("\n", " ");
                 List<String> chopped = new ArrayList<>();
                 while (s.length() > 80) {
                   int chopAt = s.indexOf(' ', 80);
@@ -289,7 +290,7 @@ public class JobExecutionView implements TUIView {
                     chopAt = 80;
                   }
                   chopped.add(s.substring(0, chopAt));
-                  s = s.substring(chopAt);
+                  s = s.substring(chopAt).trim();
                 }
                 chopped.add(s);
                 return chopped.stream();
