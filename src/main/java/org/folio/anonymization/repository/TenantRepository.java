@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.domain.db.ModuleTable;
 import org.folio.anonymization.domain.folio.Tenant;
@@ -23,7 +24,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class TenantRepository {
 
+  // relational from Eureka
   private static final Table<?> TENANT_TABLE = table(name("public", "tenant"));
+  // JSON blob from Okapi
+  private static final Table<?> TENANTS_TABLE = table(name("public", "tenants"));
   private static final String MOD_CONSORTIA_KEYCLOAK_SCHEMA = "consortia_keycloak";
 
   @Autowired
@@ -59,21 +63,44 @@ public class TenantRepository {
   }
 
   protected Map<String, Tenant> getTenantsWithoutConsortiaInfo() {
-    return create
-      .select(field("name"), field("description"))
-      .from(TENANT_TABLE)
-      .fetch()
-      .stream()
-      .map(record ->
-        new Tenant(
-          record.get("name", String.class),
-          record.get("name", String.class),
-          Objects.requireNonNullElse(record.get("description", String.class), ""),
-          null,
-          false
-        )
+    return Stream
+      .concat(
+        create
+          .select(field("name"), field("description"))
+          .from(TENANT_TABLE)
+          .fetch()
+          .stream()
+          .map(record ->
+            new Tenant(
+              record.get("name", String.class),
+              record.get("name", String.class),
+              Objects.requireNonNullElse(record.get("description", String.class), ""),
+              null,
+              false
+            )
+          ),
+        create
+          .select(
+            field("tenantjson->'descriptor'->>'id'").as("id"),
+            field("tenantjson->'descriptor'->>'name'").as("name"),
+            field("tenantjson->'descriptor'->>'description'").as("description")
+          )
+          .from(TENANTS_TABLE)
+          .where(field("tenantjson->'descriptor'->>'id'").ne("supertenant"))
+          .fetch()
+          .stream()
+          .map(record ->
+            new Tenant(
+              record.get("id", String.class),
+              record.get("name", String.class),
+              Objects.requireNonNullElse(record.get("description", String.class), ""),
+              null,
+              false
+            )
+          )
       )
-      .collect(Collectors.toMap(Tenant::id, Function.identity()));
+      // tenants table has better data than tenant table, so use its data when possible
+      .collect(Collectors.toMap(Tenant::id, Function.identity(), (a, b) -> b));
   }
 
   public List<ModuleTable> getModuleTablesWithSizes(String tenantId) {
