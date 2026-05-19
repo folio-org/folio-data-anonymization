@@ -34,6 +34,7 @@ import org.folio.anonymization.jobs.templates.ReplaceValueFromListPart;
 import org.folio.anonymization.jobs.templates.ReplaceValuePart;
 import org.folio.anonymization.util.NumberUtils;
 import org.folio.anonymization.util.RandomValueUtils;
+import org.folio.anonymization.util.SystemUserExclusionUtil;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.JSONB;
@@ -445,7 +446,8 @@ public class CustomFieldAnonymization implements JobFactory {
                               "Redact " + field.toString() + " with refId " + r.get("refId") + " on " + label,
                               field.withJsonPath(field.jsonPath() + "." + r.get("refId")),
                               condition
-                            )
+                            ),
+                          SystemUserExclusionUtil.getExclusionCondition(field, tenant)
                         )
                       )
                     );

@@ -88,6 +88,26 @@ public class BatchGenerationFromTablePart<T> extends JobPart {
   @SuppressWarnings("unchecked")
   public BatchGenerationFromTablePart(
     String label,
+    FieldReference otherField,
+    int batchSize,
+    String childrenJobStage,
+    BatchPartFactory factory,
+    Condition condition
+  ) {
+    this(
+      label,
+      TableIDs.getIdFor(otherField).getLeft(),
+      (Class<T>) TableIDs.getIdFor(otherField).getRight(),
+      batchSize,
+      childrenJobStage,
+      factory,
+      condition
+    );
+  }
+
+  @SuppressWarnings("unchecked")
+  public BatchGenerationFromTablePart(
+    String label,
     TableReference table,
     int batchSize,
     String childrenJobStage,

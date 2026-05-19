@@ -21,12 +21,15 @@ import org.folio.anonymization.jobs.templates.BatchGenerationFromSequencePart;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.CreateTablePart;
 import org.folio.anonymization.jobs.templates.DropTablePart;
+import org.folio.anonymization.jobs.templates.ExcludeGeneratedValuesPart;
+import org.folio.anonymization.jobs.templates.FindSystemUsersPart;
 import org.folio.anonymization.jobs.templates.GenerateValuesPart;
 import org.folio.anonymization.jobs.templates.InsertIntoTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.folio.anonymization.jobs.templates.ReplaceValuePart;
 import org.folio.anonymization.util.DBUtils;
 import org.folio.anonymization.util.RandomValueUtils;
+import org.folio.anonymization.util.SystemUserExclusionUtil;
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.Table;
@@ -36,6 +39,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UsernameAnonymization implements JobFactory {
+
+  // special handling to capture system user ones from here that should not be anonymized
+  private static final FieldReference USERS_TABLE_FIELD = new FieldReference("users", "users", "jsonb", "$.username");
 
   private static final List<FieldReference> FIELDS = List.of(
     new FieldReference("circulation_storage", "print_events", "jsonb", "$.requesterName"),
@@ -162,7 +168,7 @@ public class UsernameAnonymization implements JobFactory {
     new FieldReference("users", "staging_users", "jsonb", "$.metadata.createdByUsername"),
     new FieldReference("users", "staging_users", "jsonb", "$.metadata.updatedByUsername"),
     new FieldReference("users", "user_tenant", "username"),
-    new FieldReference("users", "users", "jsonb", "$.username"),
+    USERS_TABLE_FIELD,
     new FieldReference("users", "users", "jsonb", "$.metadata.createdByUsername"),
     new FieldReference("users", "users", "jsonb", "$.metadata.updatedByUsername")
   );
@@ -214,6 +220,8 @@ public class UsernameAnonymization implements JobFactory {
               "enumerate",
               "generate-new-values-prep",
               "generate-new-values",
+              "exclude-system-user-values-prep",
+              "exclude-system-user-values",
               "apply-new-values-prep",
               "apply-new-values",
               "cleanup"
@@ -289,6 +297,30 @@ public class UsernameAnonymization implements JobFactory {
           }
 
           job.scheduleParts(
+            "exclude-system-user-values-prep",
+            List.of(
+              new FindSystemUsersPart(
+                "Find system user values",
+                USERS_TABLE_FIELD.table(tenant.tenant()),
+                field("{0}->>'username'", String.class, USERS_TABLE_FIELD.baseColumn(tenant.tenant(), JSONB.class)),
+                systemUserValues ->
+                  job.scheduleParts(
+                    "exclude-system-user-values",
+                    List.of(
+                      new ExcludeGeneratedValuesPart(
+                        "Exclude system user values from anonymization",
+                        tempTableFinal,
+                        originalValue,
+                        newValue,
+                        systemUserValues
+                      )
+                    )
+                  )
+              )
+            )
+          );
+
+          job.scheduleParts(
             "apply-new-values-prep",
             JobConfigurationProperty
               .getEnabledFields(ctx.settings())
@@ -324,7 +356,8 @@ public class UsernameAnonymization implements JobFactory {
                           )
                       );
                     }
-                  }
+                  },
+                  SystemUserExclusionUtil.getExclusionCondition(field, tenant)
                 )
               )
               .toList()

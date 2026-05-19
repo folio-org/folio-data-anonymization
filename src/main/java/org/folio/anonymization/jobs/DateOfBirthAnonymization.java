@@ -13,6 +13,7 @@ import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
+import org.folio.anonymization.util.SystemUserExclusionUtil;
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +61,8 @@ public class DateOfBirthAnonymization implements JobFactory {
                         field,
                         condition,
                         RANDOM_DOB_SQL
-                      )
+                      ),
+                    SystemUserExclusionUtil.getExclusionCondition(field, tenant)
                   )
                 )
                 .toList()
