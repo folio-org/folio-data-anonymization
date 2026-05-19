@@ -15,6 +15,7 @@ import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.folio.anonymization.jobs.templates.ReplaceValuePart;
 import org.folio.anonymization.util.RandomValueUtils;
+import org.folio.anonymization.util.SystemUserExclusionUtil;
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,7 +105,8 @@ public class PhoneNumberAnonymization implements JobFactory {
                           baseReplacement
                         );
                       }
-                    }
+                    },
+                    SystemUserExclusionUtil.getExclusionCondition(field, tenant)
                   )
                 )
                 .toList()

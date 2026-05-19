@@ -21,6 +21,8 @@ import org.folio.anonymization.jobs.templates.BatchGenerationFromSequencePart;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.CreateTablePart;
 import org.folio.anonymization.jobs.templates.DropTablePart;
+import org.folio.anonymization.jobs.templates.ExcludeGeneratedValuesPart;
+import org.folio.anonymization.jobs.templates.FindSystemUsersPart;
 import org.folio.anonymization.jobs.templates.GenerateValuesPart;
 import org.folio.anonymization.jobs.templates.InsertIntoTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
@@ -37,11 +39,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserExternalSystemIdAnonymization implements JobFactory {
 
+  // special handling to capture system user ones from here that should not be anonymized
+  private static final FieldReference USERS_TABLE_FIELD = new FieldReference(
+    "users",
+    "users",
+    "jsonb",
+    "$.externalSystemId"
+  );
+
   private static final List<FieldReference> FIELDS = List.of(
     new FieldReference("oa", "party", "p_orcid_id"),
     new FieldReference("users", "staging_users", "jsonb", "$.externalSystemId"),
     new FieldReference("users", "user_tenant", "external_system_id"),
-    new FieldReference("users", "users", "jsonb", "$.externalSystemId")
+    USERS_TABLE_FIELD
   );
 
   @Autowired
@@ -90,6 +100,8 @@ public class UserExternalSystemIdAnonymization implements JobFactory {
               "enumerate",
               "generate-new-values-prep",
               "generate-new-values",
+              "exclude-system-user-values-prep",
+              "exclude-system-user-values",
               "apply-new-values-prep",
               "apply-new-values",
               "cleanup"
@@ -163,6 +175,34 @@ public class UserExternalSystemIdAnonymization implements JobFactory {
               )
             );
           }
+
+          job.scheduleParts(
+            "exclude-system-user-values-prep",
+            List.of(
+              new FindSystemUsersPart(
+                "Find system user values",
+                USERS_TABLE_FIELD.table(tenant.tenant()),
+                field(
+                  "{0}->>'externalSystemId'",
+                  String.class,
+                  USERS_TABLE_FIELD.baseColumn(tenant.tenant(), JSONB.class)
+                ),
+                systemUserValues ->
+                  job.scheduleParts(
+                    "exclude-system-user-values",
+                    List.of(
+                      new ExcludeGeneratedValuesPart(
+                        "Exclude system user values from anonymization",
+                        tempTableFinal,
+                        originalValue,
+                        newValue,
+                        systemUserValues
+                      )
+                    )
+                  )
+              )
+            )
+          );
 
           job.scheduleParts(
             "apply-new-values-prep",

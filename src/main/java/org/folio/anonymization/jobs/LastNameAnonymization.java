@@ -12,6 +12,7 @@ import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceValueFromListPart;
 import org.folio.anonymization.util.RandomValueUtils;
+import org.folio.anonymization.util.SystemUserExclusionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -88,7 +89,8 @@ public class LastNameAnonymization implements JobFactory {
                         field,
                         condition,
                         RandomValueUtils.lastNames(Math.max(end - start, 5))
-                      )
+                      ),
+                    SystemUserExclusionUtil.getExclusionCondition(field, tenant)
                   )
                 )
                 .toList()

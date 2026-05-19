@@ -21,12 +21,15 @@ import org.folio.anonymization.jobs.templates.BatchGenerationFromSequencePart;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.CreateTablePart;
 import org.folio.anonymization.jobs.templates.DropTablePart;
+import org.folio.anonymization.jobs.templates.ExcludeGeneratedValuesPart;
+import org.folio.anonymization.jobs.templates.FindSystemUsersPart;
 import org.folio.anonymization.jobs.templates.GenerateValuesPart;
 import org.folio.anonymization.jobs.templates.InsertIntoTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.folio.anonymization.jobs.templates.ReplaceValuePart;
 import org.folio.anonymization.util.DBUtils;
 import org.folio.anonymization.util.RandomValueUtils;
+import org.folio.anonymization.util.SystemUserExclusionUtil;
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.Table;
@@ -36,6 +39,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserBarcodeAnonymization implements JobFactory {
+
+  // used to find system user barcodes that should be excluded from anonymization
+  private static final FieldReference USERS_TABLE_FIELD = new FieldReference("users", "users", "jsonb", "$.barcode");
 
   private static final List<FieldReference> FIELDS = List.of(
     new FieldReference("circulation_storage", "actual_cost_record", "jsonb", "$.user.barcode"),
@@ -50,7 +56,7 @@ public class UserBarcodeAnonymization implements JobFactory {
     new FieldReference("requests_mediated", "mediated_request", "requester_barcode"),
     new FieldReference("requests_mediated", "mediated_request", "proxy_barcode"),
     new FieldReference("users", "user_tenant", "barcode"),
-    new FieldReference("users", "users", "jsonb", "$.barcode")
+    USERS_TABLE_FIELD
   );
 
   @Autowired
@@ -82,7 +88,9 @@ public class UserBarcodeAnonymization implements JobFactory {
           .toList(),
         ctx -> {
           Table<?> tempTableFinal = table(name("public", "_danon_" + ctx.tenant().tenant().id() + "_user_barcodes"));
-          Table<?> tempTableStaging = table(name("public", "_danon_" + ctx.tenant().tenant().id() + "_user_barcodes_staging"));
+          Table<?> tempTableStaging = table(
+            name("public", "_danon_" + ctx.tenant().tenant().id() + "_user_barcodes_staging")
+          );
 
           Field<String> originalValue = field("original_value", SQLDataType.VARCHAR.notNull());
           Field<String> newValue = field("new_value", SQLDataType.VARCHAR.null_());
@@ -95,6 +103,8 @@ public class UserBarcodeAnonymization implements JobFactory {
               "enumerate",
               "generate-new-values-prep",
               "generate-new-values",
+              "exclude-system-user-values-prep",
+              "exclude-system-user-values",
               "apply-new-values-prep",
               "apply-new-values",
               "cleanup"
@@ -170,6 +180,30 @@ public class UserBarcodeAnonymization implements JobFactory {
           }
 
           job.scheduleParts(
+            "exclude-system-user-values-prep",
+            List.of(
+              new FindSystemUsersPart(
+                "Find system user values",
+                USERS_TABLE_FIELD.table(tenant.tenant()),
+                field("{0}->>'barcode'", String.class, USERS_TABLE_FIELD.baseColumn(tenant.tenant(), JSONB.class)),
+                systemUserValues ->
+                  job.scheduleParts(
+                    "exclude-system-user-values",
+                    List.of(
+                      new ExcludeGeneratedValuesPart(
+                        "Exclude system user values from anonymization",
+                        tempTableFinal,
+                        originalValue,
+                        newValue,
+                        systemUserValues
+                      )
+                    )
+                  )
+              )
+            )
+          );
+
+          job.scheduleParts(
             "apply-new-values-prep",
             JobConfigurationProperty
               .getEnabledFields(ctx.settings())
@@ -205,7 +239,8 @@ public class UserBarcodeAnonymization implements JobFactory {
                           )
                       );
                     }
-                  }
+                  },
+                  SystemUserExclusionUtil.getExclusionCondition(field, tenant)
                 )
               )
               .toList()
