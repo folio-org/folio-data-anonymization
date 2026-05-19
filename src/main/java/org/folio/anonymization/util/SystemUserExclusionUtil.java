@@ -27,7 +27,7 @@ public class SystemUserExclusionUtil {
 
   public static Condition getExclusionCondition(Tenant tenant) {
     return field(
-      "{0}->>'type'",
+      "COALESCE({0}->>'type', '')",
       String.class,
       new FieldReference("users", "users", "jsonb").baseColumn(tenant, JSONB.class)
     )
