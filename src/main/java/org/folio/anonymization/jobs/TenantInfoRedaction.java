@@ -13,6 +13,7 @@ import org.folio.anonymization.domain.job.JobFactory;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.RedactPart;
+import org.folio.anonymization.repository.UtilRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -33,17 +34,22 @@ public class TenantInfoRedaction implements JobFactory {
   @Autowired
   private SharedExecutionContext context;
 
+  @Autowired
+  private UtilRepository utilRepository;
+
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
-    boolean tenantIsInTable = context
-      .create()
-      .fetchExists(
-        context
-          .create()
-          .selectOne()
-          .from(TENANT_ID_FIELD.table())
-          .where(TENANT_ID_FIELD.field(null, String.class).eq(tenant.tenant().id()))
-      );
+    boolean tenantInfoTableExists = utilRepository.doesTableExist(TENANT_ID_FIELD.schema(), TENANT_ID_FIELD.table());
+    boolean tenantIsInTable = tenantInfoTableExists &&
+      context
+        .create()
+        .fetchExists(
+          context
+            .create()
+            .selectOne()
+            .from(TENANT_ID_FIELD.table())
+            .where(TENANT_ID_FIELD.field(null, String.class).eq(tenant.tenant().id()))
+        );
 
     return List.of(
       new JobBuilder(
@@ -57,7 +63,11 @@ public class TenantInfoRedaction implements JobFactory {
             if (!tenantIsInTable) {
               return new JobConfigurationProperty(
                 field,
-                row(text(field.toString()).crossedOut(), spacer(1), text("(not present for tenant)").italic()),
+                row(
+                  text(field.toString()).crossedOut(),
+                  spacer(1),
+                  text(tenantInfoTableExists ? "(not present for tenant)" : "(not available)").italic()
+                ),
                 true,
                 true
               );
