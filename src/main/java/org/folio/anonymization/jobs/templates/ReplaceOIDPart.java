@@ -1,13 +1,20 @@
 package org.folio.anonymization.jobs.templates;
 
+import static org.jooq.impl.DSL.exists;
 import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.name;
+import static org.jooq.impl.DSL.selectOne;
+import static org.jooq.impl.DSL.table;
 import static org.jooq.impl.DSL.using;
 import static org.jooq.impl.DSL.val;
 
 import org.folio.anonymization.domain.db.FieldReference;
+import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.JobPart;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.Table;
 
 /**
  * Job part to replace a large object referenced by an OID column with a static value.
@@ -34,7 +41,7 @@ public class ReplaceOIDPart extends JobPart {
     this.create()
       .transaction(configuration -> {
         DSLContext ctx = using(configuration);
-        Condition condition = this.condition.and(this.field.baseColumn(this.tenant()).isNotNull());
+        Condition condition = this.conditionForExistingLargeObjects(this.tenant());
 
         // FDs from lo_open will auto-close at the end of the transaction, so we don't have to worry about cleaning them up
         // 0x00020000 = INV_WRITE, from postgres source code
@@ -59,5 +66,15 @@ public class ReplaceOIDPart extends JobPart {
           .where(condition)
           .execute();
       });
+  }
+
+  Condition conditionForExistingLargeObjects(Tenant tenant) {
+    Field<Object> oidColumn = this.field.baseColumn(tenant);
+    Table<?> largeObjectMetadata = table(name("pg_catalog", "pg_largeobject_metadata")).as("lo_metadata");
+    Field<Object> largeObjectOid = field(name("lo_metadata", "oid"));
+
+    return this.condition
+      .and(oidColumn.isNotNull())
+      .and(exists(selectOne().from(largeObjectMetadata).where(largeObjectOid.eq(oidColumn))));
   }
 }
