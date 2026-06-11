@@ -14,6 +14,7 @@ import org.apache.commons.text.StringSubstitutor;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.util.DBUtils;
 import org.folio.anonymization.util.ListUtils;
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.Table;
@@ -76,6 +77,14 @@ public class FieldReference {
         DSL.inline(jsonPath)
       );
     }
+  }
+
+  public Condition jsonPathExists(Tenant tenant) {
+    if (jsonPath == null) {
+      throw new UnsupportedOperationException("Cannot check JSON path existence for a non-JSONB field");
+    }
+
+    return DSL.condition("jsonb_path_exists(({0})::jsonb, {1})", baseColumn(tenant), DSL.inline(jsonPath));
   }
 
   /**
