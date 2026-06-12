@@ -164,6 +164,7 @@ public class ReplaceValueFromListPart extends JobPart {
             updateCondition = updateCondition.and(field.baseColumn(this.tenant()).isNotNull());
           } else {
             selectExprs.add(field.jsonbSet(this.tenant(), inner -> field("to_jsonb({0})", JSONB.class, rawValue)));
+            updateCondition = updateCondition.and(field.jsonPathExists(this.tenant()));
           }
         }
 
