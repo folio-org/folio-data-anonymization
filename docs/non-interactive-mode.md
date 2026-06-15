@@ -124,7 +124,7 @@ Some jobs have initialization and teardown tasks (for example, creating a tempor
 >
 > Jobs which have failing parts will automatically have `performTeardown` effectively disabled, to ensure the job can be resumed in a later run. The created rerun template will have `performSetup` false and `performTeardown` true for the failed job, so that when the rerun template is used, setup tasks will be skipped but teardown tasks will be performed as normal.
 
-```
+```yaml
 jobs:
   vendor_names_and_codes:
     enabled: true
