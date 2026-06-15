@@ -1,0 +1,60 @@
+{
+  parameters: {
+    allowedRetries: 30,
+    threadPoolSize: 100,
+    connectionPoolSize: 120,
+    queryTimeoutDurationSeconds: 600,
+  },
+  tenants: ['.+'],
+  jobs: {
+    addresses: { enabled: true },
+    bulk_ops_and_lists: { enabled: true },
+    custom_property_definitions: { enabled: false }, // disabled by default as this is not comprehensive and likely unnecessary
+    custom_property_values: { enabled: true },
+    date_of_birth: { enabled: true },
+    email_addresses: { enabled: true },
+    external_credentials: { enabled: true },
+    file_contents: { enabled: true },
+    filename_and_s3_paths: { enabled: true },
+    financial_account_numbers: { enabled: true },
+    financial_bank_and_transaction_info: { enabled: true },
+    financial_routing_numbers: { enabled: true },
+    free_text_labels_and_descriptions: { enabled: true },
+    free_text_miscellaneous: { enabled: true },
+    free_text_staff_notes: { enabled: true },
+    free_text_unique_labels: { enabled: true },
+    gender_and_pronouns: { enabled: true },
+    global_configuration: {
+      enabled: true,
+      // these are potentially catastrophically destructive and not recommended. instead, we recommend analyzing
+      // the output of the report to see which unknown entries (if any) were found and manually whitelisting those.
+      //
+      // identified entries which are standard but not known to the tool should be updated in the tool's code so they
+      // can be properly handled (or ignored) in the future.
+      removeUnknownModConfigurationEntries: false,
+      removeUnknownModSettingEntries: false,
+    },
+    import_profile_relationships: { enabled: true },
+    ip_addresses: { enabled: true },
+    names_first: { enabled: true },
+    names_full: { enabled: true },
+    names_last: { enabled: true },
+    names_middle: { enabled: true },
+    names_prefix: { enabled: true },
+    patron_pins: { enabled: true },
+    phone_numbers: { enabled: true },
+    profile_pictures: { enabled: true },
+    saml_configuration: { enabled: true },
+    tenant_metadata: { enabled: true },
+    truncate_credentials: { enabled: true },
+    truncate_ephemeral: { enabled: true },
+    truncate_logging_and_audit: { enabled: true },
+    urls: { enabled: true },
+    user_agents: { enabled: true },
+    user_barcodes: { enabled: true },
+    user_credentials: { enabled: true },
+    user_external_system_ids: { enabled: true },
+    usernames: { enabled: true },
+    vendor_names_and_codes: { enabled: true },
+  },
+}

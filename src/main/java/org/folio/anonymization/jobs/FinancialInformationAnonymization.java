@@ -64,6 +64,7 @@ public class FinancialInformationAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "financial_bank_and_transaction_info",
         "Bank/transaction information redaction",
         "Redacts bank and transaction information values by replacing alphanumeric characters.",
         tenant,
@@ -89,6 +90,7 @@ public class FinancialInformationAnonymization implements JobFactory {
             )
       ),
       new JobBuilder(
+        "financial_account_numbers",
         "Account number anonymization",
         "Replaces account numbers with generated numeric values.",
         tenant,
@@ -250,6 +252,7 @@ public class FinancialInformationAnonymization implements JobFactory {
         }
       ),
       new JobBuilder(
+        "financial_routing_numbers",
         "Routing number replacement",
         "Replaces routing numbers with reserved test value 123123123.",
         tenant,

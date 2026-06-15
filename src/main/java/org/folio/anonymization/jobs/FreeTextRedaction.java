@@ -6,7 +6,6 @@ import static dev.tamboui.toolkit.Toolkit.text;
 
 import java.util.List;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.tuple.Triple;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.job.Job;
@@ -246,19 +245,23 @@ public class FreeTextRedaction implements JobFactory {
       LISTS_USER_FRIENDLY_QUERY,
       tenant.tenant()
     );
+
     return Stream
       .of(
-        Triple.of(
+        new LabelledJob(
+          "free_text_staff_notes",
           "Free text redaction — staff notes and comments",
           "Redacts staff notes and patron comments.",
           NOTE_AND_COMMENT_FIELDS
         ),
-        Triple.of(
+        new LabelledJob(
+          "free_text_labels_and_descriptions",
           "Free text redaction — labels and descriptions",
           "Redacts object labels/names and descriptions which may potentially reference PII.",
           LABELS_AND_DESCRIPTION_FIELDS
         ),
-        Triple.of(
+        new LabelledJob(
+          "free_text_miscellaneous",
           "Free text redaction — miscellaneous fields",
           "Redacts free text fields which contain irregular PII not covered by other categories.",
           MISC_FIELDS
@@ -266,12 +269,13 @@ public class FreeTextRedaction implements JobFactory {
       )
       .map(t ->
         new JobBuilder(
-          t.getLeft(),
-          t.getMiddle(),
+          t.key(),
+          t.name(),
+          t.description(),
           tenant,
           context,
           disableUserFriendlyQueryColumnsIfNeeded(
-            JobConfigurationProperty.fromFieldList(t.getRight(), tenant),
+            JobConfigurationProperty.fromFieldList(t.fields(), tenant),
             modListsUserFriendlyQueryExists
           ),
           ctx ->
@@ -327,4 +331,6 @@ public class FreeTextRedaction implements JobFactory {
     }
     return fromFieldList;
   }
+
+  private record LabelledJob(String key, String name, String description, List<FieldReference> fields) {}
 }

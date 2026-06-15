@@ -66,6 +66,7 @@ public class LastNameAnonymization implements JobFactory {
 
     return List.of(
       new JobBuilder(
+        "names_last",
         "Last name anonymization",
         "Replaces last-name values with Faker-generated realistic-appearing values",
         tenant,

@@ -33,6 +33,7 @@ public class NamePrefixAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "names_prefix",
         "Name prefix anonymization",
         "Replaces name-prefix values with Faker-generated realistic-appearing values",
         tenant,

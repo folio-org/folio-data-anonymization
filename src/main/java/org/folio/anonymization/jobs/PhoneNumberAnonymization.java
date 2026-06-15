@@ -53,6 +53,7 @@ public class PhoneNumberAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "phone_numbers",
         "Phone number anonymization",
         "Replaces user's phone numbers with randomized values",
         tenant,

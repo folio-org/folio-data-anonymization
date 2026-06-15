@@ -83,6 +83,7 @@ public class CustomFieldAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "custom_property_definitions",
         "Custom property definitions (not recommended)",
         "*SEE BELOW FOR LIMITATIONS* Replaces the names and descriptions of custom fields with random values.",
         tenant,
@@ -217,6 +218,7 @@ public class CustomFieldAnonymization implements JobFactory {
             )
       ),
       new JobBuilder(
+        "custom_property_values",
         "Custom property values",
         "Redact or replace text, integer, and pick list values of custom fields with random values.",
         tenant,

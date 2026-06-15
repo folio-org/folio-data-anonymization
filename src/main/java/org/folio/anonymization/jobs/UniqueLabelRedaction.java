@@ -39,6 +39,7 @@ public class UniqueLabelRedaction implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "free_text_unique_labels",
         "Free text redaction — unique labels",
         "Replaces cancellation reason names and checklist item names with unique anonymized labels.",
         tenant,
@@ -73,7 +74,10 @@ public class UniqueLabelRedaction implements JobFactory {
 
   private static List<String> uniqueLabels(FieldReference targetField, int start, int end) {
     int size = Math.max(end - start, 1);
-    String prefix = CANCELLATION_REASON_NAME.equals(targetField) ? "Anonymized reason #" : "Anonymized checklist #";
+    long now = System.nanoTime() % 1_000; // should be sufficient to avoid collisions across runs
+    String prefix = CANCELLATION_REASON_NAME.equals(targetField)
+      ? "Anonymized (" + now + ") reason #"
+      : "Anonymized (" + now + ") checklist #";
     return IntStream.range(0, size).mapToObj(i -> prefix + (start + i + 1)).toList();
   }
 }

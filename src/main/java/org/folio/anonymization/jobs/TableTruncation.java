@@ -73,6 +73,7 @@ public class TableTruncation implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "truncate_logging_and_audit",
         "Logging/audit table truncation",
         "Truncates logging and audit tables that cannot be safely anonymized",
         tenant,
@@ -86,6 +87,7 @@ public class TableTruncation implements JobFactory {
             )
       ),
       new JobBuilder(
+        "truncate_ephemeral",
         "Ephemeral table truncation",
         "Truncates temporary tables that cannot be safely anonymized (outboxes, in-progress exports, caches, etc)",
         tenant,
@@ -99,6 +101,7 @@ public class TableTruncation implements JobFactory {
             )
       ),
       new JobBuilder(
+        "truncate_credentials",
         "Credential table truncation",
         "Truncates tables containing credentials and access tokens that cannot be safely anonymized",
         tenant,

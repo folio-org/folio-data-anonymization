@@ -36,6 +36,7 @@ public class MiddleNameAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "names_middle",
         "Middle name anonymization",
         "Replaces middle-name values with Faker-generated realistic-appearing values",
         tenant,

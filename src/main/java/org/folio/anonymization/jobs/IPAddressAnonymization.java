@@ -31,6 +31,7 @@ public class IPAddressAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "ip_addresses",
         "IP address anonymization",
         "Replaces user's IP addresses with randomized values",
         tenant,

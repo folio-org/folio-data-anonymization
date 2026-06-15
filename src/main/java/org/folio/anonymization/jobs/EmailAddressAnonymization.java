@@ -46,6 +46,7 @@ public class EmailAddressAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "email_addresses",
         "Email address anonymization",
         "Replaces email addresses with semi-unique anonymized values",
         tenant,

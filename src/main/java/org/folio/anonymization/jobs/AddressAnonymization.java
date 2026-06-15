@@ -99,6 +99,7 @@ public class AddressAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "addresses",
         "Address anonymization",
         "Replaces address elements with randomized realistic-appearing values",
         tenant,

@@ -1,0 +1,133 @@
+{
+  "parameters" : {
+    "allowedRetries" : 30,
+    "threadPoolSize" : 100,
+    "connectionPoolSize" : 120,
+    "queryTimeoutDurationSeconds" : 600
+  },
+  "tenants" : [ "^\\Qcs00000int_0008\\E$" ],
+  "jobs" : {
+    "addresses" : {
+      "enabled" : false
+    },
+    "bulk_ops_and_lists" : {
+      "enabled" : false
+    },
+    "global_configuration" : {
+      "enabled" : false
+    },
+    "custom_property_definitions" : {
+      "enabled" : false
+    },
+    "custom_property_values" : {
+      "enabled" : false
+    },
+    "date_of_birth" : {
+      "enabled" : false
+    },
+    "email_addresses" : {
+      "enabled" : false
+    },
+    "external_credentials" : {
+      "enabled" : false
+    },
+    "file_contents" : {
+      "enabled" : false
+    },
+    "filename_and_s3_paths" : {
+      "enabled" : false
+    },
+    "financial_bank_and_transaction_info" : {
+      "enabled" : false
+    },
+    "financial_account_numbers" : {
+      "enabled" : true,
+      "performSetup" : false,
+      "performTeardown" : true
+    },
+    "financial_routing_numbers" : {
+      "enabled" : false
+    },
+    "free_text_staff_notes" : {
+      "enabled" : false
+    },
+    "free_text_labels_and_descriptions" : {
+      "enabled" : false
+    },
+    "free_text_miscellaneous" : {
+      "enabled" : false
+    },
+    "names_first" : {
+      "enabled" : false
+    },
+    "names_full" : {
+      "enabled" : false
+    },
+    "gender_and_pronouns" : {
+      "enabled" : false
+    },
+    "import_profile_relationships" : {
+      "enabled" : false
+    },
+    "ip_addresses" : {
+      "enabled" : false
+    },
+    "names_last" : {
+      "enabled" : false
+    },
+    "names_middle" : {
+      "enabled" : false
+    },
+    "names_prefix" : {
+      "enabled" : false
+    },
+    "patron_pins" : {
+      "enabled" : false
+    },
+    "phone_numbers" : {
+      "enabled" : false
+    },
+    "profile_pictures" : {
+      "enabled" : false
+    },
+    "saml_configuration" : {
+      "enabled" : false
+    },
+    "truncate_logging_and_audit" : {
+      "enabled" : false
+    },
+    "truncate_ephemeral" : {
+      "enabled" : false
+    },
+    "truncate_credentials" : {
+      "enabled" : false
+    },
+    "tenant_metadata" : {
+      "enabled" : false
+    },
+    "free_text_unique_labels" : {
+      "enabled" : false
+    },
+    "urls" : {
+      "enabled" : false
+    },
+    "user_agents" : {
+      "enabled" : false
+    },
+    "user_barcodes" : {
+      "enabled" : false
+    },
+    "user_credentials" : {
+      "enabled" : false
+    },
+    "user_external_system_ids" : {
+      "enabled" : false
+    },
+    "usernames" : {
+      "enabled" : false
+    },
+    "vendor_names_and_codes" : {
+      "enabled" : false
+    }
+  }
+}

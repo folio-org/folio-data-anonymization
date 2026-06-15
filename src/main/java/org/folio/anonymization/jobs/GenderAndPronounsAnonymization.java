@@ -51,6 +51,7 @@ public class GenderAndPronounsAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "gender_and_pronouns",
         "Gender/pronouns anonymization",
         "Replaces personal gender and pronouns with values from a predefined set",
         tenant,

@@ -8,13 +8,13 @@ import org.springframework.context.annotation.Configuration;
 public class JooqConfig {
 
   // TODO: make this variable?
-  private static final int QUERY_TIMEOUT_SECONDS = 10 * 60; // ten minutes
+  private static final int DEFAULT_QUERY_TIMEOUT_SECONDS = 10 * 60; // ten minutes
 
   @Bean
   public DefaultConfigurationCustomizer jooqDefaultConfigurationCustomizer() {
     // note: this is not actually handled by jOOQ; it seems that pgjdbc cancels eventually™
     // https://github.com/jOOQ/jOOQ/issues/14973#issuecomment-1518061328
     // https://stackoverflow.com/a/74521880/4236490
-    return c -> c.settings().withQueryTimeout(QUERY_TIMEOUT_SECONDS);
+    return c -> c.settings().withQueryTimeout(DEFAULT_QUERY_TIMEOUT_SECONDS);
   }
 }

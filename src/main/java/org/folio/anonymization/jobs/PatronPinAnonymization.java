@@ -31,6 +31,7 @@ public class PatronPinAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "patron_pins",
         "Patron PIN anonymization",
         "Replaces patron PINs with '0000'.",
         tenant,

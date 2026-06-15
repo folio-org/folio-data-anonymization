@@ -53,6 +53,7 @@ public class FileAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "file_contents",
         "File anonymization",
         "Replaces stored file blobs with placeholder safe values.",
         tenant,

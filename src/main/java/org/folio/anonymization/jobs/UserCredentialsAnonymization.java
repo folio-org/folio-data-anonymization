@@ -82,8 +82,9 @@ public class UserCredentialsAnonymization implements JobFactory {
 
     return List.of(
       new JobBuilder(
+        "user_credentials",
         "User credentials anonymization",
-        "Replaces all user login credentials with password 'folio'",
+        "Replaces all user login DB credentials with password 'folio'",
         tenant,
         context,
         configuration,

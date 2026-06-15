@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public record JobBuilder(
+  String key,
   String name,
   String description,
   TenantExecutionContext tenant,
@@ -16,6 +17,7 @@ public record JobBuilder(
     return this.creator()
       .apply(
         new JobContext(
+          key,
           "[%s] %s".formatted(tenant.tenant().id(), name),
           description,
           tenant,

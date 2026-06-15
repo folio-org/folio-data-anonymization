@@ -181,6 +181,7 @@ public class UsernameAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "usernames",
         "Username anonymization",
         "Replaces usernames with unique anonymized values, ensuring integrity between tables.",
         tenant,

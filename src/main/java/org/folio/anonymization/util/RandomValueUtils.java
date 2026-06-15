@@ -220,10 +220,12 @@ public class RandomValueUtils {
     List<String> values = new ArrayList<>(end - start);
     List<String> labels = new ArrayList<>(end - start);
 
+    long now = System.nanoTime() % 1_000; // should be sufficient to avoid collisions across runs
+
     IntStream
       .range(start, end)
       .forEach(j -> {
-        values.add("anonymized_pick_list_value_" + i + "_" + j);
+        values.add("anonymized_" + now + "_pick_list_value_" + i + "_" + j);
         labels.add(String.join(" ", FAKER.get().lorem().words(2)));
       });
 
