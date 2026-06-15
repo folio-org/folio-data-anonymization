@@ -23,6 +23,6 @@ public record NonInteractiveConfiguration(
     }
 
     this.parameters().validate();
-    this.jobs().entrySet().forEach(e -> e.getValue().validate(e.getKey(), e.getKey().equals("global-configuration")));
+    this.jobs().entrySet().forEach(e -> e.getValue().validate(e.getKey(), e.getKey().equals("global_configuration")));
   }
 }

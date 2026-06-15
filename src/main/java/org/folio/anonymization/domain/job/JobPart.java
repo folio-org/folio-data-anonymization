@@ -24,7 +24,7 @@ import org.springframework.dao.QueryTimeoutException;
 @RequiredArgsConstructor
 public abstract class JobPart implements Supplier<JobPart> {
 
-  private static RetryTemplate RETRY_TEMPLATE = new RetryTemplate(
+  private static volatile RetryTemplate RETRY_TEMPLATE = new RetryTemplate(
     // retry for 30 seconds
     RetryPolicy
       .builder()
@@ -97,7 +97,7 @@ public abstract class JobPart implements Supplier<JobPart> {
             SQLTransientConnectionException.class,
             QueryTimeoutException.class
           )
-          .maxRetries(30)
+          .maxRetries(retries)
           .build()
       );
   }

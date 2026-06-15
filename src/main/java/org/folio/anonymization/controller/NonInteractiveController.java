@@ -336,7 +336,7 @@ public class NonInteractiveController {
             OBJECT_MAPPER.writeValueAsBytes(
               new NonInteractiveConfiguration(
                 this.configuration.parameters(),
-                List.of(Pattern.compile('^' + Pattern.quote(tenant.id()) + '$')),
+                List.of(Pattern.compile("^" + Pattern.quote(tenant.id()) + "$")),
                 rerunJobConfiguration
               )
             )

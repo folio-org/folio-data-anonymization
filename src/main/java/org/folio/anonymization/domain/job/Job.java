@@ -6,7 +6,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Stream;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.Pair;
@@ -102,12 +101,13 @@ public final class Job implements Comparable<Job> {
     }
   }
 
-  public Stream<Pair<JobPart, Throwable>> getFailedParts() {
+  public List<Pair<JobPart, Throwable>> getFailedParts() {
     synchronized (currentlyExecuting) {
       return this.currentlyExecuting.values()
         .stream()
         .filter(pair -> pair.getRight().isCompletedExceptionally())
-        .map(p -> Pair.of(p.getLeft(), p.getRight().exceptionNow()));
+        .map(p -> Pair.of(p.getLeft(), p.getRight().exceptionNow()))
+        .toList();
     }
   }
 
