@@ -65,30 +65,29 @@ public class NonInteractiveController {
     log.info("Setting configuration from path: {}", path);
 
     try {
-      String fileContent = new String(Files.readAllBytes(Paths.get(path)));
-      ObjectMapper objectMapper;
-      if (fileContent.trim().startsWith("{")) {
-        log.info("Detected JSON format for configuration file; parsing as JSON...");
-        objectMapper =
-          JsonMapper
-            .builder()
-            // allows use of Java/C++ style comments (both '/'+'*' and '//' varieties) within parsed content.
-            .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
-            // some SQL statements may be cleaner this way around
-            .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
-            // left side of { foo: bar }, cleaner/easier to read. JS style
-            .enable(JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES)
-            // nicer diffs/etc
-            .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
-            // allows "escaping" newlines in regular JSON, giving proper linebreaks
-            .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
-            .build();
-      } else {
-        log.info("Detected YAML format for configuration file; parsing as YAML...");
-        objectMapper = YAMLMapper.builder().build();
-      }
+      ObjectMapper jsonMapper = JsonMapper
+        .builder()
+        // allows use of Java/C++ style comments (both '/'+'*' and '//' varieties) within parsed content.
+        .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
+        // some SQL statements may be cleaner this way around
+        .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+        // left side of { foo: bar }, cleaner/easier to read. JS style
+        .enable(JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES)
+        // nicer diffs/etc
+        .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
+        // allows "escaping" newlines in regular JSON, giving proper linebreaks
+        .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
+        .build();
+      ObjectMapper yamlMapper = YAMLMapper.builder().build();
 
-      NonInteractiveConfiguration newConfig = objectMapper.readValue(new File(path), NonInteractiveConfiguration.class);
+      NonInteractiveConfiguration newConfig;
+      try {
+        log.info("Attempting to parse configuration file as JSON/JSON5...");
+        newConfig = jsonMapper.readValue(new File(path), NonInteractiveConfiguration.class);
+      } catch (Exception jsonEx) {
+        log.info("Failed to parse as JSON/JSON5 ({}); attempting YAML...", jsonEx.getMessage());
+        newConfig = yamlMapper.readValue(new File(path), NonInteractiveConfiguration.class);
+      }
       log.info("Read configuration from {}; validating...", path);
       newConfig.validate();
       this.configuration = newConfig;
