@@ -72,6 +72,7 @@ public class VendorNamesAndCodeAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "vendor_names_and_codes",
         "Vendor names/code anonymization",
         "Replaces vendor names and codes with unique anonymized values, ensuring integrity between tables.",
         tenant,

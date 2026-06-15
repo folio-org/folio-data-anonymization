@@ -24,7 +24,7 @@ import org.springframework.dao.QueryTimeoutException;
 @RequiredArgsConstructor
 public abstract class JobPart implements Supplier<JobPart> {
 
-  private static final RetryTemplate RETRY_TEMPLATE = new RetryTemplate(
+  private static volatile RetryTemplate RETRY_TEMPLATE = new RetryTemplate(
     // retry for 30 seconds
     RetryPolicy
       .builder()
@@ -46,6 +46,7 @@ public abstract class JobPart implements Supplier<JobPart> {
   /** label for the individual part; MUST be unique */
   protected final String label;
   private final AtomicBoolean executing = new AtomicBoolean(false);
+  // will be true iff the part succeeded
   private final AtomicBoolean completed = new AtomicBoolean(false);
 
   @Override
@@ -83,5 +84,21 @@ public abstract class JobPart implements Supplier<JobPart> {
 
   protected Tenant tenant() {
     return this.job.getContext().tenant().tenant();
+  }
+
+  public static void setMaximumRetries(int retries) {
+    JobPart.RETRY_TEMPLATE =
+      new RetryTemplate(
+        RetryPolicy
+          .builder()
+          .includes(
+            PessimisticLockingFailureException.class,
+            DataAccessResourceFailureException.class,
+            SQLTransientConnectionException.class,
+            QueryTimeoutException.class
+          )
+          .maxRetries(retries)
+          .build()
+      );
   }
 }

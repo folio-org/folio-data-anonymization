@@ -66,6 +66,7 @@ public class ProfilePictureAnonymization implements JobFactory {
 
     return List.of(
       new JobBuilder(
+        "profile_pictures",
         "Profile picture anonymization",
         "Replaces profile picture encryption settings and swaps users.profile_picture values with seeded data.",
         tenant,

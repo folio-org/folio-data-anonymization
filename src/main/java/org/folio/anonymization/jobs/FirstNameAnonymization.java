@@ -67,6 +67,7 @@ public class FirstNameAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "names_first",
         "First name anonymization",
         "Replaces first-name values with Faker-generated realistic-appearing values",
         tenant,

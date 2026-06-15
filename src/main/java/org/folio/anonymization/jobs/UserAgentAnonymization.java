@@ -34,6 +34,7 @@ public class UserAgentAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "user_agents",
         "User agent anonymization",
         "Replaces user agent values with randomized realistic-appearing values",
         tenant,

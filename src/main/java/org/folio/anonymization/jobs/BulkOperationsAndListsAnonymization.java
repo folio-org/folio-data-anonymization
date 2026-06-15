@@ -54,7 +54,11 @@ public class BulkOperationsAndListsAnonymization implements JobFactory {
     "fql_query"
   );
   private static final FieldReference LIST_DETAILS_FQL_QUERY = new FieldReference("lists", "list_details", "fql_query");
-  private static final FieldReference LIST_VERSIONS_FQL_QUERY = new FieldReference("lists", "list_versions", "fql_query");
+  private static final FieldReference LIST_VERSIONS_FQL_QUERY = new FieldReference(
+    "lists",
+    "list_versions",
+    "fql_query"
+  );
   private static final FieldReference BULK_OPERATION_EXEC_CONTENT_IDENTIFIER = new FieldReference(
     "bulk_operations",
     "bulk_operation_execution_content",
@@ -71,7 +75,11 @@ public class BulkOperationsAndListsAnonymization implements JobFactory {
     "updated_value"
   );
   private static final TableReference PROFILE_TABLE = new TableReference("bulk_operations", "profile");
-  private static final FieldReference PROFILE_ENTITY_TYPE = new FieldReference("bulk_operations", "profile", "entity_type");
+  private static final FieldReference PROFILE_ENTITY_TYPE = new FieldReference(
+    "bulk_operations",
+    "profile",
+    "entity_type"
+  );
 
   @Autowired
   private SharedExecutionContext context;
@@ -79,7 +87,11 @@ public class BulkOperationsAndListsAnonymization implements JobFactory {
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     boolean hasBulkOperationTable = hasTable(tenant, "bulk_operations", "bulk_operation");
-    boolean hasBulkOperationExecutionContentTable = hasTable(tenant, "bulk_operations", "bulk_operation_execution_content");
+    boolean hasBulkOperationExecutionContentTable = hasTable(
+      tenant,
+      "bulk_operations",
+      "bulk_operation_execution_content"
+    );
     boolean hasBulkOperationRuleDetailsTable = hasTable(tenant, "bulk_operations", "bulk_operation_rule_details");
     boolean hasProfileTable = hasTable(tenant, "bulk_operations", "profile");
     boolean hasListDetailsTable = hasTable(tenant, "lists", "list_details");
@@ -132,6 +144,7 @@ public class BulkOperationsAndListsAnonymization implements JobFactory {
 
     return List.of(
       new JobBuilder(
+        "bulk_ops_and_lists",
         "Bulk operations and lists anonymization",
         "Redacts bulk operation/list query fields and identifiers, and deletes USER profile rows.",
         tenant,

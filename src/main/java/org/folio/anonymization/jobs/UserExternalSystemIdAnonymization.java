@@ -62,6 +62,7 @@ public class UserExternalSystemIdAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "user_external_system_ids",
         "User external system ID anonymization",
         "Replaces user external system IDs with unique generated values.",
         tenant,

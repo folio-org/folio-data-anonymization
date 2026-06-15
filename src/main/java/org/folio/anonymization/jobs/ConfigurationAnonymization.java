@@ -7,7 +7,9 @@ import static org.jooq.impl.DSL.not;
 import static org.jooq.impl.DSL.translate;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -45,10 +47,10 @@ public class ConfigurationAnonymization implements JobFactory {
   @Autowired
   private SeedFileService seedFileService;
 
-  @SuppressWarnings("unchecked")
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     List<JobConfigurationProperty> options = new ArrayList<>();
+    Map<String, Consumer<Job>> executionFunctions = new HashMap<>();
     if (
       tenant
         .availableTables()
@@ -133,37 +135,41 @@ public class ConfigurationAnonymization implements JobFactory {
           .stream()
           .collect(Collectors.toCollection(ArrayList::new));
 
+      executionFunctions.put(
+        "mod-config-addresses",
+        job ->
+          job.scheduleParts(
+            "act",
+            List.of(
+              new ReplaceJSONBValuePart(
+                "[mod-config] Redact tenant addresses",
+                CONFIGURATION_FIELD.withJsonPath("$.value"),
+                module.eq("TENANT").and(configName.eq("tenant.addresses")),
+                val ->
+                  field(
+                    "to_jsonb(jsonb_set_lax(({0})::jsonb, '{address}', to_jsonb({1}), false, 'return_target')::text)",
+                    JSONB.class,
+                    DBUtils.jsonbToString(val),
+                    translate(
+                      field(
+                        "unaccent({0})",
+                        String.class,
+                        DBUtils.resolveFieldPropertiesToString(
+                          field("({0})::jsonb", JSONB.class, DBUtils.jsonbToString(val)),
+                          List.of("address")
+                        )
+                      ),
+                      RandomValueUtils.POSTGRES_TRANSLATE_FROM,
+                      RandomValueUtils.POSTGRES_TRANSLATE_TO
+                    )
+                  )
+              )
+            )
+          )
+      );
       options.add(
         new JobConfigurationProperty(
-          (Consumer<Job>) job ->
-            job.scheduleParts(
-              "act",
-              List.of(
-                new ReplaceJSONBValuePart(
-                  "[mod-config] Redact tenant addresses",
-                  CONFIGURATION_FIELD.withJsonPath("$.value"),
-                  module.eq("TENANT").and(configName.eq("tenant.addresses")),
-                  val ->
-                    field(
-                      "to_jsonb(jsonb_set_lax(({0})::jsonb, '{address}', to_jsonb({1}), false, 'return_target')::text)",
-                      JSONB.class,
-                      DBUtils.jsonbToString(val),
-                      translate(
-                        field(
-                          "unaccent({0})",
-                          String.class,
-                          DBUtils.resolveFieldPropertiesToString(
-                            field("({0})::jsonb", JSONB.class, DBUtils.jsonbToString(val)),
-                            List.of("address")
-                          )
-                        ),
-                        RandomValueUtils.POSTGRES_TRANSLATE_FROM,
-                        RandomValueUtils.POSTGRES_TRANSLATE_TO
-                      )
-                    )
-                )
-              )
-            ),
+          "mod-config-addresses",
           "[mod-configuration] Redact tenant addresses",
           true,
           !findAndRemoveFromConfigurationList(
@@ -172,26 +178,31 @@ public class ConfigurationAnonymization implements JobFactory {
           )
         )
       );
+
+      executionFunctions.put(
+        "mod-config-oai-administratorEmail",
+        job ->
+          job.scheduleParts(
+            "act",
+            List.of(
+              new ReplaceJSONBValuePart(
+                "[mod-config] Anonymize mod-oai-pmh administratorEmail",
+                CONFIGURATION_FIELD.withJsonPath("$.value"),
+                module.eq("OAIPMH").and(configName.eq("general")),
+                val ->
+                  field(
+                    "to_jsonb(jsonb_set_lax(({0})::jsonb, '{administratorEmail}', to_jsonb({1}), false, 'return_target')::text)",
+                    JSONB.class,
+                    DBUtils.jsonbToString(val),
+                    RandomValueUtils.emails(1).get(0)
+                  )
+              )
+            )
+          )
+      );
       options.add(
         new JobConfigurationProperty(
-          (Consumer<Job>) job ->
-            job.scheduleParts(
-              "act",
-              List.of(
-                new ReplaceJSONBValuePart(
-                  "[mod-config] Anonymize mod-oai-pmh administratorEmail",
-                  CONFIGURATION_FIELD.withJsonPath("$.value"),
-                  module.eq("OAIPMH").and(configName.eq("general")),
-                  val ->
-                    field(
-                      "to_jsonb(jsonb_set_lax(({0})::jsonb, '{administratorEmail}', to_jsonb({1}), false, 'return_target')::text)",
-                      JSONB.class,
-                      DBUtils.jsonbToString(val),
-                      RandomValueUtils.emails(1).get(0)
-                    )
-                )
-              )
-            ),
+          "mod-config-oai-administratorEmail",
           "[mod-configuration] Anonymize mod-oai-pmh administrator email",
           true,
           !findAndRemoveFromConfigurationList(
@@ -200,24 +211,27 @@ public class ConfigurationAnonymization implements JobFactory {
           )
         )
       );
+
+      executionFunctions.put(
+        "mod-config-smtp",
+        job ->
+          job.scheduleParts(
+            "act",
+            List.of(
+              new RedactPart(
+                "[mod-config] Redact SMTP credentials and host",
+                CONFIGURATION_FIELD.withJsonPath("$.value"),
+                module
+                  .eq("SMTP_SERVER")
+                  .and(configName.eq("email"))
+                  .and(code.in("EMAIL_FROM", "EMAIL_USERNAME", "EMAIL_PASSWORD", "EMAIL_SMTP_HOST", "EMAIL_SMTP_PORT"))
+              )
+            )
+          )
+      );
       options.add(
         new JobConfigurationProperty(
-          (Consumer<Job>) job ->
-            job.scheduleParts(
-              "act",
-              List.of(
-                new RedactPart(
-                  "[mod-config] Redact SMTP credentials and host",
-                  CONFIGURATION_FIELD.withJsonPath("$.value"),
-                  module
-                    .eq("SMTP_SERVER")
-                    .and(configName.eq("email"))
-                    .and(
-                      code.in("EMAIL_FROM", "EMAIL_USERNAME", "EMAIL_PASSWORD", "EMAIL_SMTP_HOST", "EMAIL_SMTP_PORT")
-                    )
-                )
-              )
-            ),
+          "mod-config-smtp",
           "[mod-configuration] Redact SMTP server credentials/host",
           true,
           !findAndRemoveFromConfigurationList(
@@ -226,33 +240,38 @@ public class ConfigurationAnonymization implements JobFactory {
           )
         )
       );
+
+      executionFunctions.put(
+        "mod-config-saml-keystore",
+        job ->
+          job.scheduleParts(
+            "act",
+            List.of(
+              new ReplaceJSONBValuePart(
+                "[mod-config] Replace SAML keystore",
+                CONFIGURATION_FIELD.withJsonPath("$.value"),
+                module.eq("LOGIN-SAML-SSOCircle").and(configName.eq("saml")).and(code.eq("keystore.file")),
+                field(
+                  "to_jsonb({0}::text)",
+                  JSONB.class,
+                  RandomValueUtils.encodeBase64(seedFileService.getSeedFilesAsBytes("saml.jks").get(0))
+                )
+              ),
+              new ReplaceJSONBValuePart(
+                "[mod-config] Replace SAML keystore passwords",
+                CONFIGURATION_FIELD.withJsonPath("$.value"),
+                module
+                  .eq("LOGIN-SAML-SSOCircle")
+                  .and(configName.eq("saml"))
+                  .and(code.in("keystore.password", "keystore.privatekey.password")),
+                field("to_jsonb({0}::text)", JSONB.class, "folio")
+              )
+            )
+          )
+      );
       options.add(
         new JobConfigurationProperty(
-          (Consumer<Job>) job ->
-            job.scheduleParts(
-              "act",
-              List.of(
-                new ReplaceJSONBValuePart(
-                  "[mod-config] Replace SAML keystore",
-                  CONFIGURATION_FIELD.withJsonPath("$.value"),
-                  module.eq("LOGIN-SAML-SSOCircle").and(configName.eq("saml")).and(code.eq("keystore.file")),
-                  field(
-                    "to_jsonb({0}::text)",
-                    JSONB.class,
-                    RandomValueUtils.encodeBase64(seedFileService.getSeedFilesAsBytes("saml.jks").get(0))
-                  )
-                ),
-                new ReplaceJSONBValuePart(
-                  "[mod-config] Replace SAML keystore passwords",
-                  CONFIGURATION_FIELD.withJsonPath("$.value"),
-                  module
-                    .eq("LOGIN-SAML-SSOCircle")
-                    .and(configName.eq("saml"))
-                    .and(code.in("keystore.password", "keystore.privatekey.password")),
-                  field("to_jsonb({0}::text)", JSONB.class, "folio")
-                )
-              )
-            ),
+          "mod-config-saml-keystore",
           "[mod-configuration] Replace SAML keystore",
           true,
           !findAndRemoveFromConfigurationList(
@@ -264,19 +283,24 @@ public class ConfigurationAnonymization implements JobFactory {
           )
         )
       );
+
+      executionFunctions.put(
+        "mod-config-data-export-configurations",
+        job ->
+          job.scheduleParts(
+            "act",
+            List.of(
+              new DeletePart(
+                "[mod-config] Remove mod-data-export-spring configurations",
+                CONFIGURATION_FIELD.tableReference(),
+                module.eq("mod-data-export-spring")
+              )
+            )
+          )
+      );
       options.add(
         new JobConfigurationProperty(
-          (Consumer<Job>) job ->
-            job.scheduleParts(
-              "act",
-              List.of(
-                new DeletePart(
-                  "[mod-config] Remove mod-data-export-spring configurations",
-                  CONFIGURATION_FIELD.tableReference(),
-                  module.eq("mod-data-export-spring")
-                )
-              )
-            ),
+          "mod-config-data-export-configurations",
           "[mod-configuration] Remove mod-data-export-spring configurations (may contain FTP credentials)",
           true,
           !findAndRemoveFromConfigurationList(foundConfigs, r -> r.get(module).equals("mod-data-export-spring"))
@@ -290,9 +314,11 @@ public class ConfigurationAnonymization implements JobFactory {
           .stream()
           .map(r -> Pair.of(r.get(module), r.get(configName)))
           .distinct()
-          .map(p ->
-            new JobConfigurationProperty(
-              (Consumer<Job>) job ->
+          .map(p -> {
+            String configKey = "mod-config-unknown-" + p.getLeft() + "-" + p.getRight();
+            executionFunctions.put(
+              configKey,
+              job ->
                 job.scheduleParts(
                   "act",
                   List.of(
@@ -305,7 +331,10 @@ public class ConfigurationAnonymization implements JobFactory {
                       module.eq(p.getLeft()).and(configName.eq(p.getRight()))
                     )
                   )
-                ),
+                )
+            );
+            return new JobConfigurationProperty(
+              configKey,
               row(
                 text("[mod-configuration] "),
                 text("(unknown configuration type)").yellow(),
@@ -313,8 +342,8 @@ public class ConfigurationAnonymization implements JobFactory {
               ),
               false,
               false
-            )
-          )
+            );
+          })
           .toList()
       );
     }
@@ -339,9 +368,11 @@ public class ConfigurationAnonymization implements JobFactory {
               .andNot(scope.eq("mod-ncip").and(key.in("rapid", "reshare")))
           )
           .fetch()
-          .map(r ->
-            new JobConfigurationProperty(
-              (Consumer<Job>) job ->
+          .map(r -> {
+            String configKey = "mod-settings-unknown-" + r.value1();
+            executionFunctions.put(
+              configKey,
+              job ->
                 job.scheduleParts(
                   "act",
                   List.of(
@@ -351,7 +382,10 @@ public class ConfigurationAnonymization implements JobFactory {
                       scope.eq(r.value1())
                     )
                   )
-                ),
+                )
+            );
+            return new JobConfigurationProperty(
+              configKey,
               row(
                 text("[mod-settings] "),
                 text("(unknown setting type)").yellow(),
@@ -359,13 +393,14 @@ public class ConfigurationAnonymization implements JobFactory {
               ),
               false,
               false
-            )
-          )
+            );
+          })
       );
     }
 
     return List.of(
       new JobBuilder(
+        "global_configuration",
         "Global configuration anonymization",
         "Handle values from mod-configuration and mod-settings",
         tenant,
@@ -378,7 +413,8 @@ public class ConfigurationAnonymization implements JobFactory {
             .stream()
             .filter(JobConfigurationProperty::isOn)
             .map(JobConfigurationProperty::getKey)
-            .map(f -> (Consumer<Job>) f)
+            .map(String.class::cast)
+            .map(executionFunctions::get)
             .forEach(f -> f.accept(job));
           return job;
         }

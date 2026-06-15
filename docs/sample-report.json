@@ -1,0 +1,986 @@
+{
+  "tenantId": "cs00000int_0008",
+  "hadFailures": true,
+  "completedAt": "2026-06-15T04:36:59.145213Z",
+  "configuration": {
+    "parameters": {
+      "allowedRetries": 30,
+      "threadPoolSize": 100,
+      "connectionPoolSize": 120,
+      "queryTimeoutDurationSeconds": 600
+    },
+    "tenants": ["cs00000int_0008"],
+    "jobs": {
+      "addresses": {
+        "enabled": false
+      },
+      "bulk_ops_and_lists": {
+        "enabled": false
+      },
+      "global_configuration": {
+        "enabled": false
+      },
+      "custom_property_definitions": {
+        "enabled": false
+      },
+      "custom_property_values": {
+        "enabled": false
+      },
+      "date_of_birth": {
+        "enabled": false
+      },
+      "email_addresses": {
+        "enabled": false
+      },
+      "external_credentials": {
+        "enabled": false
+      },
+      "file_contents": {
+        "enabled": false
+      },
+      "filename_and_s3_paths": {
+        "enabled": false
+      },
+      "financial_bank_and_transaction_info": {
+        "enabled": false
+      },
+      "financial_account_numbers": {
+        "enabled": true
+      },
+      "financial_routing_numbers": {
+        "enabled": false
+      },
+      "free_text_staff_notes": {
+        "enabled": false
+      },
+      "free_text_labels_and_descriptions": {
+        "enabled": false
+      },
+      "free_text_miscellaneous": {
+        "enabled": false
+      },
+      "names_first": {
+        "enabled": false
+      },
+      "names_full": {
+        "enabled": false
+      },
+      "gender_and_pronouns": {
+        "enabled": false
+      },
+      "import_profile_relationships": {
+        "enabled": false
+      },
+      "ip_addresses": {
+        "enabled": false
+      },
+      "names_last": {
+        "enabled": false
+      },
+      "names_middle": {
+        "enabled": false
+      },
+      "names_prefix": {
+        "enabled": false
+      },
+      "patron_pins": {
+        "enabled": false
+      },
+      "phone_numbers": {
+        "enabled": false
+      },
+      "profile_pictures": {
+        "enabled": false
+      },
+      "saml_configuration": {
+        "enabled": false
+      },
+      "truncate_logging_and_audit": {
+        "enabled": false
+      },
+      "truncate_ephemeral": {
+        "enabled": false
+      },
+      "truncate_credentials": {
+        "enabled": false
+      },
+      "tenant_metadata": {
+        "enabled": false
+      },
+      "free_text_unique_labels": {
+        "enabled": false
+      },
+      "urls": {
+        "enabled": false
+      },
+      "user_agents": {
+        "enabled": false
+      },
+      "user_barcodes": {
+        "enabled": false
+      },
+      "user_credentials": {
+        "enabled": false
+      },
+      "user_external_system_ids": {
+        "enabled": false
+      },
+      "usernames": {
+        "enabled": false
+      },
+      "vendor_names_and_codes": {
+        "enabled": false
+      }
+    }
+  },
+  "disabledJobs": {
+    "addresses": {
+      "invoice_storage.batch_vouchers.jsonb->'$.batchedVouchers[*].vendorAddress.addressLine1'": "off",
+      "invoice_storage.batch_vouchers.jsonb->'$.batchedVouchers[*].vendorAddress.addressLine2'": "off",
+      "invoice_storage.batch_vouchers.jsonb->'$.batchedVouchers[*].vendorAddress.city'": "off",
+      "invoice_storage.batch_vouchers.jsonb->'$.batchedVouchers[*].vendorAddress.stateRegion'": "off",
+      "invoice_storage.batch_vouchers.jsonb->'$.batchedVouchers[*].vendorAddress.zipCode'": "off",
+      "invoice_storage.batch_vouchers.jsonb->'$.batchedVouchers[*].vendorAddress.country'": "off",
+      "oa.address.add_address_line_one": "off",
+      "oa.address.add_address_line_two": "off",
+      "oa.address.add_city": "off",
+      "oa.address.add_region": "off",
+      "oa.address.add_postal_code": "off",
+      "oa.address.add_country": "off",
+      "organizations_storage.contacts.jsonb->'$.addresses[*].addressLine1'": "off",
+      "organizations_storage.contacts.jsonb->'$.addresses[*].addressLine2'": "off",
+      "organizations_storage.contacts.jsonb->'$.addresses[*].city'": "off",
+      "organizations_storage.contacts.jsonb->'$.addresses[*].stateRegion'": "off",
+      "organizations_storage.contacts.jsonb->'$.addresses[*].zipCode'": "off",
+      "organizations_storage.contacts.jsonb->'$.addresses[*].country'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.addresses[*].addressLine1'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.addresses[*].addressLine2'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.addresses[*].city'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.addresses[*].stateRegion'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.addresses[*].zipCode'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.addresses[*].country'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.addresses[*].addressLine1'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.addresses[*].addressLine2'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.addresses[*].city'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.addresses[*].stateRegion'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.addresses[*].zipCode'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.addresses[*].country'": "off",
+      "organizations_storage.organizations.jsonb->'$.addresses[*].addressLine1'": "off",
+      "organizations_storage.organizations.jsonb->'$.addresses[*].addressLine2'": "off",
+      "organizations_storage.organizations.jsonb->'$.addresses[*].city'": "off",
+      "organizations_storage.organizations.jsonb->'$.addresses[*].stateRegion'": "off",
+      "organizations_storage.organizations.jsonb->'$.addresses[*].zipCode'": "off",
+      "organizations_storage.organizations.jsonb->'$.addresses[*].country'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.addresses[*].addressLine1'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.addresses[*].addressLine2'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.addresses[*].city'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.addresses[*].stateRegion'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.addresses[*].zipCode'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.addresses[*].country'": "off",
+      "settings.tenant_addresses.address": "off",
+      "users.staging_users.jsonb->'$.addressInfo.addressLine0'": "off",
+      "users.staging_users.jsonb->'$.addressInfo.addressLine1'": "off",
+      "users.staging_users.jsonb->'$.addressInfo.city'": "off",
+      "users.staging_users.jsonb->'$.addressInfo.province'": "off",
+      "users.staging_users.jsonb->'$.addressInfo.zip'": "off",
+      "users.staging_users.jsonb->'$.addressInfo.country'": "off",
+      "users.users.jsonb->'$.personal.addresses[*].countryId'": "off",
+      "users.users.jsonb->'$.personal.addresses[*].addressLine1'": "off",
+      "users.users.jsonb->'$.personal.addresses[*].addressLine2'": "off",
+      "users.users.jsonb->'$.personal.addresses[*].city'": "off",
+      "users.users.jsonb->'$.personal.addresses[*].region'": "off",
+      "users.users.jsonb->'$.personal.addresses[*].postalCode'": "off"
+    },
+    "bulk_ops_and_lists": {
+      "replace-fql-query": "off",
+      "replace-list-details-fql-query": "off",
+      "replace-list-versions-fql-query": "off",
+      "replace-execution-content-identifier": "off",
+      "replace-rule-details-initial-value": "off",
+      "replace-rule-details-updated-value": "off",
+      "clear-profile-rule-collection-for-users": "off"
+    },
+    "global_configuration": {
+      "mod-config-addresses": "unavailable",
+      "mod-config-oai-administratorEmail": "off",
+      "mod-config-smtp": "off",
+      "mod-config-saml-keystore": "unavailable",
+      "mod-config-data-export-configurations": "unavailable"
+    },
+    "custom_property_definitions": {
+      "agreements": "off",
+      "licenses": "off",
+      "orders_storage": "off",
+      "service_interaction": "off",
+      "users": "off"
+    },
+    "custom_property_values": {
+      "agreements": "off",
+      "licenses": "off",
+      "orders_storage": "off",
+      "service_interaction": "off",
+      "users": "off",
+      "agreements.custom_property_blob.value": "off",
+      "agreements.custom_property_integer.value": "off",
+      "agreements.custom_property_multi_integer_value.value_big_integer": "off",
+      "agreements.custom_property_multi_text_value.value_string": "off",
+      "agreements.custom_property_text.value": "off",
+      "licenses.custom_property_blob.value": "off",
+      "licenses.custom_property_integer.value": "off",
+      "licenses.custom_property_multi_integer_value.value_big_integer": "off",
+      "licenses.custom_property_multi_text_value.value_string": "off",
+      "licenses.custom_property_text.value": "off",
+      "orders_storage.po_line.jsonb->'$.customFields'": "off",
+      "orders_storage.purchase_order.jsonb->'$.customFields'": "off",
+      "service_interaction.custom_property_blob.value": "off",
+      "service_interaction.custom_property_integer.value": "off",
+      "service_interaction.custom_property_multi_integer_value.value_big_integer": "off",
+      "service_interaction.custom_property_multi_text_value.value_string": "off",
+      "service_interaction.custom_property_text.value": "off",
+      "users.users.jsonb->'$.customFields'": "off"
+    },
+    "date_of_birth": {
+      "users.users.jsonb->'$.personal.dateOfBirth'": "off"
+    },
+    "email_addresses": {
+      "batch_print.printing.sorting_field": "off",
+      "erm_usage.usage_data_providers.jsonb->'$.sushiCredentials.requestorMail'": "off",
+      "oa.alternate_email_address.aea_email": "off",
+      "oa.party.p_main_email": "off",
+      "organizations_storage.contacts.jsonb->'$.emails[*].value'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.emails[*].value'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.emails[*].value'": "off",
+      "organizations_storage.organizations.jsonb->'$.emails[*].value'": "off",
+      "organizations_storage.organizations.jsonb->'$.edi.ediJob.sendToEmails'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.emails[*].value'": "off",
+      "users.staging_users.jsonb->'$.contactInfo.email'": "off",
+      "users.user_tenant.email": "off",
+      "users.users.jsonb->'$.personal.email'": "off",
+      "oai_pmh.configuration_settings.config_value->'$.administratorEmail'": "off"
+    },
+    "external_credentials": {
+      "copycat.profile.jsonb->'$.authentication'": "off",
+      "data_export_spring.export_config.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.serverAddress'": "off",
+      "data_export_spring.export_config.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.username'": "off",
+      "data_export_spring.export_config.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.password'": "off",
+      "data_export_spring.job.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.serverAddress'": "off",
+      "data_export_spring.job.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.username'": "off",
+      "data_export_spring.job.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.password'": "off",
+      "email.settings.jsonb->'$.host'": "off",
+      "email.settings.jsonb->'$.username'": "off",
+      "email.settings.jsonb->'$.password'": "off",
+      "email.settings.jsonb->'$.from'": "off",
+      "email.settings.jsonb->'$.value.host'": "off",
+      "email.settings.jsonb->'$.value.username'": "off",
+      "email.settings.jsonb->'$.value.password'": "off",
+      "email.settings.jsonb->'$.value.from'": "off",
+      "email.smtp_configuration.jsonb->'$.host'": "off",
+      "email.smtp_configuration.jsonb->'$.username'": "off",
+      "email.smtp_configuration.jsonb->'$.password'": "off",
+      "email.smtp_configuration.jsonb->'$.from'": "off",
+      "email.smtp_configuration.jsonb->'$.value.host'": "off",
+      "email.smtp_configuration.jsonb->'$.value.username'": "off",
+      "email.smtp_configuration.jsonb->'$.value.password'": "off",
+      "email.smtp_configuration.jsonb->'$.value.from'": "off",
+      "erm_usage.usage_data_providers.jsonb->'$.sushiCredentials.apiKey'": "off",
+      "inn_reach.central_server_credentials.central_server_key": "off",
+      "inn_reach.central_server_credentials.central_server_secret": "off",
+      "inn_reach.local_server_credentials.local_server_key": "off",
+      "inn_reach.local_server_credentials.local_server_secret": "off",
+      "invoice_storage.batch_voucher_export_configs.jsonb->'$.uploadURI'": "off",
+      "invoice_storage.batch_voucher_export_configs.jsonb->'$.ftpFormat'": "off",
+      "invoice_storage.batch_voucher_export_configs.jsonb->'$.ftpPort'": "off",
+      "invoice_storage.export_config_credentials.jsonb->'$.username'": "off",
+      "invoice_storage.export_config_credentials.jsonb->'$.password'": "off",
+      "kb_ebsco_java.kb_credentials.api_key": "off",
+      "organizations_storage.interfaces.jsonb->'$.username'": "off",
+      "organizations_storage.interfaces.jsonb->'$.password'": "off",
+      "organizations_storage.organizations.jsonb->'$.edi.ediFtp.serverAddress'": "off",
+      "organizations_storage.organizations.jsonb->'$.edi.ediFtp.username'": "off",
+      "organizations_storage.organizations.jsonb->'$.edi.ediFtp.password'": "off",
+      "remote_storage.remote_storage_configurations.api_key": "off"
+    },
+    "file_contents": {
+      "batch_print.printing.content": "off",
+      "erm_usage.files.data": "off",
+      "invoice_storage.documents.document_data": "off",
+      "agreements.file_object.file_contents": "off",
+      "agreements.comparison_job.cj_file_contents": "off",
+      "licenses.file_object.file_contents": "off"
+    },
+    "filename_and_s3_paths": {
+      "global data_import_global.queue_items.file_path": "off",
+      "agreements.file_upload.fu_filename": "off",
+      "data_export.file_definitions.jsonb->'$.filename'": "off",
+      "data_export.file_definitions.jsonb->'$.sourcePath'": "off",
+      "data_export_spring.export_config.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.orderDirectory'": "off",
+      "data_export_spring.export_config.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.invoiceDirectory'": "off",
+      "data_export_spring.job.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.orderDirectory'": "off",
+      "data_export_spring.job.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.invoiceDirectory'": "off",
+      "data_import.upload_definitions.jsonb->'$.fileDefinitions[*].name'": "off",
+      "data_import.upload_definitions.jsonb->'$.fileDefinitions[*].sourcePath'": "off",
+      "data_import.upload_definitions.jsonb->'$.fileDefinitions[*].uiKey'": "off",
+      "erm_usage.custom_reports.jsonb->'$.fileName'": "off",
+      "licenses.file_upload.fu_filename": "off",
+      "organizations_storage.organizations.jsonb->'$.edi.ediFtp.orderDirectory'": "off",
+      "organizations_storage.organizations.jsonb->'$.edi.ediFtp.invoiceDirectory'": "off",
+      "source_record_manager.job_execution.source_path": "off",
+      "source_record_manager.job_execution.file_name": "off"
+    },
+    "financial_bank_and_transaction_info": {
+      "feesfines.feefineactions.jsonb->'$.transactionInformation'": "off",
+      "organizations_storage.banking_information.jsonb->'$.bankName'": "off"
+    },
+    "financial_routing_numbers": {
+      "organizations_storage.banking_information.jsonb->'$.transitNumber'": "off"
+    },
+    "names_first": {
+      "circulation_storage.actual_cost_record.jsonb->'$.user.firstName'": "off",
+      "circulation_storage.request.jsonb->'$.requester.firstName'": "off",
+      "circulation_storage.request.jsonb->'$.proxy.firstName'": "off",
+      "data_export.job_executions.run_by_first_name": "off",
+      "data_export.job_executions.jsonb->'$.runBy.firstName'": "off",
+      "data_export.job_profiles.jsonb->'$.userInfo.firstName'": "off",
+      "data_export.mapping_profiles.jsonb->'$.userInfo.firstName'": "off",
+      "data_export.job_profiles.updated_by_first_name": "off",
+      "data_export.mapping_profiles.updated_by_first_name": "off",
+      "data_import.default_file_extensions.jsonb->'$.userInfo.firstName'": "off",
+      "data_import.file_extensions.jsonb->'$.userInfo.firstName'": "off",
+      "di_converter_storage.action_profiles.jsonb->'$.userInfo.firstName'": "off",
+      "di_converter_storage.job_profiles.jsonb->'$.userInfo.firstName'": "off",
+      "di_converter_storage.mapping_profiles.jsonb->'$.userInfo.firstName'": "off",
+      "di_converter_storage.match_profiles.jsonb->'$.userInfo.firstName'": "off",
+      "di_converter_storage.profile_snapshots.jsonb->'$.content.userInfo.firstName'": "off",
+      "erm_usage.usage_data_providers.jsonb->'$.sushiCredentials.requestorName'": "off",
+      "inventory_storage.item.jsonb->'$.circulationNotes[*].source.personal.firstName'": "off",
+      "inventory_storage.audit_item.jsonb->'$.record.circulationNotes[*].source.firstName'": "off",
+      "oa.party.p_given_names": "off",
+      "organizations_storage.contacts.jsonb->'$.firstName'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts[*].firstName'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts[*].firstName'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.firstName'": "off",
+      "requests_mediated.mediated_request.requester_first_name": "off",
+      "requests_mediated.mediated_request.proxy_first_name": "off",
+      "search.item.json->'$.circulationNotes[*].source.personal.firstName'": "off",
+      "source_record_manager.job_execution.job_profile_snapshot_wrapper->'$.content.userInfo.firstName'": "off",
+      "source_record_manager.job_execution.job_user_first_name": "off",
+      "users.staging_users.jsonb->'$.generalInfo.firstName'": "off",
+      "users.staging_users.jsonb->'$.generalInfo.preferredFirstName'": "off",
+      "users.users.jsonb->'$.personal.firstName'": "off",
+      "users.users.jsonb->'$.personal.preferredFirstName'": "off"
+    },
+    "free_text_staff_notes": {
+      "agreements.agreement_relationship.ar_note": "off",
+      "agreements.custom_property.note": "off",
+      "agreements.custom_property.public_note": "off",
+      "agreements.document_attachment.da_note": "off",
+      "agreements.entitlement.ent_note": "off",
+      "agreements.entitlement.ent_description": "off",
+      "agreements.license_amendment_status.las_note": "off",
+      "agreements.period.per_note": "off",
+      "agreements.remote_license_link.rll_note": "off",
+      "agreements.subscription_agreement.sa_license_note": "off",
+      "agreements.subscription_agreement_org_role.saor_note": "off",
+      "agreements.package_content_item.pci_note": "off",
+      "agreements.sa_event_history.eh_notes": "off",
+      "agreements.usage_data_provider.udp_note": "off",
+      "circulation_storage.actual_cost_record.jsonb->'$.additionalInfoForStaff'": "off",
+      "data_export_spring.export_config.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.notes'": "off",
+      "data_export_spring.job.export_type_specific_parameters->'$.vendorEdiOrdersExportConfig.ediFtp.notes'": "off",
+      "entities_links.authority.notes->'$[*].note'": "off",
+      "entities_links.authority_archive.notes->'$[*].note'": "unavailable",
+      "erm_usage.counter_reports.jsonb->'$.editReason'": "off",
+      "erm_usage.custom_reports.jsonb->'$.note'": "off",
+      "erm_usage.usage_data_providers.jsonb->'$.notes'": "off",
+      "feesfines.feefineactions.jsonb->'$.comments'": "off",
+      "inventory_storage.holdings_record.jsonb->'$.administrativeNotes[*]'": "off",
+      "inventory_storage.holdings_record.jsonb->'$.notes[*].note'": "off",
+      "inventory_storage.holdings_record.jsonb->'$.holdingsStatements[*].note'": "off",
+      "inventory_storage.holdings_record.jsonb->'$.holdingsStatementsForIndexes[*].note'": "off",
+      "inventory_storage.holdings_record.jsonb->'$.holdingsStatementsForSupplements[*].note'": "off",
+      "inventory_storage.audit_holdings_record.jsonb->'$.record.administrativeNotes[*]'": "off",
+      "inventory_storage.audit_holdings_record.jsonb->'$.record.notes[*].note'": "off",
+      "inventory_storage.audit_holdings_record.jsonb->'$.record.holdingsStatements[*].note'": "off",
+      "inventory_storage.audit_holdings_record.jsonb->'$.record.holdingsStatementsForIndexes[*].note'": "off",
+      "inventory_storage.audit_holdings_record.jsonb->'$.record.holdingsStatementsForSupplements[*].note'": "off",
+      "inventory_storage.instance.jsonb->'$.notes[*].note'": "off",
+      "inventory_storage.instance.jsonb->'$.administrativeNotes[*]'": "off",
+      "inventory_storage.audit_instance.jsonb->'$.record.notes[*].note'": "off",
+      "inventory_storage.audit_instance.jsonb->'$.record.administrativeNotes[*]'": "off",
+      "inventory_storage.item.jsonb->'$.notes[*].note'": "off",
+      "inventory_storage.item.jsonb->'$.administrativeNotes[*]'": "off",
+      "inventory_storage.item.jsonb->'$.circulationNotes[*].note'": "off",
+      "inventory_storage.audit_item.jsonb->'$.record.notes[*].note'": "off",
+      "inventory_storage.audit_item.jsonb->'$.record.administrativeNotes[*]'": "off",
+      "inventory_storage.audit_item.jsonb->'$.record.circulationNotes[*].note'": "off",
+      "invoice_storage.invoice_lines.jsonb->'$.comment'": "off",
+      "invoice_storage.invoices.jsonb->'$.note'": "off",
+      "licenses.custom_property.note": "off",
+      "licenses.custom_property.public_note": "off",
+      "licenses.document_attachment.da_note": "off",
+      "licenses.license_org.sao_note": "off",
+      "licenses.license_org_role.lior_note": "off",
+      "notes.note.title": "off",
+      "notes.note.content": "off",
+      "notes.note.indexed_content": "off",
+      "oa.charge.ch_discount_note": "off",
+      "oa.checklist_item_note.clin_note": "off",
+      "oa.payer.cpy_payer_note": "off",
+      "oa.publication_request_history.prh_note": "off",
+      "oa.publication_status.ps_status_note": "off",
+      "orders_storage.pieces.jsonb->'$.comment'": "off",
+      "orders_storage.po_line.jsonb->'$.cancellationRestrictionNote'": "off",
+      "orders_storage.po_line.jsonb->'$.details.receivingNote'": "off",
+      "orders_storage.po_line.jsonb->'$.renewalNote'": "off",
+      "orders_storage.po_line.jsonb->'$.vendorDetail.noteFromVendor'": "off",
+      "orders_storage.purchase_order.jsonb->'$.closeReason.note'": "off",
+      "orders_storage.purchase_order.jsonb->'$.closeReason.reason'": "off",
+      "orders_storage.purchase_order.jsonb->'$.notes[*]'": "off",
+      "orders_storage.purchase_order.jsonb->'$.ongoing.notes'": "off",
+      "orders_storage.routing_list.jsonb->'$.notes'": "off",
+      "orders_storage.titles.jsonb->'$.receivingNote'": "off",
+      "organizations_storage.banking_information.jsonb->'$.notes'": "off",
+      "organizations_storage.contacts.jsonb->'$.notes'": "off",
+      "organizations_storage.contacts.jsonb->'$.urls[*].notes'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.notes'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.urls[*].notes'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.notes'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.urls[*].notes'": "off",
+      "organizations_storage.interfaces.jsonb->'$.notes'": "off",
+      "organizations_storage.interfaces.jsonb->'$.statisticsNotes'": "off",
+      "organizations_storage.organizations.jsonb->'$.urls[*].notes'": "off",
+      "organizations_storage.organizations.jsonb->'$.agreements[*].notes'": "off",
+      "organizations_storage.organizations.jsonb->'$.edi.notes'": "off",
+      "organizations_storage.organizations.jsonb->'$.edi.ediFtp.notes'": "off",
+      "organizations_storage.organizations.jsonb->'$.edi.ediJob.schedulingNotes'": "off",
+      "organizations_storage.organizations.jsonb->'$.accounts[*].notes'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.notes'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.urls[*].notes'": "off",
+      "reading_room.patron_permission.notes": "off",
+      "remote_storage.item_notes.note": "off",
+      "remote_storage.retrieval_queue.request_note": "off",
+      "requests_mediated.batch_request.patron_comments": "off",
+      "requests_mediated.batch_request_split.patron_comments": "off",
+      "requests_mediated.mediated_request.patron_comments": "off",
+      "requests_mediated.mediated_request.cancellation_additional_information": "off",
+      "search.holding.json->'$.administrativeNotes[*]'": "off",
+      "search.holding.json->'$.notes[*].note'": "off",
+      "search.holding.json->'$.holdingsStatements[*].note'": "off",
+      "search.holding.json->'$.holdingsStatementsForIndexes[*].note'": "off",
+      "search.holding.json->'$.holdingsStatementsForSupplements[*].note'": "off",
+      "search.instance.json->'$.notes[*].note'": "off",
+      "search.instance.json->'$.administrativeNotes[*]'": "off",
+      "search.item.json->'$.notes[*].note'": "off",
+      "search.item.json->'$.administrativeNotes[*]'": "off",
+      "search.item.json->'$.circulationNotes[*].note'": "off",
+      "serials_management.predicted_piece_set.pps_note": "off",
+      "serials_management.enumeration_numeric_leveltmrf.enltmrf_internal_note": "off",
+      "serials_management.serial_note.sn_note": "off",
+      "service_interaction.custom_property.note": "off",
+      "service_interaction.custom_property.public_note": "off",
+      "tlr.ecs_tlr.patron_comments": "off"
+    },
+    "free_text_labels_and_descriptions": {
+      "agreements.document_attachment.da_name": "off",
+      "agreements.entitlement.ent_description": "off",
+      "agreements.persistent_job.job_name": "off",
+      "circulation_storage.cancellation_reason.jsonb->'$.description'": "off",
+      "circulation_storage.cancellation_reason.jsonb->'$.publicDescription'": "off",
+      "data_export.job_profiles.jsonb->'$.description'": "off",
+      "data_export.mapping_profiles.jsonb->'$.description'": "off",
+      "data_import.default_file_extensions.jsonb->'$.description'": "off",
+      "di_converter_storage.action_profiles.jsonb->'$.description'": "off",
+      "di_converter_storage.job_profiles.jsonb->'$.description'": "off",
+      "di_converter_storage.mapping_profiles.jsonb->'$.description'": "off",
+      "di_converter_storage.match_profiles.jsonb->'$.description'": "off",
+      "di_converter_storage.profile_snapshots.jsonb->'$.content.description'": "off",
+      "feesfines.manual_block_templates.jsonb->'$.blockTemplate.desc'": "off",
+      "feesfines.manualblocks.jsonb->'$.desc'": "off",
+      "feesfines.waives.jsonb->'$.description'": "off",
+      "kb_ebsco_java.access_types.name": "off",
+      "kb_ebsco_java.access_types.description": "off",
+      "kb_ebsco_java.providers.name": "off",
+      "kb_ebsco_java.kb_credentials.name": "off",
+      "kb_ebsco_java.resources.name": "off",
+      "licenses.document_attachment.da_name": "off",
+      "lists.list_details.name": "off",
+      "lists.list_details.description": "off",
+      "lists.list_versions.name": "off",
+      "lists.list_versions.description": "off",
+      "oa.address.add_name": "off",
+      "oa.charge.ch_description": "off",
+      "oa.checklist_item_definition.clid_label": "off",
+      "oa.checklist_item_definition.clid_description": "off",
+      "orders_storage.routing_list.jsonb->'$.names'": "off",
+      "orders_storage.export_history.jsonb->'$.jobName'": "off",
+      "orders_storage.po_line.jsonb->'$.description'": "off",
+      "orders_storage.po_line.jsonb->'$.poLineDescription'": "off",
+      "organizations_storage.contacts.jsonb->'$.emails[*].description'": "off",
+      "organizations_storage.contacts.jsonb->'$.urls[*].description'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.emails[*].description'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.urls[*].description'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.emails[*].description'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.urls[*].description'": "off",
+      "organizations_storage.interface_credentials.jsonb->'$.name'": "off",
+      "organizations_storage.organizations.jsonb->'$.description'": "off",
+      "organizations_storage.organizations.jsonb->'$.aliases[*].description'": "off",
+      "organizations_storage.organizations.jsonb->'$.urls[*].description'": "off",
+      "organizations_storage.organizations.jsonb->'$.emails[*].description'": "off",
+      "organizations_storage.organizations.jsonb->'$.agreements[*].name'": "off",
+      "organizations_storage.organizations.jsonb->'$.accounts[*].name'": "off",
+      "organizations_storage.organizations.jsonb->'$.accounts[*].description'": "off",
+      "organizations_storage.organizations.jsonb->'$.changelogs[*].description'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.emails[*].description'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.urls[*].description'": "off",
+      "roles_keycloak.role.description": "off",
+      "service_interaction.dashboard.dshb_name": "off",
+      "service_interaction.dashboard.dshb_description": "off",
+      "service_interaction.widget_instance.wins_name": "off",
+      "template_engine.template.jsonb->'$.description'": "off"
+    },
+    "free_text_miscellaneous": {
+      "agreements.document_attachment.da_location": "off",
+      "bulk_operations.bulk_operation.user_friendly_query": "off",
+      "inn_reach.transaction_local_hold.patron_home_library": "off",
+      "licenses.document_attachment.da_location": "off",
+      "lists.list_details.user_friendly_query": "unavailable",
+      "lists.list_versions.user_friendly_query": "unavailable",
+      "oa.party.p_institution_level_2": "off",
+      "oa.correspondence.prc_content": "off",
+      "oa.correspondence.prc_correspondent": "off",
+      "organizations_storage.organizations.jsonb->'$.accounts[*].contactInfo'": "off"
+    },
+    "names_full": {
+      "courses.coursereserves_courselistings.jsonb->'$.instructorObjects[*].name'": "off",
+      "courses.coursereserves_instructors.jsonb->'$.name'": "off",
+      "feesfines.feefineactions.jsonb->'$.source'": "off",
+      "inn_reach.transaction_hold.patron_name": "off",
+      "lists.list_details.created_by_username": "off",
+      "lists.list_details.updated_by_username": "off",
+      "lists.list_refresh_details.refreshed_by_username": "off",
+      "lists.list_versions.updated_by_username": "off",
+      "oa.party.p_full_name": "off",
+      "orders_storage.po_line.jsonb->'$.requester'": "off",
+      "orders_storage.po_line.jsonb->'$.donor'": "off",
+      "orders_storage.po_line.jsonb->'$.selector'": "off"
+    },
+    "gender_and_pronouns": {
+      "users.users.jsonb->'$.personal.gender'": "off",
+      "users.users.jsonb->'$.personal.pronouns'": "off"
+    },
+    "ip_addresses": {
+      "login.event_logs.jsonb->'$.ip'": "off"
+    },
+    "import_profile_relationships": {
+      "di_converter_storage.action_profiles.jsonb->'$.parentProfiles'": "off",
+      "di_converter_storage.action_profiles.jsonb->'$.childProfiles'": "off",
+      "di_converter_storage.job_profiles.jsonb->'$.parentProfiles'": "off",
+      "di_converter_storage.job_profiles.jsonb->'$.childProfiles'": "off",
+      "di_converter_storage.mapping_profiles.jsonb->'$.parentProfiles'": "off",
+      "di_converter_storage.mapping_profiles.jsonb->'$.childProfiles'": "off",
+      "di_converter_storage.match_profiles.jsonb->'$.parentProfiles'": "off",
+      "di_converter_storage.match_profiles.jsonb->'$.childProfiles'": "off",
+      "di_converter_storage.profile_snapshots.jsonb->'$.parentProfiles'": "off",
+      "di_converter_storage.profile_snapshots.jsonb->'$.childProfiles'": "off",
+      "di_converter_storage.profile_snapshots.jsonb->'$.childSnapshotWrappers'": "off",
+      "source_record_manager.job_execution.job_profile_snapshot_wrapper->'$.childSnapshotWrappers'": "off"
+    },
+    "names_last": {
+      "circulation_storage.actual_cost_record.jsonb->'$.user.lastName'": "off",
+      "circulation_storage.request.jsonb->'$.requester.lastName'": "off",
+      "circulation_storage.request.jsonb->'$.proxy.lastName'": "off",
+      "data_export.job_executions.run_by_last_name": "off",
+      "data_export.job_executions.jsonb->'$.runBy.lastName'": "off",
+      "data_export.job_profiles.jsonb->'$.userInfo.lastName'": "off",
+      "data_export.mapping_profiles.jsonb->'$.userInfo.lastName'": "off",
+      "data_export.job_profiles.updated_by_last_name": "off",
+      "data_export.mapping_profiles.updated_by_last_name": "off",
+      "data_import.default_file_extensions.jsonb->'$.userInfo.lastName'": "off",
+      "data_import.file_extensions.jsonb->'$.userInfo.lastName'": "off",
+      "di_converter_storage.action_profiles.jsonb->'$.userInfo.lastName'": "off",
+      "di_converter_storage.job_profiles.jsonb->'$.userInfo.lastName'": "off",
+      "di_converter_storage.mapping_profiles.jsonb->'$.userInfo.lastName'": "off",
+      "di_converter_storage.match_profiles.jsonb->'$.userInfo.lastName'": "off",
+      "di_converter_storage.profile_snapshots.jsonb->'$.content.userInfo.lastName'": "off",
+      "inventory_storage.item.jsonb->'$.circulationNotes[*].source.personal.lastName'": "off",
+      "inventory_storage.audit_item.jsonb->'$.record.circulationNotes[*].source.lastName'": "off",
+      "oa.party.p_family_name": "off",
+      "organizations_storage.contacts.jsonb->'$.lastName'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts[*].lastName'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts[*].lastName'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.lastName'": "off",
+      "requests_mediated.mediated_request.requester_last_name": "off",
+      "requests_mediated.mediated_request.proxy_last_name": "off",
+      "search.item.json->'$.circulationNotes[*].source.personal.lastName'": "off",
+      "source_record_manager.job_execution.job_profile_snapshot_wrapper->'$.content.userInfo.lastName'": "off",
+      "source_record_manager.job_execution.job_user_last_name": "off",
+      "users.staging_users.jsonb->'$.generalInfo.lastName'": "off",
+      "users.users.jsonb->'$.personal.lastName'": "off"
+    },
+    "names_middle": {
+      "circulation_storage.actual_cost_record.jsonb->'$.user.middleName'": "off",
+      "circulation_storage.request.jsonb->'$.requester.middleName'": "off",
+      "circulation_storage.request.jsonb->'$.proxy.middleName'": "off",
+      "requests_mediated.mediated_request.requester_middle_name": "off",
+      "requests_mediated.mediated_request.proxy_middle_name": "off",
+      "users.staging_users.jsonb->'$.generalInfo.middleName'": "off",
+      "users.users.jsonb->'$.personal.middleName'": "off"
+    },
+    "names_prefix": {
+      "oa.party.p_title": "off",
+      "organizations_storage.contacts.jsonb->'$.prefix'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts[*].prefix'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts[*].prefix'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.prefix'": "off"
+    },
+    "patron_pins": {
+      "users.patronpin.jsonb->'$.pin'": "off"
+    },
+    "phone_numbers": {
+      "inn_reach.transaction_local_hold.patron_phone": "off",
+      "oa.party.p_phone": "off",
+      "oa.party.p_mobile": "off",
+      "organizations_storage.contacts.jsonb->'$.phoneNumbers[*].phoneNumber'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.phoneNumbers[*].phoneNumber'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.phoneNumbers[*].phoneNumber'": "off",
+      "organizations_storage.organizations.jsonb->'$.phoneNumbers[*].phoneNumber'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.phoneNumbers[*].phoneNumber'": "off",
+      "users.staging_users.jsonb->'$.contactInfo.phone'": "off",
+      "users.staging_users.jsonb->'$.contactInfo.mobilePhone'": "off",
+      "users.user_tenant.phone_number": "off",
+      "users.user_tenant.mobile_phone_number": "off",
+      "users.users.jsonb->'$.personal.phone'": "off",
+      "users.users.jsonb->'$.personal.mobilePhone'": "off"
+    },
+    "profile_pictures": {
+      "update-configuration": "off",
+      "update-settings": "off",
+      "replace-pictures": "off"
+    },
+    "saml_configuration": {
+      "login_saml.configuration.jsonb": "off"
+    },
+    "truncate_logging_and_audit": {
+      "agreements.log_entry_additional_info": "off",
+      "agreements.log_entry": "off",
+      "audit.acquisition_invoice_line_log": "off",
+      "audit.acquisition_invoice_log": "off",
+      "audit.acquisition_order_line_log": "off",
+      "audit.acquisition_order_log": "off",
+      "audit.acquisition_organization_log": "off",
+      "audit.acquisition_piece_log": "off",
+      "audit.audit_data": "off",
+      "audit.circulation_logs": "off",
+      "audit.holdings_audit": "off",
+      "audit.instance_audit": "off",
+      "audit.item_audit": "off",
+      "audit.marc_authority_audit": "off",
+      "audit.marc_bib_audit": "off",
+      "audit.user_audit": "off",
+      "configuration.audit_config_data": "off",
+      "dcb.transactions_audit": "off",
+      "email.email_statistics": "off",
+      "notify.notify_data": "off",
+      "pubsub.audit_message_payload": "off"
+    },
+    "truncate_ephemeral": {
+      "data_export_worker.batch_job_execution_context": "off",
+      "data_export_worker.batch_step_execution_context": "off",
+      "data_export_worker.batch_job_execution_params": "off",
+      "data_export_worker.e_holdings_package": "off",
+      "data_export_worker.e_holdings_resource": "off",
+      "fqm_manager.query_details": "off",
+      "fqm_manager.query_results": "off",
+      "inn_reach.batch_job_execution_context": "off",
+      "inn_reach.batch_job_execution_params": "off",
+      "inn_reach.batch_step_execution_context": "off",
+      "lists.list_contents": "off",
+      "orders_storage.outbox_event_log": "off",
+      "organizations_storage.outbox_event_log": "off",
+      "users.outbox_event_log": "off"
+    },
+    "truncate_credentials": {
+      "authtoken.api_tokens": "off",
+      "authtoken.job": "off",
+      "authtoken.refresh_tokens": "off",
+      "erm_usage.aggregator_settings": "off",
+      "kb_ebsco_java.usage_consolidation_credentials": "off",
+      "remote_storage.system_user_parameters": "off",
+      "service_interaction.db_key_pair": "off"
+    },
+    "tenant_metadata": {
+      "global public.tenant_info.created_by_username": "off",
+      "global public.tenant_info.updated_by_username": "off"
+    },
+    "urls": {
+      "agreements.document_attachment.da_url": "off",
+      "agreements.package_description_url.pdu_url": "off",
+      "agreements.string_template.strt_rule": "off",
+      "copycat.profile.jsonb->'$.url'": "off",
+      "erm_usage.usage_data_providers.jsonb->'$.harvestingConfig.sushiConfig.serviceUrl'": "off",
+      "kb_ebsco_java.kb_credentials.url": "off",
+      "licenses.document_attachment.da_url": "off",
+      "organizations_storage.contacts.jsonb->'$.urls[*].value'": "off",
+      "organizations_storage.organizations.jsonb->'$.contacts.urls[*].value'": "off",
+      "organizations_storage.organizations.jsonb->'$.privilegedContacts.urls[*].value'": "off",
+      "organizations_storage.interfaces.jsonb->'$.uri'": "off",
+      "organizations_storage.interfaces.jsonb->'$.locallyStored'": "off",
+      "organizations_storage.interfaces.jsonb->'$.onlineLocation'": "off",
+      "organizations_storage.organizations.jsonb->'$.urls[*].value'": "off",
+      "organizations_storage.organizations.jsonb->'$.agreements[*].referenceUrl'": "off",
+      "organizations_storage.privileged_contacts.jsonb->'$.urls[*].value'": "off"
+    },
+    "free_text_unique_labels": {
+      "circulation_storage.cancellation_reason.jsonb->'$.name'": "off",
+      "oa.checklist_item_definition.clid_name": "off"
+    },
+    "user_agents": {
+      "login.event_logs.jsonb->'$.userAgent'": "off"
+    },
+    "user_barcodes": {
+      "create-table": "off",
+      "drop-table": "off",
+      "circulation_storage.actual_cost_record.jsonb->'$.user.barcode'": "off",
+      "circulation_storage.request.jsonb->'$.requester.barcode'": "off",
+      "circulation_storage.request.jsonb->'$.proxy.barcode'": "off",
+      "courses.coursereserves_courselistings.jsonb->'$.instructorObjects[*].barcode'": "off",
+      "courses.coursereserves_instructors.jsonb->'$.barcode'": "off",
+      "dcb.transactions.patron_barcode": "off",
+      "inn_reach.central_patron_type_mapping.folio_user_barcode": "off",
+      "inn_reach.transaction_hold.folio_patron_barcode": "off",
+      "remote_storage.retrieval_queue.patron_barcode": "off",
+      "requests_mediated.mediated_request.requester_barcode": "off",
+      "requests_mediated.mediated_request.proxy_barcode": "off",
+      "users.user_tenant.barcode": "off",
+      "users.users.jsonb->'$.barcode'": "off"
+    },
+    "user_credentials": {
+      "replace-auth-credentials": "off",
+      "replace-auth-credentials-history": "off"
+    },
+    "user_external_system_ids": {
+      "create-table": "off",
+      "drop-table": "off",
+      "oa.party.p_orcid_id": "off",
+      "users.staging_users.jsonb->'$.externalSystemId'": "off",
+      "users.user_tenant.external_system_id": "off",
+      "users.users.jsonb->'$.externalSystemId'": "off"
+    },
+    "usernames": {
+      "create-table": "off",
+      "drop-table": "off",
+      "circulation_storage.print_events.jsonb->'$.requesterName'": "off",
+      "consortia_keycloak.inactive_user_tenant.username": "off",
+      "consortia_keycloak.user_tenant.username": "off",
+      "data_export.job_profiles.jsonb->'$.userInfo.userName'": "off",
+      "data_export.mapping_profiles.jsonb->'$.userInfo.userName'": "off",
+      "data_export.job_profiles.jsonb->'$.metadata.createdByUsername'": "off",
+      "data_export.job_profiles.jsonb->'$.metadata.updatedByUsername'": "off",
+      "data_export.mapping_profiles.jsonb->'$.metadata.createdByUsername'": "off",
+      "data_export.mapping_profiles.jsonb->'$.metadata.updatedByUsername'": "off",
+      "data_export_spring.job.created_by_username": "off",
+      "data_export_spring.job.updated_by_username": "off",
+      "data_import.default_file_extensions.jsonb->'$.userInfo.userName'": "off",
+      "data_import.file_extensions.jsonb->'$.userInfo.userName'": "off",
+      "data_import.default_file_extensions.jsonb->'$.metadata.createdByUsername'": "off",
+      "data_import.default_file_extensions.jsonb->'$.metadata.updatedByUsername'": "off",
+      "data_import.file_extensions.jsonb->'$.metadata.createdByUsername'": "off",
+      "data_import.file_extensions.jsonb->'$.metadata.updatedByUsername'": "off",
+      "data_import.upload_definitions.jsonb->'$.metadata.createdByUsername'": "off",
+      "data_import.upload_definitions.jsonb->'$.metadata.updatedByUsername'": "off",
+      "di_converter_storage.action_profiles.jsonb->'$.userInfo.userName'": "off",
+      "di_converter_storage.job_profiles.jsonb->'$.userInfo.userName'": "off",
+      "di_converter_storage.mapping_profiles.jsonb->'$.userInfo.userName'": "off",
+      "di_converter_storage.match_profiles.jsonb->'$.userInfo.userName'": "off",
+      "di_converter_storage.profile_snapshots.jsonb->'$.content.metadata.createdByUsername'": "off",
+      "di_converter_storage.profile_snapshots.jsonb->'$.content.metadata.updatedByUsername'": "off",
+      "di_converter_storage.profile_snapshots.jsonb->'$.content.userInfo.userName'": "off",
+      "di_converter_storage.marc_field_protection_settings.jsonb->'$.metadata.createdByUsername'": "off",
+      "di_converter_storage.marc_field_protection_settings.jsonb->'$.metadata.updatedByUsername'": "off",
+      "inn_reach.agency_location_ac_mapping.created_by_username": "off",
+      "inn_reach.agency_location_ac_mapping.updated_by_username": "off",
+      "inn_reach.agency_location_lsc_mapping.created_by_username": "off",
+      "inn_reach.agency_location_lsc_mapping.updated_by_username": "off",
+      "inn_reach.agency_location_mapping.created_by_username": "off",
+      "inn_reach.agency_location_mapping.updated_by_username": "off",
+      "inn_reach.central_patron_type_mapping.created_by_username": "off",
+      "inn_reach.central_patron_type_mapping.updated_by_username": "off",
+      "inn_reach.central_server.created_by_username": "off",
+      "inn_reach.central_server.updated_by_username": "off",
+      "inn_reach.contribution_criteria_configuration.created_by_username": "off",
+      "inn_reach.contribution_criteria_configuration.updated_by_username": "off",
+      "inn_reach.contribution.created_by_username": "off",
+      "inn_reach.contribution.updated_by_username": "off",
+      "inn_reach.inn_reach_location.created_by_username": "off",
+      "inn_reach.inn_reach_location.updated_by_username": "off",
+      "inn_reach.inn_reach_recall_user.created_by_username": "off",
+      "inn_reach.inn_reach_recall_user.updated_by_username": "off",
+      "inn_reach.inn_reach_transaction.created_by_username": "off",
+      "inn_reach.inn_reach_transaction.updated_by_username": "off",
+      "inn_reach.item_contribution_options_configuration.created_by_username": "off",
+      "inn_reach.item_contribution_options_configuration.updated_by_username": "off",
+      "inn_reach.item_type_mapping.created_by_username": "off",
+      "inn_reach.item_type_mapping.updated_by_username": "off",
+      "inn_reach.job_execution_status.created_by_username": "off",
+      "inn_reach.job_execution_status.updated_by_username": "off",
+      "inn_reach.library_mapping.created_by_username": "off",
+      "inn_reach.library_mapping.updated_by_username": "off",
+      "inn_reach.location_mapping.created_by_username": "off",
+      "inn_reach.location_mapping.updated_by_username": "off",
+      "inn_reach.marc_field_configuration.created_by_username": "off",
+      "inn_reach.marc_field_configuration.updated_by_username": "off",
+      "inn_reach.marc_transformation_options_settings.created_by_username": "off",
+      "inn_reach.marc_transformation_options_settings.updated_by_username": "off",
+      "inn_reach.material_type_mapping.created_by_username": "off",
+      "inn_reach.material_type_mapping.updated_by_username": "off",
+      "inn_reach.ongoing_contribution_status.created_by_username": "off",
+      "inn_reach.ongoing_contribution_status.updated_by_username": "off",
+      "inn_reach.paging_slip_template.created_by_username": "off",
+      "inn_reach.paging_slip_template.updated_by_username": "off",
+      "inn_reach.patron_type_mapping.created_by_username": "off",
+      "inn_reach.patron_type_mapping.updated_by_username": "off",
+      "inn_reach.transaction_hold.created_by_username": "off",
+      "inn_reach.transaction_hold.updated_by_username": "off",
+      "inn_reach.transaction_pickup_location.created_by_username": "off",
+      "inn_reach.transaction_pickup_location.updated_by_username": "off",
+      "inn_reach.user_custom_field_mapping.created_by_username": "off",
+      "inn_reach.user_custom_field_mapping.updated_by_username": "off",
+      "inn_reach.visible_patron_field_config.created_by_username": "off",
+      "inn_reach.visible_patron_field_config.updated_by_username": "off",
+      "kb_ebsco_java.kb_credentials.created_by_user_name": "off",
+      "kb_ebsco_java.kb_credentials.updated_by_user_name": "off",
+      "kb_ebsco_java.usage_consolidation_settings.created_by_user_name": "off",
+      "kb_ebsco_java.usage_consolidation_settings.updated_by_user_name": "off",
+      "password_validator.validationrules.updated_by_username": "off",
+      "password_validator.validationrules.created_by_username": "off",
+      "remote_storage.remote_storage_configurations.updated_by_username": "off",
+      "remote_storage.remote_storage_configurations.created_by_username": "off",
+      "remote_storage.retrieval_queue.patron_name": "off",
+      "requests_mediated.batch_request.created_by_username": "off",
+      "requests_mediated.batch_request.updated_by_username": "off",
+      "requests_mediated.batch_request_split.created_by_username": "off",
+      "requests_mediated.batch_request_split.updated_by_username": "off",
+      "requests_mediated.mediated_request.created_by_username": "off",
+      "requests_mediated.mediated_request.updated_by_username": "off",
+      "source_record_manager.job_execution.job_profile_snapshot_wrapper->'$.content.userInfo.userName'": "off",
+      "users.addresstype.jsonb->'$.metadata.createdByUsername'": "off",
+      "users.addresstype.jsonb->'$.metadata.updatedByUsername'": "off",
+      "users.configuration.jsonb->'$.metadata.createdByUsername'": "off",
+      "users.configuration.jsonb->'$.metadata.updatedByUsername'": "off",
+      "users.custom_fields.jsonb->'$.metadata.createdByUsername'": "off",
+      "users.custom_fields.jsonb->'$.metadata.updatedByUsername'": "off",
+      "users.departments.jsonb->'$.metadata.createdByUsername'": "off",
+      "users.departments.jsonb->'$.metadata.updatedByUsername'": "off",
+      "users.groups.jsonb->'$.metadata.createdByUsername'": "off",
+      "users.groups.jsonb->'$.metadata.updatedByUsername'": "off",
+      "users.proxyfor.jsonb->'$.metadata.createdByUsername'": "off",
+      "users.proxyfor.jsonb->'$.metadata.updatedByUsername'": "off",
+      "users.staging_users.jsonb->'$.metadata.createdByUsername'": "off",
+      "users.staging_users.jsonb->'$.metadata.updatedByUsername'": "off",
+      "users.user_tenant.username": "off",
+      "users.users.jsonb->'$.username'": "off",
+      "users.users.jsonb->'$.metadata.createdByUsername'": "off",
+      "users.users.jsonb->'$.metadata.updatedByUsername'": "off"
+    },
+    "vendor_names_and_codes": {
+      "create-table": "off",
+      "drop-table": "off",
+      "agreements.alternate_name.an_name": "off",
+      "agreements.kbart_import_job.package_source": "off",
+      "agreements.kbart_import_job.package_provider": "off",
+      "agreements.org.org_name": "off",
+      "agreements.package.pkg_source": "off",
+      "copycat.profile.jsonb->'$.name'": "off",
+      "erm_usage.usage_data_providers.jsonb->'$.harvestingConfig.aggregator.name'": "off",
+      "erm_usage.usage_data_providers.jsonb->'$.harvestingConfig.aggregator.vendorCode'": "off",
+      "invoice_storage.batch_vouchers.jsonb->'$.batchedVouchers[*].vendorName'": "off",
+      "licenses.alternate_name.an_name": "off",
+      "licenses.org.org_name": "off",
+      "orders_storage.export_history.jsonb->'$.vendorName'": "off",
+      "organizations_storage.organizations.jsonb->'$.name'": "off",
+      "organizations_storage.organizations.jsonb->'$.code'": "off",
+      "organizations_storage.organizations.jsonb->'$.aliases[*].value'": "off"
+    }
+  },
+  "failedParts": {
+    "financial_account_numbers": {
+      "replace orders_storage.po_line.jsonb->'$.vendorDetail.vendorAccount' on (start to end)": {
+        "type": "org.apache.commons.lang3.exception.UncheckedException",
+        "message": "org.springframework.core.retry.RetryException: Retry policy for operation 'org.folio.anonymization.domain.job.JobPart$$Lambda/0x00000070016e7200' exhausted; aborting execution",
+        "trace": "[]"
+      }
+    }
+  },
+  "executedJobs": {
+    "financial_account_numbers": {
+      "name": "[cs00000int_0008] Account number anonymization",
+      "description": "Replaces account numbers with generated numeric values.",
+      "configuration": {
+        "create-table": "on",
+        "drop-table": "on",
+        "organizations_storage.banking_information.jsonb->'$.bankAccountNumber'": "on",
+        "organizations_storage.organizations.jsonb->'$.accounts[*].accountNo'": "on",
+        "orders_storage.po_line.jsonb->'$.vendorDetail.vendorAccount'": "on"
+      },
+      "partsRan": {
+        "prepare": [
+          {
+            "Create temporary table (staging)": "completed"
+          },
+          {
+            "Create temporary table (final)": "completed"
+          }
+        ],
+        "enumerate-prep": [
+          {
+            "Make batches to enumerate data from organizations_storage.banking_information.jsonb->'$.bankAccountNumber'": "completed"
+          },
+          {
+            "Make batches to enumerate data from organizations_storage.organizations.jsonb->'$.accounts[*].accountNo'": "completed"
+          },
+          {
+            "Make batches to enumerate data from orders_storage.po_line.jsonb->'$.vendorDetail.vendorAccount'": "completed"
+          }
+        ],
+        "enumerate": [
+          {
+            "Enumerate data from organizations_storage.organizations.jsonb->'$.accounts[*].accountNo' (start to end)": "completed"
+          },
+          {
+            "Enumerate data from orders_storage.po_line.jsonb->'$.vendorDetail.vendorAccount' (start to end)": "completed"
+          }
+        ],
+        "generate-new-values-prep": [
+          {
+            "Analyze table size for split processing": "completed"
+          }
+        ],
+        "generate-new-values": [
+          {
+            "Generate values (0 to 17)": "completed"
+          }
+        ],
+        "apply-new-values-prep": [
+          {
+            "Prep to apply new values to organizations_storage.banking_information.jsonb->'$.bankAccountNumber'": "completed"
+          },
+          {
+            "Prep to apply new values to organizations_storage.organizations.jsonb->'$.accounts[*].accountNo'": "completed"
+          },
+          {
+            "Prep to apply new values to orders_storage.po_line.jsonb->'$.vendorDetail.vendorAccount'": "completed"
+          }
+        ],
+        "apply-new-values": [
+          {
+            "replace organizations_storage.organizations.jsonb->'$.accounts[*].accountNo' on (start to end)": "failed"
+          },
+          {
+            "replace orders_storage.po_line.jsonb->'$.vendorDetail.vendorAccount' on (start to end)": "failed"
+          }
+        ],
+        "cleanup": []
+      }
+    }
+  }
+}

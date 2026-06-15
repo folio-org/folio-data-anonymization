@@ -14,7 +14,8 @@ import org.apache.commons.lang3.tuple.Pair;
 @Log4j2
 public final class Job implements Comparable<Job> {
 
-  private final String name;
+  private final String key; // machine-friendly name
+  private final String name; // human-friendly name
   private final String description;
   private final JobContext context;
 
@@ -31,11 +32,8 @@ public final class Job implements Comparable<Job> {
 
   private final ConcurrentMap<String, Pair<JobPart, CompletableFuture<JobPart>>> currentlyExecuting = new ConcurrentHashMap<>();
 
-  public Job(JobContext context) {
-    this(context, List.of("read", "compute-values", "write"));
-  }
-
   public Job(JobContext context, List<String> stages) {
+    this.key = context.key();
     this.name = context.name();
     this.description = context.description();
     this.context = context;
@@ -101,6 +99,25 @@ public final class Job implements Comparable<Job> {
         .findFirst()
         .map(p -> Pair.of(p.getLeft(), p.getRight().exceptionNow()));
     }
+  }
+
+  public List<Pair<JobPart, Throwable>> getFailedParts() {
+    synchronized (currentlyExecuting) {
+      return this.currentlyExecuting.values()
+        .stream()
+        .filter(pair -> pair.getRight().isCompletedExceptionally())
+        .map(p -> Pair.of(p.getLeft(), p.getRight().exceptionNow()))
+        .toList();
+    }
+  }
+
+  public void disableTeardown() {
+    log.info(
+      "Disabling teardown for job '{}' by removing {} parts from stage 'cleanup'.",
+      name,
+      this.parts.getOrDefault("cleanup", new ConcurrentLinkedQueue<>()).size()
+    );
+    this.parts.getOrDefault("cleanup", new ConcurrentLinkedQueue<>()).clear();
   }
 
   public boolean isCompleted() {

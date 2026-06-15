@@ -99,6 +99,7 @@ public class ExternalCredentialRedaction implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "external_credentials",
         "External credential redaction",
         "Redacts credentials for external services (FTP, INN-Reach, SMTP, Z39.50, etc.)",
         tenant,

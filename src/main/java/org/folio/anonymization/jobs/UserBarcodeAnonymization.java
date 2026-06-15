@@ -67,6 +67,7 @@ public class UserBarcodeAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "user_barcodes",
         "User barcode anonymization",
         "Replaces user barcodes with unique generated values.",
         tenant,

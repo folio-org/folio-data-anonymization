@@ -13,7 +13,6 @@ import dev.tamboui.tui.TuiConfig;
 import java.time.Duration;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.controller.TUIState.State;
 import org.folio.anonymization.view.EndView;
 import org.folio.anonymization.view.JobConfigurationView;
@@ -26,12 +25,9 @@ import org.folio.anonymization.view.StartJobsView;
 import org.folio.anonymization.view.TUIView;
 import org.folio.anonymization.view.TenantSelectionView;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
-@Log4j2
 @Controller
 @AllArgsConstructor
 public class TUIController extends ToolkitApp {
@@ -100,12 +96,6 @@ public class TUIController extends ToolkitApp {
       case SHUTTING_DOWN -> shutdownView;
       default -> throw new IllegalStateException("Unexpected state: " + state.getState());
     };
-  }
-
-  @EventListener(ApplicationReadyEvent.class)
-  public void entryPoint() throws Exception {
-    System.err.println("You should see an interface shortly...");
-    this.run();
   }
 
   @Override

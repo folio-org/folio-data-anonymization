@@ -38,6 +38,7 @@ public class DateOfBirthAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "date_of_birth",
         "Date of birth anonymization",
         "Replaces date of birth values with randomized realistic dates",
         tenant,

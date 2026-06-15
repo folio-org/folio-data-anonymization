@@ -69,6 +69,7 @@ public class FilenameRedaction implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "filename_and_s3_paths",
         "Filename and S3 path redaction",
         "Redacts filenames and S3 paths by replacing all alphanumeric characters",
         tenant,

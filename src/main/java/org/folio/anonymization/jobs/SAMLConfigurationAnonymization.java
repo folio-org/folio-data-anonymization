@@ -36,6 +36,7 @@ public class SAMLConfigurationAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "saml_configuration",
         "SAML configuration anonymization",
         "Replaces SAML private keys in mod_login_saml",
         tenant,

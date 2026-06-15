@@ -47,6 +47,7 @@ public class ImportProfileRelationshipsAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "import_profile_relationships",
         "Import profile relationship anonymization",
         "Replaces parent/child profile relationship arrays with empty arrays in data import converter tables.",
         tenant,

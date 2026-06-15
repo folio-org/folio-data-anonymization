@@ -40,6 +40,7 @@ public class FullNameAnonymization implements JobFactory {
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     return List.of(
       new JobBuilder(
+        "names_full",
         "Full name anonymization",
         "Replaces full-name values with Faker-generated realistic-appearing values",
         tenant,

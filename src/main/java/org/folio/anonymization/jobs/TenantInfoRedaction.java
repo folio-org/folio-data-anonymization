@@ -40,7 +40,8 @@ public class TenantInfoRedaction implements JobFactory {
   @Override
   public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
     boolean tenantInfoTableExists = utilRepository.doesTableExist(TENANT_ID_FIELD.schema(), TENANT_ID_FIELD.table());
-    boolean tenantIsInTable = tenantInfoTableExists &&
+    boolean tenantIsInTable =
+      tenantInfoTableExists &&
       context
         .create()
         .fetchExists(
@@ -53,6 +54,7 @@ public class TenantInfoRedaction implements JobFactory {
 
     return List.of(
       new JobBuilder(
+        "tenant_metadata",
         "Tenant metadata redaction",
         "Redacts information about the user who created/updated this tenant",
         tenant,

@@ -19,6 +19,7 @@ Then, implement `public List<JobBuilder> getBuilders(TenantExecutionContext tena
 public List<JobBuilder> getBuilders(TenantExecutionContext tenant) {
   return List.of(
     new JobBuilder(
+      "machine_readable_key",
       "Replace some data",
       "Long description about what this does and why it does it etc etc",
       tenant,
