@@ -480,5 +480,9 @@ public class NonInteractiveController {
 
     log.info("Setting queryTimeoutDurationSeconds={}", this.configuration.parameters().queryTimeoutDurationSeconds());
     create.configuration().settings().setQueryTimeout(this.configuration.parameters().queryTimeoutDurationSeconds());
+    createKeycloak
+      .configuration()
+      .settings()
+      .setQueryTimeout(this.configuration.parameters().queryTimeoutDurationSeconds());
   }
 }
