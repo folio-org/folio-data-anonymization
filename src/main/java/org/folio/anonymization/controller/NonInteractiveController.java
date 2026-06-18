@@ -200,8 +200,15 @@ public class NonInteractiveController {
     log.info("Starting jobs...");
 
     List<Job> jobs = new ArrayList<>(jobBuilders.size());
+    List<Job> deferredJobs = new ArrayList<>();
     for (int i = 0; i < jobBuilders.size(); i++) {
       Job job = jobBuilders.get(i).build();
+
+      if (job.isDeferred()) {
+        deferredJobs.add(job);
+        log.info("Job {} is deferred and will be started later!", job.getName());
+        continue;
+      }
 
       job.execute();
       jobs.add(job);
@@ -221,34 +228,17 @@ public class NonInteractiveController {
 
     Map<Tenant, Map<Job, List<Pair<JobPart, Throwable>>>> failedParts = new HashMap<>();
 
-    do {
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException(e);
-      }
+    waitForCompletion(jobs, failedParts);
 
-      for (Job job : jobs) {
-        job
-          .getFailedParts()
-          .forEach(part -> {
-            log.error(
-              "Job {} has part {} that failed with exception: {}",
-              job.getName(),
-              part.getLeft().getLabel(),
-              part.getRight().getMessage(),
-              part.getRight()
-            );
-            failedParts
-              .computeIfAbsent(job.getContext().tenant().tenant(), t -> new HashMap<>())
-              .computeIfAbsent(job, j -> new ArrayList<>())
-              .add(part);
-            job.disableTeardown();
-            job.skipPart(part.getLeft());
-          });
-      }
-    } while (!jobs.stream().allMatch(Job::isCompleted));
+    log.info("All non-deferred jobs have completed! Starting {} deferred jobs...", deferredJobs.size());
+
+    deferredJobs.forEach(job -> {
+      job.execute();
+      jobs.add(job);
+      log.info("Started deferred job: {}", job.getName());
+    });
+
+    waitForCompletion(deferredJobs, failedParts);
 
     log.info("All jobs completed!");
     log.info("Creating reports...");
@@ -360,6 +350,37 @@ public class NonInteractiveController {
     log.info("All done! Shutting down...");
     this.executor.shutdown();
     SpringApplication.exit(ctx, () -> 0);
+  }
+
+  private void waitForCompletion(List<Job> jobs, Map<Tenant, Map<Job, List<Pair<JobPart, Throwable>>>> failedParts) {
+    do {
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+
+      for (Job job : jobs) {
+        job
+          .getFailedParts()
+          .forEach(part -> {
+            log.error(
+              "Job {} has part {} that failed with exception: {}",
+              job.getName(),
+              part.getLeft().getLabel(),
+              part.getRight().getMessage(),
+              part.getRight()
+            );
+            failedParts
+              .computeIfAbsent(job.getContext().tenant().tenant(), t -> new HashMap<>())
+              .computeIfAbsent(job, j -> new ArrayList<>())
+              .add(part);
+            job.disableTeardown();
+            job.skipPart(part.getLeft());
+          });
+      }
+    } while (!jobs.stream().allMatch(Job::isCompleted));
   }
 
   protected Map<String, String> getJsonRepresentation(Throwable throwable) {

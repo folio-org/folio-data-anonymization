@@ -51,6 +51,7 @@ public class TUIState {
 
   // reported by JobExecutionView
   private List<JobPart> skippedParts = new ArrayList<>();
+  private boolean isExecutingDeferredJobs = false;
 
   // for ShutdownView
   @Setter
