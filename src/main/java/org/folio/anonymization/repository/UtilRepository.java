@@ -15,6 +15,7 @@ import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.jooq.impl.SQLDataType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 @Log4j2
@@ -25,6 +26,10 @@ public class UtilRepository {
 
   @Autowired
   private DSLContext create;
+
+  @Autowired
+  @Qualifier("keycloakDslContext")
+  private DSLContext createKeycloak;
 
   public boolean doesSchemaExist(String schemaName) {
     return (
@@ -47,6 +52,20 @@ public class UtilRepository {
         .selectOne()
         .from(name("information_schema", "tables"))
         .where(field("table_schema", String.class).eq(schemaName).and(field("table_name", String.class).eq(tableName)))
+        .fetchOne() !=
+      null
+    );
+  }
+
+  // we assume if this KC table is present that all of the relevant tables will be
+  public boolean doesKeycloakExist() {
+    return (
+      createKeycloak
+        .selectOne()
+        .from(name("information_schema", "tables"))
+        .where(
+          field("table_schema", String.class).eq("public").and(field("table_name", String.class).eq("keycloak_role"))
+        )
         .fetchOne() !=
       null
     );
