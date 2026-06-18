@@ -70,7 +70,7 @@ class URLRedactionTest {
     URLRedaction redaction = new URLRedaction();
     Field contextField = URLRedaction.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(redaction, new SharedExecutionContext((DSLContext) null, Runnable::run));
+    contextField.set(redaction, new SharedExecutionContext((DSLContext) null, (DSLContext) null, Runnable::run));
     return redaction;
   }
 

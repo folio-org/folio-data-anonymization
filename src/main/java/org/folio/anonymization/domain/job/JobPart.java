@@ -42,6 +42,9 @@ public abstract class JobPart implements Supplier<JobPart> {
   @EqualsAndHashCode.Exclude
   protected Job job;
 
+  /** changes if {@link #create()} returns KC connection */
+  protected boolean useKeycloakDb = false;
+
   protected String stage;
   /** label for the individual part; MUST be unique */
   protected final String label;
@@ -79,7 +82,15 @@ public abstract class JobPart implements Supplier<JobPart> {
 
   // utility decorators to preserve sanity
   protected DSLContext create() {
-    return this.job.getContext().executionContext().create();
+    if (useKeycloakDb) {
+      return this.job.getContext().executionContext().createKeycloak();
+    } else {
+      return this.job.getContext().executionContext().create();
+    }
+  }
+
+  protected DSLContext createKeycloak() {
+    return this.job.getContext().executionContext().createKeycloak();
   }
 
   protected Tenant tenant() {
@@ -100,5 +111,10 @@ public abstract class JobPart implements Supplier<JobPart> {
           .maxRetries(retries)
           .build()
       );
+  }
+
+  public JobPart withKeycloakDb() {
+    this.useKeycloakDb = true;
+    return this;
   }
 }

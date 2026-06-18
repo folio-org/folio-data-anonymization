@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.domain.job.SharedExecutionContext;
 import org.jooq.DSLContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,7 +23,11 @@ public class JobConfig {
   }
 
   @Bean
-  public SharedExecutionContext sharedExecutionContext(DSLContext create, ThreadPoolExecutor executor) {
-    return new SharedExecutionContext(create, executor);
+  public SharedExecutionContext sharedExecutionContext(
+    DSLContext create,
+    @Qualifier("keycloakDslContext") DSLContext createKeycloak,
+    ThreadPoolExecutor executor
+  ) {
+    return new SharedExecutionContext(create, createKeycloak, executor);
   }
 }

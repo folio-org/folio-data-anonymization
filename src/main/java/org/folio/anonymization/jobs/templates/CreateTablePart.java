@@ -5,7 +5,9 @@ import java.util.List;
 import org.folio.anonymization.domain.job.JobPart;
 import org.folio.anonymization.util.DBUtils;
 import org.jooq.Constraint;
+import org.jooq.CreateTableAsStep;
 import org.jooq.Field;
+import org.jooq.Select;
 import org.jooq.Sequence;
 import org.jooq.Table;
 
@@ -24,6 +26,23 @@ public class CreateTablePart extends JobPart {
   private final List<Field<?>> fields;
   private final List<Constraint> constraints;
   private final boolean includeSequence;
+  private Select<?> as;
+
+  public CreateTablePart(
+    String label,
+    Table<?> table,
+    List<Field<?>> fields,
+    List<Constraint> constraints,
+    boolean includeSequence,
+    Select<?> as
+  ) {
+    super(label);
+    this.table = table;
+    this.fields = new ArrayList<>(fields);
+    this.constraints = constraints;
+    this.includeSequence = includeSequence;
+    this.as = as;
+  }
 
   public CreateTablePart(
     String label,
@@ -32,11 +51,7 @@ public class CreateTablePart extends JobPart {
     List<Constraint> constraints,
     boolean includeSequence
   ) {
-    super(label);
-    this.table = table;
-    this.fields = new ArrayList<>(fields);
-    this.constraints = constraints;
-    this.includeSequence = includeSequence;
+    this(label, table, fields, constraints, includeSequence, null);
   }
 
   @Override
@@ -50,11 +65,17 @@ public class CreateTablePart extends JobPart {
       this.create().createSequence(sequence).startWith(0).minvalue(0).execute();
     }
 
-    this.create()
-      .createTable(table)
-      .columns(fields)
-      .columns(includeSequence ? new Field[] { DBUtils.getSequenceField(table) } : new Field[] {})
-      .constraints(constraints)
-      .execute();
+    CreateTableAsStep query =
+      this.create()
+        .createTable(table)
+        .columns(fields)
+        .columns(includeSequence ? new Field[] { DBUtils.getSequenceField(table) } : new Field[] {})
+        .constraints(constraints);
+
+    if (this.as != null) {
+      query.as(this.as).execute();
+    } else {
+      query.execute();
+    }
   }
 }

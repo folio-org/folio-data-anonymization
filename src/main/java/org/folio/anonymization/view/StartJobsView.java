@@ -87,7 +87,12 @@ public class StartJobsView implements TUIView {
       this.progress.setCurrentIndex(i);
 
       Job job = jobBuilder.build();
-      job.execute();
+
+      if (job.isDeferred()) {
+        log.info("Deferring job: {}", job.getName());
+      } else {
+        job.execute();
+      }
 
       jobs.add(job);
 

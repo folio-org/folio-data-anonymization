@@ -50,7 +50,7 @@ class UserBarcodeAnonymizationTest {
     UserBarcodeAnonymization anonymization = new UserBarcodeAnonymization();
     Field contextField = UserBarcodeAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
+    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, (DSLContext) null, Runnable::run));
     return anonymization;
   }
 

@@ -23,6 +23,9 @@ public final class Job implements Comparable<Job> {
   private final List<String> stages;
   private int currentStageIndex = 0;
 
+  /** If this job should be deferred until others are done (used for keycloak) */
+  private boolean isDeferred = false;
+
   /**
    * Parts of the job, split as logically necessary (and/or based on application configuration).
    * Earlier parts (based on {@link #stages}) may alter parts belonging to future stages (for example,
