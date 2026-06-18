@@ -223,6 +223,7 @@ public class JobExecutionView implements TUIView {
       if (!state.isExecutingDeferredJobs() && this.jobs.stream().allMatch(j -> j.isCompleted() || j.isDeferred())) {
         log.info("Starting deferred jobs!");
         this.jobs.stream().filter(j -> j.isDeferred()).forEach(Job::execute);
+        state.setExecutingDeferredJobs(true);
       } else if (state.isExecutingDeferredJobs() && this.jobs.stream().allMatch(Job::isCompleted)) {
         this.state.finish();
       }
