@@ -31,6 +31,7 @@ import org.folio.anonymization.domain.noninteractive.JobConfigurationNonInteract
 import org.folio.anonymization.domain.noninteractive.NonInteractiveConfiguration;
 import org.folio.anonymization.repository.TenantRepository;
 import org.jooq.DSLContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Controller;
@@ -52,8 +53,17 @@ public class NonInteractiveController {
     .build();
 
   private final ApplicationContext ctx;
+
+  @Qualifier("keycloakDslContext")
+  private final DSLContext createKeycloak;
+
   private final DSLContext create;
-  private final HikariDataSource dataSource;
+
+  @Qualifier("keycloakDataSource")
+  private final HikariDataSource keycloakDataSource;
+
+  private final HikariDataSource folioDataSource;
+
   private final ThreadPoolExecutor executor;
 
   private final List<JobFactory> jobFactories;
@@ -444,7 +454,8 @@ public class NonInteractiveController {
     }
 
     log.info("Setting connectionPoolSize={}", this.configuration.parameters().connectionPoolSize());
-    this.dataSource.setMaximumPoolSize(this.configuration.parameters().connectionPoolSize());
+    this.folioDataSource.setMaximumPoolSize(this.configuration.parameters().connectionPoolSize());
+    this.keycloakDataSource.setMaximumPoolSize(this.configuration.parameters().connectionPoolSize());
 
     log.info("Setting queryTimeoutDurationSeconds={}", this.configuration.parameters().queryTimeoutDurationSeconds());
     create.configuration().settings().setQueryTimeout(this.configuration.parameters().queryTimeoutDurationSeconds());

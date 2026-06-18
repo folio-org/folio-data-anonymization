@@ -54,7 +54,7 @@ class FullNameAnonymizationTest {
     FullNameAnonymization anonymization = new FullNameAnonymization();
     Field contextField = FullNameAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
+    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, (DSLContext) null, Runnable::run));
     return anonymization;
   }
 

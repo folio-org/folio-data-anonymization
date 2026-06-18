@@ -40,6 +40,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.folio.anonymization.controller.TUIState;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobPart;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Log4j2
@@ -47,7 +48,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class JobExecutionView implements TUIView {
 
-  private final HikariDataSource dataSource;
+  private final HikariDataSource folioDataSource;
+
+  @Qualifier("keycloakDataSource")
+  private final HikariDataSource keycloakDataSource;
+
   private final ThreadPoolExecutor executor;
   private final TUIState state;
 
@@ -197,13 +202,15 @@ public class JobExecutionView implements TUIView {
             return EventResult.HANDLED;
           }
           if (k.isCharIgnoreCase('{')) {
-            int newSize = Math.max(1, this.dataSource.getMaximumPoolSize() - 10);
-            this.dataSource.setMaximumPoolSize(newSize);
+            int newSize = Math.max(1, this.folioDataSource.getMaximumPoolSize() - 10);
+            this.folioDataSource.setMaximumPoolSize(newSize);
+            this.keycloakDataSource.setMaximumPoolSize(newSize);
             return EventResult.HANDLED;
           }
           if (k.isCharIgnoreCase('}')) {
-            int newSize = this.dataSource.getMaximumPoolSize() + 10;
-            this.dataSource.setMaximumPoolSize(newSize);
+            int newSize = this.folioDataSource.getMaximumPoolSize() + 10;
+            this.folioDataSource.setMaximumPoolSize(newSize);
+            this.keycloakDataSource.setMaximumPoolSize(newSize);
             return EventResult.HANDLED;
           }
           return EventResult.UNHANDLED;
@@ -451,7 +458,7 @@ public class JobExecutionView implements TUIView {
       hotkeys.add(
         row(
           text("[{}] DB pool size ("),
-          text(String.valueOf(this.dataSource.getMaximumPoolSize())).magenta(),
+          text(String.valueOf(this.folioDataSource.getMaximumPoolSize())).magenta(),
           text(")")
         )
           .bold()

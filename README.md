@@ -29,11 +29,25 @@ There are two modes for the tool: interactive and non-interactive. The interacti
 
 Both modes require the following environment variables for database connection:
 
+For the FOLIO database:
+
 - `DB_USERNAME`
 - `DB_PASSWORD`
 - `DB_HOST`
 - `DB_PORT`
 - `DB_DATABASE`
+
+For the Keycloak database:
+
+- `KC_USERNAME` (if different from `DB_USERNAME`)
+- `KC_PASSWORD` (if different from `DB_PASSWORD`)
+- `KC_HOST` (if different from `DB_HOST`)
+- `KC_PORT` (if different from `DB_PORT`)
+- `KC_DATABASE` (defaults to `keycloak`)
+
+> [!NOTE]
+>
+> If you do not plan on performing Keycloak anonymization, set `KC_DATABASE` to the same value as `DB_DATABASE` to prevent connection errors on startup.
 
 To run in interactive mode, simply run the JAR with no arguments: `java -jar anonymization-tool.jar`.
 

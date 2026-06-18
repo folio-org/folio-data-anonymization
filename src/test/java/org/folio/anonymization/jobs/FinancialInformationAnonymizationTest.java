@@ -83,7 +83,7 @@ class FinancialInformationAnonymizationTest {
     FinancialInformationAnonymization anonymization = new FinancialInformationAnonymization();
     Field contextField = FinancialInformationAnonymization.class.getDeclaredField("context");
     contextField.setAccessible(true);
-    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, Runnable::run));
+    contextField.set(anonymization, new SharedExecutionContext((DSLContext) null, (DSLContext) null, Runnable::run));
     return anonymization;
   }
 
