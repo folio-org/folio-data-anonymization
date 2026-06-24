@@ -76,7 +76,7 @@ public class TableIDs {
     Pair.of(new FieldReference("data_import", "default_file_extensions", "id"), UUID.class),
     Pair.of(new FieldReference("data_import", "file_extensions", "id"), UUID.class),
     Pair.of(new FieldReference("data_import", "upload_definitions", "id"), UUID.class),
-    Pair.of(new FieldReference("dcb", "transactions", "id"), UUID.class),
+    Pair.of(new FieldReference("dcb", "transactions", "id"), String.class),
     Pair.of(new FieldReference("di_converter_storage", "action_profiles", "id"), UUID.class),
     Pair.of(new FieldReference("di_converter_storage", "job_profiles", "id"), UUID.class),
     Pair.of(new FieldReference("di_converter_storage", "mapping_profiles", "id"), UUID.class),

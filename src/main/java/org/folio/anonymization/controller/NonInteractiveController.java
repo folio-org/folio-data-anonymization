@@ -34,6 +34,7 @@ import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.retry.RetryException;
 import org.springframework.stereotype.Controller;
 import tools.jackson.core.json.JsonReadFeature;
 import tools.jackson.databind.ObjectMapper;
@@ -307,6 +308,9 @@ public class NonInteractiveController {
             .map(k -> Map.entry(k, JobConfigurationNonInteractive.builder().enabled(false).build()))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new));
 
+        // always rerun this if applicable
+        rerunJobConfiguration.put("keycloak_sync", this.configuration.jobs().get("keycloak_sync"));
+
         failedParts
           .getOrDefault(tenant, Map.of())
           .entrySet()
@@ -385,6 +389,11 @@ public class NonInteractiveController {
 
   protected Map<String, String> getJsonRepresentation(Throwable throwable) {
     LinkedHashMap<String, String> map = new LinkedHashMap<>();
+
+    // ignore spring retry exceptions
+    while (throwable instanceof RetryException && throwable.getCause() != null) {
+      throwable = throwable.getCause();
+    }
 
     map.put("type", throwable.getClass().getName());
     map.put("message", throwable.getMessage());

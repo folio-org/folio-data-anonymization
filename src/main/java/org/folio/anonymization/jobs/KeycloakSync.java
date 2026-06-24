@@ -358,10 +358,10 @@ public class KeycloakSync implements JobFactory {
                             // only update if it is an email (sometimes it is UUID)
                             select(
                               field(
-                                "case when {0} like '%@%' then {0} else {1} end",
+                                "case when {0} like '%@%' then {1} else {0} end",
                                 String.class,
-                                dataEmail,
-                                field("email_constraint", String.class)
+                                field("email_constraint", String.class),
+                                dataEmail
                               )
                             )
                               .from(tempUserDataTable)
