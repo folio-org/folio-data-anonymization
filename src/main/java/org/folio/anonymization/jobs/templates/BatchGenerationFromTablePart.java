@@ -150,7 +150,6 @@ public class BatchGenerationFromTablePart<T> extends JobPart {
         .fetch();
 
     int totalCount = rows.isEmpty() ? 0 : rows.get(0).value2();
-    log.info("Total count: {}", totalCount);
 
     List<T> values = rows.map(Record2::value1);
 
