@@ -12,6 +12,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.exception.UncheckedException;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.springframework.core.retry.RetryPolicy;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -29,6 +30,7 @@ public abstract class JobPart implements Supplier<JobPart> {
     RetryPolicy
       .builder()
       .includes(
+        DataAccessException.class,
         PessimisticLockingFailureException.class,
         DataAccessResourceFailureException.class,
         SQLTransientConnectionException.class,
