@@ -70,7 +70,7 @@ public class ReplaceValueFromListPart extends JobPart {
    * @param fields list of fields to replace
    * @param condition condition to use (for batching)
    * @param replacements list of list of replacement values
-   * @param valueFields list of temporary fields to use for replacements (eg {@code field("value", String.class)})
+   * @param valueFields list of temporary fields to use for replacements (eg {@code field("val", String.class)})
    */
   public ReplaceValueFromListPart(
     String label,

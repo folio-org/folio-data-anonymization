@@ -105,6 +105,7 @@ public abstract class JobPart implements Supplier<JobPart> {
         RetryPolicy
           .builder()
           .includes(
+            DataAccessException.class,
             PessimisticLockingFailureException.class,
             DataAccessResourceFailureException.class,
             SQLTransientConnectionException.class,
