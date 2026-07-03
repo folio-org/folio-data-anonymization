@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.exception.UncheckedException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.Job;
@@ -109,6 +111,8 @@ public class NonInteractiveController {
   }
 
   public void run() {
+    Instant startedAt = Instant.now();
+
     if (this.configuration == null) {
       throw log.throwing(new IllegalStateException("Cannot run non-interactive anonymization without configuration!"));
     }
@@ -251,6 +255,7 @@ public class NonInteractiveController {
 
         map.put("tenantId", tenant.id());
         map.put("hadFailures", hadFailures);
+        map.put("startedAt", startedAt.toString());
         map.put("completedAt", Instant.now().toString());
         map.put("configuration", this.configuration); // for reference
         map.put(
@@ -357,6 +362,7 @@ public class NonInteractiveController {
   }
 
   private void waitForCompletion(List<Job> jobs, Map<Tenant, Map<Job, List<Pair<JobPart, Throwable>>>> failedParts) {
+    Instant lastStatusReport = Instant.now();
     do {
       try {
         Thread.sleep(1000);
@@ -384,6 +390,38 @@ public class NonInteractiveController {
             job.skipPart(part.getLeft());
           });
       }
+
+      if (Instant.now().minusSeconds(30).isAfter(lastStatusReport)) {
+        StringBuilder report = new StringBuilder();
+        report.append("Job status as of ").append(Instant.now()).append(":\n");
+        jobs
+          .stream()
+          .sorted((a, b) -> -Boolean.valueOf(a.isCompleted()).compareTo(b.isCompleted()))
+          .forEachOrdered(j -> {
+            report.append("  ");
+            if (j.isCompleted()) {
+              report.append("√ ");
+              report.append(j.getName());
+            } else {
+              report.append("> ");
+              report.append(j.getName());
+              report.append(" (");
+              report.append(j.getStages().get(Math.min(j.getStages().size() - 1, j.getCurrentStageIndex())));
+              report.append(' ');
+              Collection<JobPart> partsInStage = j
+                .getParts()
+                .get(j.getStages().get(Math.min(j.getStages().size() - 1, j.getCurrentStageIndex())));
+              report.append(partsInStage.stream().filter(p -> p.getCompleted().get()).count());
+              report.append('/');
+              report.append(partsInStage.size());
+              report.append(" parts completed)");
+            }
+            report.append("\n");
+          });
+
+        log.info(report.toString());
+        lastStatusReport = Instant.now();
+      }
     } while (!jobs.stream().allMatch(Job::isCompleted));
   }
 
@@ -391,7 +429,9 @@ public class NonInteractiveController {
     LinkedHashMap<String, String> map = new LinkedHashMap<>();
 
     // ignore spring retry exceptions
-    while (throwable instanceof RetryException && throwable.getCause() != null) {
+    while (
+      (throwable instanceof RetryException || throwable instanceof UncheckedException) && throwable.getCause() != null
+    ) {
       throwable = throwable.getCause();
     }
 
