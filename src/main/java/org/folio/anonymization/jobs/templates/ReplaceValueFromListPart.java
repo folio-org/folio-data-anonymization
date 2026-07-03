@@ -5,14 +5,17 @@ import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.DSL.row;
 import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.DSL.table;
+import static org.jooq.impl.DSL.trueCondition;
 import static org.jooq.impl.DSL.using;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.tuple.Pair;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.db.TableIDs;
@@ -56,7 +59,7 @@ public class ReplaceValueFromListPart extends JobPart {
   private List<Field<?>> valueFields;
 
   public ReplaceValueFromListPart(String label, FieldReference field, Condition condition, List<String> replacements) {
-    this(label, List.of(field), condition, List.of(replacements), List.of(field("value", String.class)));
+    this(label, List.of(field), condition, List.of(replacements), List.of(field("val", String.class)));
   }
 
   /**
@@ -67,7 +70,7 @@ public class ReplaceValueFromListPart extends JobPart {
    * @param fields list of fields to replace
    * @param condition condition to use (for batching)
    * @param replacements list of list of replacement values
-   * @param valueFields list of temporary fields to use for replacements (eg {@code field("value", String.class)})
+   * @param valueFields list of temporary fields to use for replacements (eg {@code field("val", String.class)})
    */
   public ReplaceValueFromListPart(
     String label,
@@ -150,57 +153,127 @@ public class ReplaceValueFromListPart extends JobPart {
             .execute();
         }
 
-        // using a single correlated row-valued scalar subquery guarantees that all SET columns come from the SAME replacements row,
-        // and that nextval() is called exactly once per updated row
-        List<Field<?>> selectExprs = new ArrayList<>(fields.size());
-        List<Field<?>> setTargets = new ArrayList<>(fields.size());
-        Condition updateCondition = this.condition;
-        for (int i = 0; i < fields.size(); i++) {
-          FieldReference field = fields.get(i);
-          Field<?> rawValue = valueFields.get(i);
-          setTargets.add(field.baseColumn(this.tenant()));
-          if (field.jsonPath() == null) {
-            selectExprs.add(rawValue);
-            updateCondition = updateCondition.and(field.baseColumn(this.tenant()).isNotNull());
-          } else {
-            selectExprs.add(field.jsonbSet(this.tenant(), inner -> field("to_jsonb({0})", JSONB.class, rawValue)));
-            updateCondition = updateCondition.and(field.jsonPathExists(this.tenant()));
-          }
-        }
-
-        Select<? extends Record> sourceSelect;
-        if (replacementCount == 1) {
-          // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
-          sourceSelect =
-            select(selectExprs)
-              .from(tempTable)
-              .where(TableIDs.getIdFor(fields.get(0), this.tenant()).isNotNull())
-              .limit(1);
-        } else {
-          sourceSelect =
-            select(selectExprs)
-              // must query the next value from the insertion sequence in the from clause
-              // to ensure it only runs once per subquery execution
-              .from(tempTable, select(insertionSequence.nextval().as("chosen_seq")))
-              .where(
-                replacementsSequenceField
-                  .eq(field("chosen_seq", Integer.class))
-                  // we must bind to the outer column in some way or this will not be re-executed for each update
-                  // (thanks postgres for cleverly optimizing! 🙃)
-                  .and(TableIDs.getIdFor(fields.get(0), this.tenant()).isNotNull())
-              );
-        }
-
-        // do the actual update — row-value assignment guarantees one shared replacements row per target row
+        Pair<Select<? extends Record>, Condition> selectAndCondition =
+          this.getSelect(tempTable, insertionSequence, replacementsSequence, replacementsSequenceField);
         ctx
           .update(fields.get(0).table(this.tenant()))
-          .set(row(setTargets.toArray(new Field<?>[0])), sourceSelect)
-          .where(updateCondition)
+          .set(
+            row(fields.stream().map(f -> f.baseColumn(this.tenant())).toArray(Field<?>[]::new)),
+            selectAndCondition.getLeft()
+          )
+          .where(selectAndCondition.getRight())
           .execute();
 
         ctx.dropTemporaryTable(tempTable).cascade().execute();
         ctx.dropSequence(replacementsSequence).execute();
         ctx.dropSequenceIfExists(insertionSequence).execute();
       });
+  }
+
+  protected Pair<Select<? extends Record>, Condition> getSelect(
+    Table<?> tempTable,
+    Sequence<Integer> insertionSequence,
+    Sequence<Integer> replacementsSequence,
+    Field<Integer> replacementsSequenceField
+  ) {
+    int replacementCount = replacements.get(0).size();
+
+    // for these, we guarantee only one replacement source row per set of entries, so they stay correlated
+    if (fields.size() > 1) {
+      // using a single correlated row-valued scalar subquery guarantees that all SET columns come from the SAME replacements row,
+      // and that nextval() is called exactly once per updated row
+      List<Field<?>> selectExprs = new ArrayList<>(fields.size());
+      Condition updateCondition = this.condition;
+      for (int i = 0; i < fields.size(); i++) {
+        FieldReference field = fields.get(i);
+        Field<?> rawValue = valueFields.get(i);
+        if (field.jsonPath() == null) {
+          selectExprs.add(rawValue);
+          updateCondition = updateCondition.and(field.baseColumn(this.tenant()).isNotNull());
+        } else {
+          if (field.jsonPath().contains("*")) {
+            throw new IllegalArgumentException(
+              "We don't support nested JSONB arrays for multiple target fields, as I can't guarantee that each array element will get the same replacement value!"
+            );
+          }
+          selectExprs.add(field.jsonbSet(this.tenant(), inner -> field("to_jsonb({0})", JSONB.class, rawValue)));
+          updateCondition = updateCondition.and(field.jsonPathExists(this.tenant()));
+        }
+      }
+
+      Select<? extends Record> sourceSelect;
+      if (replacementCount == 1) {
+        // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
+        sourceSelect =
+          select(selectExprs)
+            .from(tempTable)
+            .where(TableIDs.getIdFor(fields.get(0), this.tenant()).isNotNull())
+            .limit(1);
+      } else {
+        sourceSelect =
+          select(selectExprs)
+            // must query the next value from the insertion sequence in the from clause
+            // to ensure it only runs once per subquery execution
+            .from(tempTable, select(insertionSequence.nextval().as("chosen_seq")))
+            .where(
+              replacementsSequenceField
+                .eq(field("chosen_seq", Integer.class))
+                // we must bind to the outer column in some way or this will not be re-executed for each update
+                // (thanks postgres for cleverly optimizing! 🙃)
+                .and(TableIDs.getIdFor(fields.get(0), this.tenant()).isNotNull())
+            );
+      }
+
+      return Pair.of(sourceSelect, updateCondition);
+    }
+
+    // for replacements with just one target field, we support nested JSON, so must pull one per row
+    // using a single correlated row-valued scalar subquery guarantees that all SET columns come from the SAME replacements row,
+    // and that nextval() is called exactly once per updated row
+    FieldReference field = fields.get(0);
+    Field<?> selectExpr;
+    Condition updateCondition = this.condition;
+    Field<?> rawValue = valueFields.get(0);
+
+    // define this here, as the same row may require multiple values (e.g. nested JSONB arrays)
+    // the variable condition allows us to feed a dynamic condition for the subquery, to prevent
+    // caching for nested JSON objects
+    Function<Condition, Select<? extends Record>> sourceSelect = (Condition c) -> {
+      if (replacementCount == 1) {
+        // Avoid creating a sequence with MINVALUE == MAXVALUE, which Postgres rejects.
+        return select(rawValue)
+          .from(tempTable)
+          .where(TableIDs.getIdFor(fields.get(0), this.tenant()).isNotNull())
+          .limit(1);
+      } else {
+        return select(rawValue)
+          // must query the next value from the insertion sequence in the from clause
+          // to ensure it only runs once per subquery execution
+          .from(tempTable, select(insertionSequence.nextval().as("chosen_seq")))
+          .where(
+            replacementsSequenceField
+              .eq(field("chosen_seq", Integer.class))
+              // we must bind to the outer column in some way or this will not be re-executed for each update.
+              // the table ID guarantees a new value for each outer row, and the .and(c) allows us to feed one in
+              // for the inner JSONB object (when iterating nested arrays)
+              // (thanks postgres for cleverly optimizing! 🙃)
+              .and(TableIDs.getIdFor(fields.get(0), this.tenant()).isNotNull().and(c))
+          );
+      }
+    };
+
+    if (field.jsonPath() == null) {
+      selectExpr = field("({0})", Object.class, sourceSelect.apply(trueCondition()));
+      updateCondition = updateCondition.and(field.baseColumn(this.tenant()).isNotNull());
+    } else {
+      selectExpr =
+        field.jsonbSet(
+          this.tenant(),
+          inner -> field("to_jsonb(({0}))", JSONB.class, sourceSelect.apply(inner.eq(inner)))
+        );
+      updateCondition = updateCondition.and(field.jsonPathExists(this.tenant()));
+    }
+
+    return Pair.of(select(selectExpr), updateCondition);
   }
 }

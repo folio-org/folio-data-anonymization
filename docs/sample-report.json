@@ -1,6 +1,7 @@
 {
   "tenantId": "cs00000int_0008",
   "hadFailures": true,
+  "startedAt": "2026-06-15T03:36:59.145213Z",
   "completedAt": "2026-06-15T04:36:59.145213Z",
   "configuration": {
     "parameters": {
@@ -903,11 +904,11 @@
     }
   },
   "failedParts": {
-    "financial_account_numbers": {
-      "replace orders_storage.po_line.jsonb->'$.vendorDetail.vendorAccount' on (start to end)": {
-        "type": "org.apache.commons.lang3.exception.UncheckedException",
-        "message": "org.springframework.core.retry.RetryException: Retry policy for operation 'org.folio.anonymization.domain.job.JobPart$$Lambda/0x00000070016e7200' exhausted; aborting execution",
-        "trace": "[]"
+    "custom_property_definitions" : {
+      "Replace custom field definitions in agreements on (start to end)" : {
+        "type" : "org.jooq.exception.IntegrityConstraintViolationException",
+        "message" : "SQL [update \"fs09000002_mod_agreements\".\"custom_property_definition\" set (\"pd_name\", \"pd_label\", \"pd_description\") = (select (select new_name from \"_danon_replacements_660828527419000\", (select nextval('\"public\".\"_danon_insertions_660828527441000_seq\"') as \"chosen_seq\") as \"alias_109838587\" where (\"_danon_replacements_660828527419000\".\"_seq\" = chosen_seq and \"fs09000002_mod_agreements\".\"custom_property_definition\".\"pd_id\" is not null and true)), (select new_label from \"_danon_replacements_660828527419000\", (select nextval('\"public\".\"_danon_insertions_660828527441000_seq\"') as \"chosen_seq\") as \"alias_109838587\" where (\"_danon_replacements_660828527419000\".\"_seq\" = chosen_seq and \"fs09000002_mod_agreements\".\"custom_property_definition\".\"pd_id\" is not null and true)), (select new_description from \"_danon_replacements_660828527419000\", (select nextval('\"public\".\"_danon_insertions_660828527441000_seq\"') as \"chosen_seq\") as \"alias_109838587\" where (\"_danon_replacements_660828527419000\".\"_seq\" = chosen_seq and \"fs09000002_mod_agreements\".\"custom_property_definition\".\"pd_id\" is not null and true))) where (\"fs09000002_mod_agreements\".\"custom_property_definition\".\"pd_id\" >= ? and true and \"fs09000002_mod_agreements\".\"custom_property_definition\".\"pd_name\" is not null and \"fs09000002_mod_agreements\".\"custom_property_definition\".\"pd_label\" is not null and \"fs09000002_mod_agreements\".\"custom_property_definition\".\"pd_description\" is not null)]; ERROR: duplicate key value violates unique constraint \"uc_custom_property_definitionpd_name_col\"\n  Detail: Key (pd_name)=(customfield0) already exists.",
+        "trace" : "[]"
       }
     }
   },

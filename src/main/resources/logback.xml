@@ -24,6 +24,6 @@
   </root>
 
   <!-- <logger name="org.jooq" level="DEBUG" additivity="false">
-    <appender-ref ref="Console" />
+    <appender-ref ref="File" />
   </logger> -->
 </configuration>

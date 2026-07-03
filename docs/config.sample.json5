@@ -7,10 +7,11 @@
   },
   tenants: ['.+'],
   jobs: {
+    keycloak_redact_role_descriptions: { enabled: true }, // corresponding FOLIO side is under free_text_labels_and_descriptions
+    keycloak_sync: { enabled: true },
     keycloak_truncate_logs: { enabled: true },
     keycloak_truncate_sessions: { enabled: true },
     keycloak_truncate_smtp_config: { enabled: true },
-    keycloak_sync: { enabled: true },
 
     addresses: { enabled: true },
     bulk_ops_and_lists: { enabled: true },
