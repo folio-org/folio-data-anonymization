@@ -194,10 +194,30 @@ public class RandomValueUtils {
     List<String> labels = new ArrayList<>(end - start);
     List<String> descriptions = new ArrayList<>(end - start);
 
+    // enough entropy that successive reruns should be fine
+    List<String> nameTypes = List.of(
+      "customfield",
+      "cfield",
+      "customf",
+      "cf",
+      "customvalue",
+      "customval",
+      "customv",
+      "cvalue",
+      "customfieldvalue",
+      "customfieldval",
+      "cv",
+      "customref",
+      "customreference",
+      "customrefdata",
+      "customrefdatavalue"
+    );
+    String nameType = nameTypes.get(FAKER.get().random().nextInt(nameTypes.size()));
+
     IntStream
       .range(start, end)
       .forEach(i -> {
-        names.add("customfield" + i);
+        names.add(nameType + i);
         labels.add("CF %s (%s)".formatted(i, String.join(" ", FAKER.get().lorem().words(3))));
         descriptions.add(
           "This is a description for custom field %s!\n%s".formatted(i, FAKER.get().lorem().paragraph(1))
