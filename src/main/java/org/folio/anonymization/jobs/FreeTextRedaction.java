@@ -39,6 +39,7 @@ public class FreeTextRedaction implements JobFactory {
     new FieldReference("agreements", "sa_event_history", "eh_notes"),
     new FieldReference("agreements", "usage_data_provider", "udp_note"),
     new FieldReference("circulation_storage", "actual_cost_record", "jsonb", "$.additionalInfoForStaff"),
+    new FieldReference("circulation_storage", "request", "jsonb", "$.patronComments"),
     new FieldReference(
       "data_export_spring",
       "export_config",

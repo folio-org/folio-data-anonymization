@@ -53,6 +53,7 @@ public class UsernameAnonymization implements JobFactory {
     new FieldReference("data_export", "job_profiles", "jsonb", "$.metadata.updatedByUsername"),
     new FieldReference("data_export", "mapping_profiles", "jsonb", "$.metadata.createdByUsername"),
     new FieldReference("data_export", "mapping_profiles", "jsonb", "$.metadata.updatedByUsername"),
+    new FieldReference("data_export_spring", "job", "source"),
     new FieldReference("data_export_spring", "job", "created_by_username"),
     new FieldReference("data_export_spring", "job", "updated_by_username"),
     new FieldReference("data_import", "default_file_extensions", "jsonb", "$.userInfo.userName"),
