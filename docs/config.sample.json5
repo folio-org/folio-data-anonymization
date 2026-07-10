@@ -5,7 +5,7 @@
     connectionPoolSize: 120,
     queryTimeoutDurationSeconds: 600,
   },
-  tenants: ['.+'],
+  tenants: ['cs00000int_0009'],
   jobs: {
     keycloak_redact_role_descriptions: { enabled: true }, // corresponding FOLIO side is under free_text_labels_and_descriptions
     keycloak_sync: { enabled: true },

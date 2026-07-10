@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.exception.UncheckedException;
 import org.apache.commons.lang3.tuple.Pair;
+import org.folio.anonymization.config.Version;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -253,6 +254,7 @@ public class NonInteractiveController {
       try {
         LinkedHashMap<String, Object> map = new LinkedHashMap<>();
 
+        map.put("version", Version.VERSION);
         map.put("tenantId", tenant.id());
         map.put("hadFailures", hadFailures);
         map.put("startedAt", startedAt.toString());

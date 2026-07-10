@@ -3,6 +3,7 @@ package org.folio.anonymization.controller;
 import java.util.Arrays;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.anonymization.config.Version;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -20,6 +21,8 @@ public class EntryPoint {
 
   @EventListener(ApplicationReadyEvent.class)
   public void entryPoint() throws Exception {
+    log.info("================ Starting FOLIO Data Anonymization Tool (version {}) ================", Version.VERSION);
+
     log.info("Found args: {}", Arrays.asList(args.getSourceArgs()));
 
     String[] arguments = args.getSourceArgs();

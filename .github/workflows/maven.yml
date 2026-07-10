@@ -51,6 +51,12 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-maven
 
+      - name: Set code version
+        # set src/main/java/org/folio/anonymization/config/Version.java to the current version
+        run: |
+          echo "Setting code version to ${{ github.sha }}"
+          sed -i "s/@placeholder@/${{ github.sha }}/g" src/main/java/org/folio/anonymization/config/Version.java
+
       - name: Deploy to Nexus
         run: mvn --batch-mode deploy -DskipTests
         env:
