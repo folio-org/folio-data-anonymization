@@ -5,7 +5,7 @@
     connectionPoolSize: 120,
     queryTimeoutDurationSeconds: 600,
   },
-  tenants: ['cs00000int_0009'],
+  tenants: ['.+'],
   jobs: {
     keycloak_redact_role_descriptions: { enabled: true }, // corresponding FOLIO side is under free_text_labels_and_descriptions
     keycloak_sync: { enabled: true },
@@ -50,6 +50,7 @@
     patron_pins: { enabled: true },
     phone_numbers: { enabled: true },
     profile_pictures: { enabled: true },
+    profile_picture_links: { enabled: true },
     saml_configuration: { enabled: true },
     tenant_metadata: { enabled: true },
     truncate_credentials: { enabled: true },
