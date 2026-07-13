@@ -21,7 +21,7 @@ This tool requires a PostgreSQL database connection to the data to be anonymized
 
 The tool runs as a command-line application and will need to remain running for the life of the process, which can take many hours depending on the database size and tool's configuration. As a result, we recommend running the tool in a `screen` or `tmux` session to ensure interrupted connections do not stop the process.
 
-To run the tool, first get the JAR either from [the package page](https://github.com/folio-org/folio-data-anonymization/packages/3014659) (or build it yourself with `mvn package`).
+To run the tool, first get the JAR either from [the package page](https://github.com/folio-org/folio-data-anonymization/packages/3014659).
 
 #### Invocation
 
