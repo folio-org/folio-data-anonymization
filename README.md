@@ -57,6 +57,20 @@ Logs for both modes will be stored in `logs/application.log`.
 
 For more information about these modes, see their documentation pages ([interactive mode](./docs/interactive-mode.md) and [non-interactive mode](./docs/non-interactive-mode.md)).
 
+### After anonymization is performed
+
+Once the tool has run successfully, the database is ready to be used in a FOLIO environment. To ensure complete anonymization of the environment, the following **must** be performed by the hosting team:
+
+- Ensure that all module configurations point to the new, anonymized database (and not the original database),
+- Ensure that all module configurations point to a new, empty S3-like storage (and not the original storage), and
+- Ensure that any other module configurations that point to an external source are updated as applicable.
+
+In addition to the above mandatory steps, we recommend:
+
+- Performing a full vacuum of the database to ensure optimal performance.
+
+Once everything is ready, modules and Keycloak can be started and the environment can be used.
+
 ## Issue tracking
 
 See [DANON](https://issues.folio.org/projects/DANON) in the [FOLIO issue tracker](https://folio-org.atlassian.net/).
