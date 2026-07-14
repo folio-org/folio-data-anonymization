@@ -35,7 +35,7 @@ import org.folio.anonymization.repository.UtilRepository;
 import org.folio.anonymization.util.RandomValueUtils;
 import org.jooq.Field;
 import org.jooq.Query;
-import org.jooq.Record5;
+import org.jooq.Record7;
 import org.jooq.Table;
 import org.jooq.impl.SQLDataType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,7 +74,7 @@ public class KeycloakSync implements JobFactory {
           Pair.of("reset-idp", "Reset IDP/SSO external IDs to the user's (new) username"),
           Pair.of(
             "update-user-info",
-            "Sync user info (username, email, first name, last name) to match the anonymized data"
+            "Sync user info (username, email, first name, last name, etc) to match the anonymized data"
           )
         ),
         ctx -> {
@@ -88,6 +88,7 @@ public class KeycloakSync implements JobFactory {
           Field<String> keycloakUserEntityIdField = field("id", SQLDataType.VARCHAR.notNull());
 
           Table<?> keycloakUserAttributeTable = table(name("public", "user_attribute"));
+          Table<?> keycloakRealmTable = table(name("public", "realm"));
 
           Table<?> tempMatchedUserIds = table(
             name("public", "_danon_kc_" + ctx.tenant().tenant().id() + "_folio_user_ids")
@@ -109,6 +110,8 @@ public class KeycloakSync implements JobFactory {
           Field<String> dataEmail = field("email", SQLDataType.VARCHAR.null_());
           Field<String> dataFirstName = field("first_name", SQLDataType.VARCHAR.null_());
           Field<String> dataLastName = field("last_name", SQLDataType.VARCHAR.null_());
+          Field<String> dataBarcode = field("barcode", SQLDataType.VARCHAR.null_());
+          Field<String> dataExternalSystemId = field("external_system_id", SQLDataType.VARCHAR.null_());
           GlobalFieldReference dataKeycloakIdFR = new GlobalFieldReference(
             "public",
             "_danon_kc_" + ctx.tenant().tenant().id() + "_user_data",
@@ -141,13 +144,13 @@ public class KeycloakSync implements JobFactory {
                             field(name("ue", "id"), String.class)
                               .eq(field(name("uaid", "user_id"), String.class))
                               .and(field(name("uaid", "name"), String.class).eq("user_id"))
+                              .and(field(name("uaid", "value"), String.class).isNotNull())
                           )
-                          .join(keycloakUserAttributeTable.as("uat"))
+                          .join(keycloakRealmTable.as("rlm"))
                           .on(
-                            field(name("ue", "id"), String.class)
-                              .eq(field(name("uat", "user_id"), String.class))
-                              .and(field(name("uat", "name"), String.class).eq("tenant_name"))
-                              .and(field(name("uat", "value"), String.class).eq(ctx.tenant().tenant().id()))
+                            field(name("ue", "realm_id"), String.class)
+                              .eq(field(name("rlm", "id"), String.class))
+                              .and(field(name("rlm", "name"), String.class).eq(ctx.tenant().tenant().id()))
                           )
                       )
                       .execute();
@@ -159,7 +162,16 @@ public class KeycloakSync implements JobFactory {
                 new CreateTablePart(
                   "Create temporary table (new user data)",
                   tempUserDataTable,
-                  List.of(dataKeycloakId, dataFolioId, dataUsername, dataEmail, dataFirstName, dataLastName),
+                  List.of(
+                    dataKeycloakId,
+                    dataFolioId,
+                    dataUsername,
+                    dataEmail,
+                    dataFirstName,
+                    dataLastName,
+                    dataBarcode,
+                    dataExternalSystemId
+                  ),
                   List.of(primaryKey(dataKeycloakId), unique(dataFolioId)),
                   false
                 )
@@ -189,14 +201,16 @@ public class KeycloakSync implements JobFactory {
                             .fetchMap(matchedFolioId.cast(UUID.class), matchedKeycloakId);
 
                         // fetch associated data (no cross-DB calls allowed)
-                        List<Record5<UUID, String, String, String, String>> folioUserData =
+                        List<Record7<UUID, String, String, String, String, String, String>> folioUserData =
                           this.create()
                             .select(
                               field("id", UUID.class),
                               field("jsonb->>'username'", String.class),
                               field("jsonb->'personal'->>'email'", String.class),
                               field("jsonb->'personal'->>'firstName'", String.class),
-                              field("jsonb->'personal'->>'lastName'", String.class)
+                              field("jsonb->'personal'->>'lastName'", String.class),
+                              field("jsonb->>'externalSystemId'", String.class),
+                              field("jsonb->>'barcode'", String.class)
                             )
                             .from(new TableReference("users", "users").table(ctx.tenant().tenant()))
                             .where(field("id", UUID.class).in(folioIdToKeycloakId.keySet()))
@@ -214,7 +228,9 @@ public class KeycloakSync implements JobFactory {
                                 dataUsername,
                                 dataEmail,
                                 dataFirstName,
-                                dataLastName
+                                dataLastName,
+                                dataExternalSystemId,
+                                dataBarcode
                               )
                               .values(
                                 folioIdToKeycloakId.get(record.get("id", UUID.class)),
@@ -222,7 +238,9 @@ public class KeycloakSync implements JobFactory {
                                 record.get("jsonb->>'username'", String.class),
                                 record.get("jsonb->'personal'->>'email'", String.class),
                                 record.get("jsonb->'personal'->>'firstName'", String.class),
-                                record.get("jsonb->'personal'->>'lastName'", String.class)
+                                record.get("jsonb->'personal'->>'lastName'", String.class),
+                                record.get("jsonb->>'externalSystemId'", String.class),
+                                record.get("jsonb->>'barcode'", String.class)
                               )
                           )
                           .toList();
@@ -335,8 +353,48 @@ public class KeycloakSync implements JobFactory {
                   String.class,
                   JobConfig.BATCH_SIZE,
                   "apply-new-values",
-                  (label, condition, start, end) ->
-                    new JobPart("Sync user data with FOLIO data for users " + label) {
+                  (label, condition, start, end) -> {
+                    job.scheduleParts(
+                      "apply-new-values",
+                      List.of(
+                        new JobPart("Sync user_attribute table with FOLIO barcodes for users " + label) {
+                          @Override
+                          protected void execute() {
+                            this.createKeycloak()
+                              .update(keycloakUserAttributeTable)
+                              .set(
+                                field("value", String.class),
+                                select(dataBarcode).from(tempUserDataTable).where(dataKeycloakId.eq(userId))
+                              )
+                              .where(
+                                field("name", String.class)
+                                  .eq("barcode")
+                                  .and(userId.in(select(dataKeycloakId).from(tempUserDataTable).where(condition)))
+                              )
+                              .execute();
+                          }
+                        },
+                        new JobPart("Sync user_attribute table with FOLIO external system IDs for users " + label) {
+                          @Override
+                          protected void execute() {
+                            this.createKeycloak()
+                              .update(keycloakUserAttributeTable)
+                              .set(
+                                field("value", String.class),
+                                select(dataExternalSystemId).from(tempUserDataTable).where(dataKeycloakId.eq(userId))
+                              )
+                              .where(
+                                field("name", String.class)
+                                  .eq("external_system_id")
+                                  .and(userId.in(select(dataKeycloakId).from(tempUserDataTable).where(condition)))
+                              )
+                              .execute();
+                          }
+                        }
+                      )
+                    );
+
+                    return new JobPart("Sync user_entity table with FOLIO data for users " + label) {
                       @Override
                       protected void execute() {
                         this.createKeycloak()
@@ -386,7 +444,8 @@ public class KeycloakSync implements JobFactory {
                           )
                           .execute();
                       }
-                    }
+                    };
+                  }
                 )
                   .withKeycloakDb()
               )
