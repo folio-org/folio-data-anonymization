@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   maven:
-    uses: folio-org/.github/.github/workflows/maven.yml@5066ee97bbc73b0f2e8fc53e44589cd8b146929c # v1
+    uses: folio-org/.github/.github/workflows/maven.yml@8b59acede585b74b1b717fa59a6539c5852d4278 # v1
     # Only handle push events from the main branch or tags, to decrease PR noise
     if: github.ref_name == github.event.repository.default_branch ||
       github.event_name != 'push' || github.ref_type == 'tag' || github.actor == 'renovate[bot]'
