@@ -23,7 +23,7 @@ jobs:
 
   run:
     name: Deploy to GitHub Packages
-    if: ${{ github.ref_name == github.event.repository.default_branch }}
+    if: ${{ github.ref_name == github.event.repository.default_branch || github.ref_type == 'tag' }}
     needs: maven
     runs-on: ubuntu-latest
 
@@ -51,7 +51,14 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-maven
 
-      - name: Set code version to ${{ github.sha }}
+      - name: Set maven and code version to tag (tag only)
+        if: ${{ github.ref_type == 'tag' }}
+        run: |
+          sed -i "s/@placeholder@/${{ github.ref_name }}/g" src/main/java/org/folio/anonymization/config/Version.java
+          mvn --batch-mode versions:set -DnewVersion=${{ github.ref_name }} -DgenerateBackupPoms=false
+
+      - name: Set code version to commit hash (non-tag only)
+        if: ${{ github.ref_type != 'tag' }}
         run: sed -i "s/@placeholder@/${{ github.sha }}/g" src/main/java/org/folio/anonymization/config/Version.java
 
       - name: Deploy to Nexus
