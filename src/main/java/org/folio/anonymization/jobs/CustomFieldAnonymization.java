@@ -29,6 +29,7 @@ import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromEachRowPart;
 import org.folio.anonymization.jobs.templates.BatchGenerationFromTablePart;
 import org.folio.anonymization.jobs.templates.RedactPart;
+import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.folio.anonymization.jobs.templates.ReplaceOIDPart;
 import org.folio.anonymization.jobs.templates.ReplaceValueFromListPart;
 import org.folio.anonymization.jobs.templates.ReplaceValuePart;
@@ -52,6 +53,7 @@ public class CustomFieldAnonymization implements JobFactory {
     "SINGLE_SELECT_DROPDOWN",
     "MULTI_SELECT_DROPDOWN"
   );
+  private static final Set<String> RMB_FIELD_DATE_TYPES = Set.of("DATE_PICKER");
 
   private static final List<String> GROOVY_MODULES = List.of("agreements", "licenses", "service_interaction");
   private static final List<String> RMB_MODULES = List.of("orders_storage", "users");
@@ -220,7 +222,7 @@ public class CustomFieldAnonymization implements JobFactory {
       new JobBuilder(
         "custom_property_values",
         "Custom property values",
-        "Redact or replace text, integer, and pick list values of custom fields with random values.",
+        "Redact or replace text, integer, date (users/orders only), and pick list values of custom fields with random values.",
         tenant,
         context,
         Stream
@@ -427,32 +429,70 @@ public class CustomFieldAnonymization implements JobFactory {
                 FieldReference baseDefinitionField = field.withTable("custom_fields").withColumn("jsonb");
                 // find the custom fields we actually want to modify
                 return new BatchGenerationFromEachRowPart<>(
-                  "Enumerate text-valued RMB custom fields for " + field.toString(),
-                  select(baseDefinitionField.withJsonPath("$.refId").field(tenant.tenant(), String.class).as("refId"))
+                  "Enumerate text and date RMB custom fields for " + field.toString(),
+                  select(
+                    baseDefinitionField.withJsonPath("$.refId").field(tenant.tenant(), String.class).as("refId"),
+                    field("{0}->>'type'", String.class, baseDefinitionField.baseColumn(tenant.tenant(), JSONB.class))
+                      .as("type")
+                  )
                     .from(baseDefinitionField.table(tenant.tenant()))
                     .where(
                       field("{0}->>'type'", String.class, baseDefinitionField.baseColumn(tenant.tenant(), JSONB.class))
-                        .in(RMB_FIELD_REDACT_TYPES)
+                        .in(Stream.concat(RMB_FIELD_REDACT_TYPES.stream(), RMB_FIELD_DATE_TYPES.stream()).toList())
                     ),
                   (r, i) -> {
-                    job.scheduleParts(
-                      "prepare",
-                      List.of(
-                        new BatchGenerationFromTablePart<>(
-                          "Prepare to redact " + field.toString() + " for refId " + r.get("refId"),
-                          field.withJsonPath(field.jsonPath() + "." + r.get("refId")),
-                          JobConfig.BATCH_SIZE,
-                          "overwrite",
-                          (label, condition, start, end) ->
-                            new RedactPart(
-                              "Redact " + field.toString() + " with refId " + r.get("refId") + " on " + label,
-                              field.withJsonPath(field.jsonPath() + "." + r.get("refId")),
-                              condition
-                            ),
-                          SystemUserExclusionUtil.getExclusionCondition(field, tenant)
+                    if (RMB_FIELD_REDACT_TYPES.contains(r.get("type"))) {
+                      job.scheduleParts(
+                        "prepare",
+                        List.of(
+                          new BatchGenerationFromTablePart<>(
+                            "Prepare to redact " + field.toString() + " for refId " + r.get("refId"),
+                            field.withJsonPath(field.jsonPath() + "." + r.get("refId")),
+                            JobConfig.BATCH_SIZE,
+                            "overwrite",
+                            (label, condition, start, end) ->
+                              new RedactPart(
+                                "Redact " + field.toString() + " with refId " + r.get("refId") + " on " + label,
+                                field.withJsonPath(field.jsonPath() + "." + r.get("refId")),
+                                condition
+                              ),
+                            SystemUserExclusionUtil.getExclusionCondition(field, tenant)
+                          )
                         )
-                      )
-                    );
+                      );
+                    } else if (RMB_FIELD_DATE_TYPES.contains(r.get("type"))) {
+                      job.scheduleParts(
+                        "prepare",
+                        List.of(
+                          new BatchGenerationFromTablePart<>(
+                            "Prepare to randomize dates in " + field.toString() + " for refId " + r.get("refId"),
+                            field.withJsonPath(field.jsonPath() + "." + r.get("refId")),
+                            JobConfig.BATCH_SIZE,
+                            "overwrite",
+                            (label, condition, start, end) ->
+                              new ReplaceJSONBValuePart(
+                                "Randomize date in " +
+                                field.toString() +
+                                " with refId " +
+                                r.get("refId") +
+                                " on " +
+                                label,
+                                field.withJsonPath(field.jsonPath() + "." + r.get("refId")),
+                                condition,
+                                field(
+                                  "to_jsonb(to_char(date '1960-01-01' + trunc(random() * ((date '2030-12-31' - date '1960-01-01') + 1))::int, 'YYYY-MM-DD'))",
+                                  JSONB.class
+                                )
+                              ),
+                            SystemUserExclusionUtil.getExclusionCondition(field, tenant)
+                          )
+                        )
+                      );
+                    } else {
+                      throw new IllegalArgumentException(
+                        "No strategy defined for custom field " + field + " with type " + r.get("type")
+                      );
+                    }
                   }
                 );
               })
