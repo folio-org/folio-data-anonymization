@@ -7,4 +7,12 @@ import org.folio.anonymization.domain.folio.Tenant;
 
 /** Information about the tenant which a job will execute in */
 @With
-public record TenantExecutionContext(Tenant tenant, List<ModuleTable> availableTables) {}
+public record TenantExecutionContext(
+  Tenant tenant,
+  List<ModuleTable> availableTables,
+  List<Tenant> consortiumSiblings
+) {
+  public TenantExecutionContext(Tenant tenant, List<ModuleTable> availableTables) {
+    this(tenant, availableTables, List.of());
+  }
+}

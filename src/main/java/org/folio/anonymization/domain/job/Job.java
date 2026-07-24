@@ -23,9 +23,6 @@ public final class Job implements Comparable<Job> {
   private final List<String> stages;
   private int currentStageIndex = 0;
 
-  /** If this job should be deferred until others are done (used for keycloak) */
-  private boolean isDeferred = false;
-
   /**
    * Parts of the job, split as logically necessary (and/or based on application configuration).
    * Earlier parts (based on {@link #stages}) may alter parts belonging to future stages (for example,
@@ -158,6 +155,15 @@ public final class Job implements Comparable<Job> {
 
   public boolean isDone() {
     return this.currentStageIndex >= this.stages.size();
+  }
+
+  /** If the job should run later, and in what sequence (ensures syncs happen after all data are changed) */
+  public int getDeferralStage() {
+    return switch (this.getKey()) {
+      case "shadow_sync" -> 0;
+      case "keycloak_sync" -> 1;
+      default -> -1;
+    };
   }
 
   @Override
