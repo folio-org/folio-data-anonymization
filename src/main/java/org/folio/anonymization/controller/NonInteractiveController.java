@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -34,6 +37,7 @@ import org.folio.anonymization.domain.noninteractive.JobConfigurationNonInteract
 import org.folio.anonymization.domain.noninteractive.NonInteractiveConfiguration;
 import org.folio.anonymization.repository.TenantRepository;
 import org.jooq.DSLContext;
+import org.jooq.tools.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
@@ -49,6 +53,8 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 @Controller
 @RequiredArgsConstructor
 public class NonInteractiveController {
+
+  private static final String NON_ECS_PSEUDO_CONSORTIUM = "non-ecs";
 
   private static final ObjectMapper OBJECT_MAPPER = JsonMapper
     .builder()
@@ -131,6 +137,7 @@ public class NonInteractiveController {
 
     log.info("Fetching tenants...");
     Map<String, Tenant> allTenants = tenantRepository.getAllTenants();
+    Map<String, List<Tenant>> consortiums = TenantRepository.getConsortiumListFromTenants(allTenants.values());
     List<Tenant> selectedTenants = allTenants
       .entrySet()
       .stream()
@@ -155,11 +162,38 @@ public class NonInteractiveController {
       throw log.throwing(new IllegalStateException("No tenants matched any of the provided patterns!"));
     }
 
+    // verify that all members of a consortium are included if any member is included
+    selectedTenants
+      .stream()
+      .filter(t -> t.consortiumName() != null)
+      .map(Tenant::consortiumName)
+      .forEach(consortium -> {
+        if (selectedTenants.containsAll(consortiums.get(consortium))) {
+          log.info("All members of consortium {} are included in the selected tenants.", consortium);
+        } else {
+          throw log.throwing(
+            new IllegalStateException(
+              "Consortium " +
+              consortium +
+              " has some members that are not included in the selected tenants! All members must be included if any member is included."
+            )
+          );
+        }
+      });
+
+    Map<String, List<Tenant>> selectedTenantsByConsortium = selectedTenants
+      .stream()
+      .map(t -> Map.entry(StringUtils.defaultIfNull(t.consortiumName(), NON_ECS_PSEUDO_CONSORTIUM), t))
+      .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
+
     List<JobBuilder> availableJobBuilders = selectedTenants
       .stream()
       .flatMap(tenant -> {
         log.info("Loading jobs for tenant {}...", tenant.id());
-        TenantExecutionContext context = tenantRepository.getTenantExecutionContext(tenant);
+        TenantExecutionContext context = tenantRepository.getTenantExecutionContext(
+          tenant,
+          Optional.ofNullable(tenant.consortiumName()).map(selectedTenantsByConsortium::get).orElse(List.of())
+        );
         return jobFactories.stream().map(factory -> factory.getBuilders(context));
       })
       .flatMap(List::stream)
@@ -206,13 +240,13 @@ public class NonInteractiveController {
     log.info("Starting jobs...");
 
     List<Job> jobs = new ArrayList<>(jobBuilders.size());
-    List<Job> deferredJobs = new ArrayList<>();
+    SortedMap<Integer, List<Job>> deferredJobs = new TreeMap<>();
     for (int i = 0; i < jobBuilders.size(); i++) {
       Job job = jobBuilders.get(i).build();
 
-      if (job.isDeferred()) {
-        deferredJobs.add(job);
-        log.info("Job {} is deferred and will be started later!", job.getName());
+      if (job.getDeferralStage() != -1) {
+        deferredJobs.computeIfAbsent(job.getDeferralStage(), k -> new ArrayList<>()).add(job);
+        log.info("Job {} is deferred to stage {} and will be started later!", job.getName(), job.getDeferralStage());
         continue;
       }
 
@@ -236,127 +270,159 @@ public class NonInteractiveController {
 
     waitForCompletion(jobs, failedParts);
 
-    log.info("All non-deferred jobs have completed! Starting {} deferred jobs...", deferredJobs.size());
+    log.info("All non-deferred jobs have completed!");
 
-    deferredJobs.forEach(job -> {
-      job.execute();
-      jobs.add(job);
-      log.info("Started deferred job: {}", job.getName());
-    });
+    for (Map.Entry<Integer, List<Job>> entry : deferredJobs.entrySet()) {
+      log.info("Starting {} deferred jobs for stage {}...", entry.getValue().size(), entry.getKey());
 
-    waitForCompletion(deferredJobs, failedParts);
+      for (Job job : entry.getValue()) {
+        job.execute();
+        jobs.add(job);
+        log.info("Started deferred job: {}", job.getName());
+      }
+
+      waitForCompletion(entry.getValue(), failedParts);
+    }
 
     log.info("All jobs completed!");
     log.info("Creating reports...");
 
-    selectedTenants.forEach(tenant -> {
-      boolean hadFailures = failedParts.containsKey(tenant);
-      try {
-        LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+    selectedTenantsByConsortium
+      .entrySet()
+      .stream()
+      .flatMap(entry -> {
+        if (NON_ECS_PSEUDO_CONSORTIUM.equals(entry.getKey())) {
+          return entry.getValue().stream().map(t -> Map.entry(t.id(), List.of(t)));
+        } else {
+          String rawName = entry.getKey().substring(0, entry.getKey().lastIndexOf('(')).trim();
+          String sanitized = rawName
+            .replaceAll("[^a-zA-Z0-9]", "-")
+            .toLowerCase()
+            .substring(0, Math.min(20, rawName.length()));
+          return List.of(Map.entry("consortium-" + sanitized, entry.getValue())).stream();
+        }
+      })
+      .forEach(consortium -> {
+        String name = consortium.getKey();
+        List<Tenant> tenants = consortium.getValue();
+        List<String> tenantIds = tenants.stream().map(Tenant::id).toList();
 
-        map.put("version", Version.VERSION);
-        map.put("tenantId", tenant.id());
-        map.put("hadFailures", hadFailures);
-        map.put("startedAt", startedAt.toString());
-        map.put("completedAt", Instant.now().toString());
-        map.put("configuration", this.configuration); // for reference
-        map.put(
-          "disabledJobs",
-          skippedJobBuilders
-            .stream()
-            .filter(b -> b.tenant().tenant().id().equals(tenant.id()))
-            .map(b -> Map.entry(b.key(), getJsonRepresentation(b)))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new))
-        );
-        map.put(
-          "failedParts",
-          failedParts
-            .getOrDefault(tenant, Map.of())
-            .entrySet()
-            .stream()
-            .map(e ->
-              Map.entry(
-                e.getKey().getKey(),
-                e
-                  .getValue()
-                  .stream()
-                  .map(part -> Map.entry(part.getLeft().getLabel(), getJsonRepresentation(part.getRight())))
-                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new))
-              )
-            )
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new))
-        );
-        map.put(
-          "executedJobs",
-          jobs
-            .stream()
-            .filter(j -> j.getContext().tenant().tenant().id().equals(tenant.id()))
-            .map(j -> Map.entry(j.getKey(), getJsonRepresentation(j)))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new))
-        );
-
-        Files.write(Paths.get("out", tenant.id() + "-report.json"), OBJECT_MAPPER.writeValueAsBytes(map));
-        log.info("Saved report for tenant {}", tenant.id());
-      } catch (IOException e) {
-        throw log.throwing(new UncheckedIOException(e));
-      }
-
-      if (hadFailures) {
-        log.warn(
-          "Tenant {} had failures during anonymization! Please review the generated report at {} for details and re-run the errored jobs.",
-          tenant.id(),
-          Paths.get("out", tenant.id() + "-report.json").toAbsolutePath()
-        );
-
-        Map<String, JobConfigurationNonInteractive> rerunJobConfiguration =
-          this.configuration.jobs()
-            .keySet()
-            .stream()
-            .map(k -> Map.entry(k, JobConfigurationNonInteractive.builder().enabled(false).build()))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new));
-
-        // always rerun this if applicable
-        rerunJobConfiguration.put("keycloak_sync", this.configuration.jobs().get("keycloak_sync"));
-
-        failedParts
-          .getOrDefault(tenant, Map.of())
-          .entrySet()
-          .stream()
-          .forEach(job ->
-            rerunJobConfiguration.put(
-              job.getKey().getKey(),
-              JobConfigurationNonInteractive
-                .builder()
-                .enabled(true)
-                .performSetup(false)
-                .performTeardown(true)
-                .removeUnknownModConfigurationEntries(
-                  this.configuration.jobs().get(job.getKey().getKey()).removeUnknownModConfigurationEntries()
-                )
-                .removeUnknownModSettingEntries(
-                  this.configuration.jobs().get(job.getKey().getKey()).removeUnknownModSettingEntries()
-                )
-                .build()
-            )
-          );
-
+        boolean hadFailures = tenants.stream().anyMatch(failedParts::containsKey);
         try {
-          Files.write(
-            Paths.get("out", tenant.id() + "-rerun.json"),
-            OBJECT_MAPPER.writeValueAsBytes(
-              new NonInteractiveConfiguration(
-                this.configuration.parameters(),
-                List.of(Pattern.compile("^" + Pattern.quote(tenant.id()) + "$")),
-                rerunJobConfiguration
+          LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+
+          map.put("version", Version.VERSION);
+          if (tenants.size() > 1) {
+            map.put("consortiumName", tenants.get(0).consortiumName());
+            map.put("tenants", tenantIds);
+          } else {
+            map.put("tenantId", tenants.get(0).id());
+          }
+          map.put("hadFailures", hadFailures);
+          map.put("startedAt", startedAt.toString());
+          map.put("completedAt", Instant.now().toString());
+          map.put("configuration", this.configuration); // for reference
+          map.put(
+            "disabledJobs",
+            tenantIds
+              .stream()
+              .flatMap(t ->
+                skippedJobBuilders
+                  .stream()
+                  .filter(b -> t.equals(b.tenant().tenant().id()))
+                  .map(b -> Map.entry("[" + t + "] " + b.key(), getJsonRepresentation(b)))
               )
-            )
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new))
           );
-          log.info("Saved re-run configuration for tenant {}", tenant.id());
+          map.put(
+            "failedParts",
+            tenants
+              .stream()
+              .flatMap(t -> failedParts.getOrDefault(t, Map.of()).entrySet().stream())
+              .map(e ->
+                Map.entry(
+                  "[" + e.getKey().getContext().tenant().tenant().id() + "] " + e.getKey().getKey(),
+                  e
+                    .getValue()
+                    .stream()
+                    .map(part -> Map.entry(part.getLeft().getLabel(), getJsonRepresentation(part.getRight())))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new))
+                )
+              )
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new))
+          );
+          map.put(
+            "executedJobs",
+            jobs
+              .stream()
+              .filter(j -> tenantIds.contains(j.getContext().tenant().tenant().id()))
+              .map(j ->
+                Map.entry("[" + j.getContext().tenant().tenant().id() + "] " + j.getKey(), getJsonRepresentation(j))
+              )
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new))
+          );
+
+          Files.write(Paths.get("out", name + "-report.json"), OBJECT_MAPPER.writeValueAsBytes(map));
+          log.info("Saved report for tenant/consortium {}", name);
         } catch (IOException e) {
           throw log.throwing(new UncheckedIOException(e));
         }
-      }
-    });
+
+        if (hadFailures) {
+          log.warn(
+            "Consortium/tenant {} had failures during anonymization! Please review the generated report at {} for details and re-run the errored jobs.",
+            name,
+            Paths.get("out", name + "-report.json").toAbsolutePath()
+          );
+
+          Map<String, JobConfigurationNonInteractive> rerunJobConfiguration =
+            this.configuration.jobs()
+              .keySet()
+              .stream()
+              .map(k -> Map.entry(k, JobConfigurationNonInteractive.builder().enabled(false).build()))
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new));
+
+          // always rerun these if applicable
+          rerunJobConfiguration.put("keycloak_sync", this.configuration.jobs().get("keycloak_sync"));
+
+          tenants
+            .stream()
+            .flatMap(t -> failedParts.getOrDefault(t, Map.of()).entrySet().stream())
+            .forEach(job ->
+              rerunJobConfiguration.put(
+                job.getKey().getKey(),
+                JobConfigurationNonInteractive
+                  .builder()
+                  .enabled(true)
+                  .performSetup(false)
+                  .performTeardown(true)
+                  .removeUnknownModConfigurationEntries(
+                    this.configuration.jobs().get(job.getKey().getKey()).removeUnknownModConfigurationEntries()
+                  )
+                  .removeUnknownModSettingEntries(
+                    this.configuration.jobs().get(job.getKey().getKey()).removeUnknownModSettingEntries()
+                  )
+                  .build()
+              )
+            );
+
+          try {
+            Files.write(
+              Paths.get("out", name + "-rerun.json"),
+              OBJECT_MAPPER.writeValueAsBytes(
+                new NonInteractiveConfiguration(
+                  this.configuration.parameters(),
+                  tenantIds.stream().map(id -> Pattern.compile("^" + Pattern.quote(id) + "$")).toList(),
+                  rerunJobConfiguration
+                )
+              )
+            );
+            log.info("Saved re-run configuration for tenant/consortium {}", name);
+          } catch (IOException e) {
+            throw log.throwing(new UncheckedIOException(e));
+          }
+        }
+      });
 
     log.info("All done! Shutting down...");
     this.executor.shutdown();

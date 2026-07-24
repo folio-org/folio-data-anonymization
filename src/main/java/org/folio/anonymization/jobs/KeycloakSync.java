@@ -82,7 +82,6 @@ public class KeycloakSync implements JobFactory {
             ctx,
             List.of("prepare", "enumerate-prep", "enumerate", "apply-new-values-prep", "apply-new-values", "cleanup")
           );
-          job.setDeferred(true);
 
           Table<?> keycloakUserEntityTable = table(name("public", "user_entity"));
           Field<String> keycloakUserEntityIdField = field("id", SQLDataType.VARCHAR.notNull());

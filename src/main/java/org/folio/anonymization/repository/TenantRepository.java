@@ -4,6 +4,7 @@ import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.DSL.table;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,8 +37,8 @@ public class TenantRepository {
   @Autowired
   private UtilRepository utilRepository;
 
-  public TenantExecutionContext getTenantExecutionContext(Tenant tenant) {
-    return new TenantExecutionContext(tenant, this.getModuleTablesWithSizes(tenant.id()));
+  public TenantExecutionContext getTenantExecutionContext(Tenant tenant, List<Tenant> consortiumSiblings) {
+    return new TenantExecutionContext(tenant, this.getModuleTablesWithSizes(tenant.id()), consortiumSiblings);
   }
 
   public Map<String, Tenant> getAllTenants() {
@@ -121,7 +122,8 @@ public class TenantRepository {
 
     return create
       .select(
-        field(name("consortium", "name")).as("consortium_name"),
+        field(field("concat({0}, ' (', {1}, ')')", name("consortium", "name"), name("consortium", "id")))
+          .as("consortium_name"),
         field(name("tenant", "id")).as("tenant_id"),
         field(name("tenant", "name")).as("tenant_name"),
         field(name("tenant", "is_central")).as("tenant_is_central")
@@ -142,6 +144,13 @@ public class TenantRepository {
         )
       )
       .toList();
+  }
+
+  public static Map<String, List<Tenant>> getConsortiumListFromTenants(Collection<Tenant> tenants) {
+    return tenants
+      .stream()
+      .filter(t -> t.consortiumName() != null)
+      .collect(Collectors.groupingBy(Tenant::consortiumName));
   }
 
   protected record TenantConsortiumInfo(
