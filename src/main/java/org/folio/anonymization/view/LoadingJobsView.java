@@ -83,7 +83,7 @@ public class LoadingJobsView implements TUIView {
       this.progress.setCurrentTenant(tenant.id());
       this.progress.setOnDbStage(true);
 
-      TenantExecutionContext context = tenantRepository.getTenantExecutionContext(tenant);
+      TenantExecutionContext context = tenantRepository.getTenantExecutionContext(tenant, List.of());
 
       this.progress.setOnDbStage(false);
 

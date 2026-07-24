@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.NotImplementedException;
 import org.folio.anonymization.controller.TUIState;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
@@ -88,8 +89,10 @@ public class StartJobsView implements TUIView {
 
       Job job = jobBuilder.build();
 
-      if (job.isDeferred()) {
-        log.info("Deferring job: {}", job.getName());
+      if (job.getDeferralStage() != -1) {
+        throw new NotImplementedException(
+          "Deferred jobs are not supported in non-interactive mode (job '%s')".formatted(job.getKey())
+        );
       } else {
         job.execute();
       }
