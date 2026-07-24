@@ -198,7 +198,14 @@ public class CustomFieldAnonymization implements JobFactory {
                         new ReplaceValueFromListPart(
                           "Replace custom field names in " + table.schema() + " on " + label,
                           table.field("jsonb").withJsonPath("$.name"),
-                          condition,
+                          condition.and(
+                            field(
+                              "{0}->>'refId'",
+                              String.class,
+                              table.field("jsonb").baseColumn(tenant.tenant(), JSONB.class)
+                            )
+                              .notEqual("originaltenantid")
+                          ),
                           RandomValueUtils.customFieldNames(Math.max(5, end - start))
                         )
                     ),
@@ -211,7 +218,14 @@ public class CustomFieldAnonymization implements JobFactory {
                         new RedactPart(
                           "Redact custom field help texts in " + table.schema() + " on " + label,
                           table.field("jsonb").withJsonPath("$.helpText"),
-                          condition
+                          condition.and(
+                            field(
+                              "{0}->>'refId'",
+                              String.class,
+                              table.field("jsonb").baseColumn(tenant.tenant(), JSONB.class)
+                            )
+                              .notEqual("originaltenantid")
+                          )
                         )
                     )
                   );
@@ -439,6 +453,14 @@ public class CustomFieldAnonymization implements JobFactory {
                     .where(
                       field("{0}->>'type'", String.class, baseDefinitionField.baseColumn(tenant.tenant(), JSONB.class))
                         .in(Stream.concat(RMB_FIELD_REDACT_TYPES.stream(), RMB_FIELD_DATE_TYPES.stream()).toList())
+                        .and(
+                          field(
+                            "{0}->>'refId'",
+                            String.class,
+                            baseDefinitionField.baseColumn(tenant.tenant(), JSONB.class)
+                          )
+                            .notEqual("originaltenantid")
+                        )
                     ),
                   (r, i) -> {
                     if (RMB_FIELD_REDACT_TYPES.contains(r.get("type"))) {
