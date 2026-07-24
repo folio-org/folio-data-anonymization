@@ -54,7 +54,7 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 @RequiredArgsConstructor
 public class NonInteractiveController {
 
-  private static final String NON_ECS_PSUEDO_CONSORTIUM = "non-ecs";
+  private static final String NON_ECS_PSEUDO_CONSORTIUM = "non-ecs";
 
   private static final ObjectMapper OBJECT_MAPPER = JsonMapper
     .builder()
@@ -183,7 +183,7 @@ public class NonInteractiveController {
 
     Map<String, List<Tenant>> selectedTenantsByConsortium = selectedTenants
       .stream()
-      .map(t -> Map.entry(StringUtils.defaultIfNull(t.consortiumName(), NON_ECS_PSUEDO_CONSORTIUM), t))
+      .map(t -> Map.entry(StringUtils.defaultIfNull(t.consortiumName(), NON_ECS_PSEUDO_CONSORTIUM), t))
       .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
 
     List<JobBuilder> availableJobBuilders = selectedTenants
@@ -291,7 +291,7 @@ public class NonInteractiveController {
       .entrySet()
       .stream()
       .flatMap(entry -> {
-        if (NON_ECS_PSUEDO_CONSORTIUM.equals(entry.getKey())) {
+        if (NON_ECS_PSEUDO_CONSORTIUM.equals(entry.getKey())) {
           return entry.getValue().stream().map(t -> Map.entry(t.id(), List.of(t)));
         } else {
           String rawName = entry.getKey().substring(0, entry.getKey().lastIndexOf('(')).trim();
