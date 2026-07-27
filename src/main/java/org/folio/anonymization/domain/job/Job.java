@@ -135,9 +135,32 @@ public final class Job implements Comparable<Job> {
     this.checkNextStageEligibility();
   }
 
+  /**
+   * Used for special "_sync_*" stages; we verify that all other jobs of this type have reached this
+   * stage before continuing.
+   *
+   * Only applicable in ECS executions; single-tenant executions have a no-op here and will just skip to the next stage.
+   */
+  public synchronized void updateProgress(List<Job> jobs) {
+    int currentStage = this.currentStageIndex;
+    if (
+      currentStage < this.stages.size() &&
+      this.stages.get(currentStage).startsWith("_sync_") &&
+      jobs
+        .stream()
+        .filter(j -> j.getKey().equals(this.getKey()))
+        .filter(j -> this.context.tenant().consortiumSiblings().contains(j.getContext().tenant().tenant()))
+        .allMatch(j -> j.getCurrentStageIndex() >= currentStage)
+    ) {
+      log.info("Job '{}' has had all siblings reach sync stage '{}'; continuing.", name, this.stages.get(currentStage));
+      currentStageIndex++;
+      this.executeNextStage();
+    }
+  }
+
   protected void checkNextStageEligibility() {
     synchronized (currentlyExecuting) {
-      if (currentlyExecuting.isEmpty()) {
+      if (currentlyExecuting.isEmpty() && !stages.get(currentStageIndex).startsWith("_sync_")) {
         log.info("Job '{}' completed stage '{}'.", name, stages.get(currentStageIndex));
         currentStageIndex++;
         this.executeNextStage();
@@ -149,6 +172,12 @@ public final class Job implements Comparable<Job> {
     if (!stages.contains(destinationStage)) {
       throw new IllegalArgumentException("Job '%s': stage '%s' is not recognized".formatted(name, destinationStage));
     }
+    if (destinationStage.startsWith("_sync_")) {
+      throw new IllegalArgumentException(
+        "Job '%s': stage '%s' is a sync stage and cannot have parts scheduled!".formatted(name, destinationStage)
+      );
+    }
+
     parts.computeIfAbsent(destinationStage, k -> new ConcurrentLinkedQueue<>()).addAll(jobParts);
     return this;
   }

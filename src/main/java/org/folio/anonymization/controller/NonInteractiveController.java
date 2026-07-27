@@ -168,9 +168,7 @@ public class NonInteractiveController {
       .filter(t -> t.consortiumName() != null)
       .map(Tenant::consortiumName)
       .forEach(consortium -> {
-        if (selectedTenants.containsAll(consortiums.get(consortium))) {
-          log.info("All members of consortium {} are included in the selected tenants.", consortium);
-        } else {
+        if (!selectedTenants.containsAll(consortiums.get(consortium))) {
           throw log.throwing(
             new IllegalStateException(
               "Consortium " +
@@ -432,6 +430,7 @@ public class NonInteractiveController {
   private void waitForCompletion(List<Job> jobs, Map<Tenant, Map<Job, List<Pair<JobPart, Throwable>>>> failedParts) {
     Instant lastStatusReport = Instant.now();
     do {
+      jobs.stream().forEach(j -> j.updateProgress(jobs));
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
