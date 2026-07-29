@@ -17,12 +17,11 @@ import org.jooq.JSONB;
  * and sibling tenant.
  *
  * @example
- * new ShadowUserPropagationBatchPart("propagate", tenant, sibling, field, "_danon_%s_user_external_system_ids", "propagate-shadow-users", UnaryOperator.identity())
+ * new ShadowUserPropagationBatchPart(tenant, sibling, field, "_danon_%s_user_external_system_ids", "propagate-shadow-users", UnaryOperator.identity())
  */
 public class ShadowUserPropagationBatchPart extends BatchGenerationFromTablePart<UUID> {
 
   public ShadowUserPropagationBatchPart(
-    String label,
     Tenant baseTenant,
     Tenant sibling,
     String jsonbProperty,

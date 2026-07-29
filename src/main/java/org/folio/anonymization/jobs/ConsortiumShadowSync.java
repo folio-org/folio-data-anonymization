@@ -5,7 +5,6 @@ import static dev.tamboui.toolkit.Toolkit.spacer;
 import static dev.tamboui.toolkit.Toolkit.text;
 import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.select;
-import static org.jooq.impl.DSL.selectOne;
 
 import java.util.List;
 import java.util.UUID;
@@ -97,11 +96,6 @@ public class ConsortiumShadowSync implements JobFactory {
                         Table<?> siblingUsersTable = id.table(sibling);
                         Field<UUID> ourUserIdField = id.baseColumn(tenant.tenant(), UUID.class);
                         Field<UUID> siblingUserIdField = id.baseColumn(sibling, UUID.class);
-                        Field<String> ourUserType = field(
-                          "{0}->>'type'",
-                          String.class,
-                          jsonb.baseColumn(tenant.tenant(), JSONB.class)
-                        );
                         Field<String> siblingUserType = field(
                           "{0}->>'type'",
                           String.class,

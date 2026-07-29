@@ -197,7 +197,6 @@ public class UserExternalSystemIdAnonymization implements JobFactory {
                 .stream()
                 .map(sibling ->
                   new ShadowUserPropagationBatchPart(
-                    "Propagating anonymized data for shadow users from sibling tenant " + sibling.id(),
                     tenant.tenant(),
                     sibling,
                     "externalSystemId",
