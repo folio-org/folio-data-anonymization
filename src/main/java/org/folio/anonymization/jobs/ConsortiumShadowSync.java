@@ -111,7 +111,7 @@ public class ConsortiumShadowSync implements JobFactory {
                               jsonb_set(
                                 {0},
                                 '{personal}',
-                                {0}->'personal' || jsonb_build_object(
+                                COALESCE({0}->'personal', '{}'::jsonb) || jsonb_build_object(
                                   'lastName', {1}->'lastName',
                                   'firstName', {1}->'firstName',
                                   'middleName', {1}->'middleName',

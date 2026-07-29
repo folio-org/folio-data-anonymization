@@ -149,7 +149,9 @@ public final class Job implements Comparable<Job> {
       jobs
         .stream()
         .filter(j -> j.getKey().equals(this.getKey()))
-        .filter(j -> this.context.tenant().consortiumSiblings().contains(j.getContext().tenant().tenant()))
+        .filter(j ->
+          this.context.tenant().consortiumSiblings().stream().anyMatch(s -> s.id().equals(j.getContext().tenant().tenant().id()))
+        )
         .allMatch(j -> j.getCurrentStageIndex() >= currentStage)
     ) {
       log.info("Job '{}' has had all siblings reach sync stage '{}'; continuing.", name, this.stages.get(currentStage));
