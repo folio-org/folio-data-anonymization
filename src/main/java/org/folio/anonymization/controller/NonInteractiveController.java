@@ -381,7 +381,7 @@ public class NonInteractiveController {
               .map(k -> Map.entry(k, JobConfigurationNonInteractive.builder().enabled(false).build()))
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new));
 
-          // always rerun this if applicable
+          // always rerun these if applicable
           rerunJobConfiguration.put("shadow_sync", this.configuration.jobs().get("shadow_sync"));
           rerunJobConfiguration.put("keycloak_sync", this.configuration.jobs().get("keycloak_sync"));
 
