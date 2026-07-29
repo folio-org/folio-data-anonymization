@@ -8,6 +8,7 @@ import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.TenantExecutionContext;
 import org.jooq.Condition;
+import org.jooq.Field;
 import org.jooq.JSONB;
 
 @UtilityClass
@@ -25,12 +26,11 @@ public class SystemUserExclusionUtil {
     return trueCondition();
   }
 
+  // return true IFF the user should be included
   public static Condition getExclusionCondition(Tenant tenant) {
-    return field(
-      "COALESCE({0}->>'type', '')",
-      String.class,
-      new FieldReference("users", "users", "jsonb").baseColumn(tenant, JSONB.class)
-    )
-      .ne("system");
+    Field<JSONB> column = new FieldReference("users", "users", "jsonb").baseColumn(tenant, JSONB.class);
+    return field("COALESCE({0}->>'type', '')", String.class, column)
+      .ne("system")
+      .and(field("COALESCE({0}->>'username', '')", String.class, column).notEqualIgnoreCase("EBSCOEdge"));
   }
 }
