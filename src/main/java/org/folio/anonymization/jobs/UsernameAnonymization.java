@@ -320,7 +320,8 @@ public class UsernameAnonymization implements JobFactory {
                     sibling,
                     "username",
                     "_danon_%s_usernames",
-                    "propagate-shadow-users"
+                    "propagate-shadow-users",
+                    f -> field("concat({0}, '_', substring(gen_random_uuid()::text, 0, 6))", String.class, f)
                   )
                 )
                 .toList()

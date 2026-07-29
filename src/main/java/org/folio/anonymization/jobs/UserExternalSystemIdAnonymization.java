@@ -8,6 +8,7 @@ import static org.jooq.impl.DSL.table;
 import static org.jooq.impl.DSL.unique;
 
 import java.util.List;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.config.JobConfig;
@@ -201,7 +202,8 @@ public class UserExternalSystemIdAnonymization implements JobFactory {
                     sibling,
                     "externalSystemId",
                     "_danon_%s_user_external_system_ids",
-                    "propagate-shadow-users"
+                    "propagate-shadow-users",
+                    UnaryOperator.identity()
                   )
                 )
                 .toList()

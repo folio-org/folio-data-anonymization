@@ -8,6 +8,7 @@ import static org.jooq.impl.DSL.table;
 import static org.jooq.impl.DSL.unique;
 
 import java.util.List;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
@@ -202,7 +203,8 @@ public class UserBarcodeAnonymization implements JobFactory {
                     sibling,
                     "barcode",
                     "_danon_%s_user_barcodes",
-                    "propagate-shadow-users"
+                    "propagate-shadow-users",
+                    UnaryOperator.identity()
                   )
                 )
                 .toList()

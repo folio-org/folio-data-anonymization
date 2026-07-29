@@ -3,9 +3,11 @@ package org.folio.anonymization.jobs.templates;
 import static org.jooq.impl.DSL.field;
 
 import java.util.UUID;
+import java.util.function.UnaryOperator;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.folio.Tenant;
+import org.jooq.Field;
 import org.jooq.JSONB;
 
 /**
@@ -15,7 +17,7 @@ import org.jooq.JSONB;
  * and sibling tenant.
  *
  * @example
- * new ShadowUserPropagationBatchPart("propagate", tenant, sibling, field, "_danon_%s_user_external_system_ids", "propagate-shadow-users")
+ * new ShadowUserPropagationBatchPart("propagate", tenant, sibling, field, "_danon_%s_user_external_system_ids", "propagate-shadow-users", UnaryOperator.identity())
  */
 public class ShadowUserPropagationBatchPart extends BatchGenerationFromTablePart<UUID> {
 
@@ -25,7 +27,8 @@ public class ShadowUserPropagationBatchPart extends BatchGenerationFromTablePart
     Tenant sibling,
     String jsonbProperty,
     String tempTableTemplate,
-    String stage
+    String stage,
+    UnaryOperator<Field<String>> valueTransformer
   ) {
     // pull users from users table where type = 'shadow' for batches
     super(
@@ -41,7 +44,8 @@ public class ShadowUserPropagationBatchPart extends BatchGenerationFromTablePart
           sibling,
           jsonbProperty,
           tempTableTemplate,
-          condition
+          condition,
+          valueTransformer
         ),
       field(
         "COALESCE({0}->>'type', '')",

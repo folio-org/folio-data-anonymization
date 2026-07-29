@@ -7,6 +7,7 @@ import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.DSL.table;
 
 import java.util.UUID;
+import java.util.function.UnaryOperator;
 import lombok.extern.log4j.Log4j2;
 import org.folio.anonymization.domain.db.FieldReference;
 import org.folio.anonymization.domain.folio.Tenant;
@@ -30,7 +31,7 @@ import org.jooq.impl.SQLDataType;
  * all that is supported at this time.
  *
  * @example
- * new ShadowUserPropagationPart("propagate", sibling, "username", "_danon_%s_user_external_system_ids", condition)
+ * new ShadowUserPropagationPart("propagate", sibling, "username", "_danon_%s_user_external_system_ids", condition, UnaryOperator.identity())
  */
 @Log4j2
 public class ShadowUserPropagationPart extends JobPart {
@@ -39,19 +40,22 @@ public class ShadowUserPropagationPart extends JobPart {
   private final String jsonbProperty;
   private final String tempTableTemplate;
   private final Condition userCondition;
+  private final UnaryOperator<Field<String>> valueTransformer;
 
   public ShadowUserPropagationPart(
     String label,
     Tenant sibling,
     String jsonbProperty,
     String tempTableTemplate,
-    Condition condition
+    Condition condition,
+    UnaryOperator<Field<String>> valueTransformer
   ) {
     super(label);
     this.sibling = sibling;
     this.jsonbProperty = jsonbProperty;
     this.tempTableTemplate = tempTableTemplate;
     this.userCondition = condition;
+    this.valueTransformer = valueTransformer;
   }
 
   @Override
@@ -65,9 +69,8 @@ public class ShadowUserPropagationPart extends JobPart {
       siblingTempTable.getQualifiedName().append("original_value"),
       SQLDataType.VARCHAR.notNull()
     );
-    Field<String> siblingNewValue = field(
-      siblingTempTable.getQualifiedName().append("new_value"),
-      SQLDataType.VARCHAR.null_()
+    Field<String> siblingNewValue = valueTransformer.apply(
+      field(siblingTempTable.getQualifiedName().append("new_value"), SQLDataType.VARCHAR.null_())
     );
 
     FieldReference userIdReference = new FieldReference("users", "users", "id");
