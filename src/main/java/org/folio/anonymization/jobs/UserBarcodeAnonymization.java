@@ -8,9 +8,11 @@ import static org.jooq.impl.DSL.table;
 import static org.jooq.impl.DSL.unique;
 
 import java.util.List;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 import org.folio.anonymization.config.JobConfig;
 import org.folio.anonymization.domain.db.FieldReference;
+import org.folio.anonymization.domain.folio.Tenant;
 import org.folio.anonymization.domain.job.Job;
 import org.folio.anonymization.domain.job.JobBuilder;
 import org.folio.anonymization.domain.job.JobConfigurationProperty;
@@ -27,6 +29,7 @@ import org.folio.anonymization.jobs.templates.GenerateValuesPart;
 import org.folio.anonymization.jobs.templates.InsertIntoTablePart;
 import org.folio.anonymization.jobs.templates.ReplaceJSONBValuePart;
 import org.folio.anonymization.jobs.templates.ReplaceValuePart;
+import org.folio.anonymization.jobs.templates.ShadowUserPropagationBatchPart;
 import org.folio.anonymization.util.DBUtils;
 import org.folio.anonymization.util.RandomValueUtils;
 import org.folio.anonymization.util.SystemUserExclusionUtil;
@@ -104,6 +107,10 @@ public class UserBarcodeAnonymization implements JobFactory {
               "enumerate",
               "generate-new-values-prep",
               "generate-new-values",
+              "_sync_before_shadow_user_propagation",
+              "propagate-shadow-users-prep",
+              "propagate-shadow-users",
+              "_sync_after_shadow_user_propagation",
               "exclude-system-user-values-prep",
               "exclude-system-user-values",
               "apply-new-values-prep",
@@ -177,6 +184,29 @@ public class UserBarcodeAnonymization implements JobFactory {
                     )
                 )
               )
+            );
+
+            List<Tenant> siblingsBesidesUs = tenant
+              .consortiumSiblings()
+              .stream()
+              .filter(s -> !s.id().equals(tenant.tenant().id()))
+              .toList();
+
+            job.scheduleParts(
+              "propagate-shadow-users-prep",
+              siblingsBesidesUs
+                .stream()
+                .map(sibling ->
+                  new ShadowUserPropagationBatchPart(
+                    tenant.tenant(),
+                    sibling,
+                    "barcode",
+                    "_danon_%s_user_barcodes",
+                    "propagate-shadow-users",
+                    UnaryOperator.identity()
+                  )
+                )
+                .toList()
             );
           }
 

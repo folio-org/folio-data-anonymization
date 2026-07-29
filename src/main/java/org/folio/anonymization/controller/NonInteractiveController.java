@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -168,9 +169,7 @@ public class NonInteractiveController {
       .filter(t -> t.consortiumName() != null)
       .map(Tenant::consortiumName)
       .forEach(consortium -> {
-        if (selectedTenants.containsAll(consortiums.get(consortium))) {
-          log.info("All members of consortium {} are included in the selected tenants.", consortium);
-        } else {
+        if (!selectedTenants.containsAll(consortiums.get(consortium))) {
           throw log.throwing(
             new IllegalStateException(
               "Consortium " +
@@ -383,6 +382,7 @@ public class NonInteractiveController {
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new));
 
           // always rerun these if applicable
+          rerunJobConfiguration.put("shadow_sync", this.configuration.jobs().get("shadow_sync"));
           rerunJobConfiguration.put("keycloak_sync", this.configuration.jobs().get("keycloak_sync"));
 
           tenants
@@ -432,6 +432,7 @@ public class NonInteractiveController {
   private void waitForCompletion(List<Job> jobs, Map<Tenant, Map<Job, List<Pair<JobPart, Throwable>>>> failedParts) {
     Instant lastStatusReport = Instant.now();
     do {
+      jobs.stream().forEach(j -> j.updateProgress(jobs));
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
@@ -478,7 +479,10 @@ public class NonInteractiveController {
               report.append(' ');
               Collection<JobPart> partsInStage = j
                 .getParts()
-                .get(j.getStages().get(Math.min(j.getStages().size() - 1, j.getCurrentStageIndex())));
+                .getOrDefault(
+                  j.getStages().get(Math.min(j.getStages().size() - 1, j.getCurrentStageIndex())),
+                  new ConcurrentLinkedQueue<>()
+                );
               report.append(partsInStage.stream().filter(p -> p.getCompleted().get()).count());
               report.append('/');
               report.append(partsInStage.size());

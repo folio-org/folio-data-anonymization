@@ -51,7 +51,7 @@ public class FieldReference {
   }
 
   public Table<?> table(Tenant tenant) {
-    return DSL.table(DSL.name(DBUtils.getSchemaName(tenant.id(), schema), table));
+    return tableReference().table(tenant);
   }
 
   public TableReference tableReference() {
