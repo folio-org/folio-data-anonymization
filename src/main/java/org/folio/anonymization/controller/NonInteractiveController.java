@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -380,7 +381,8 @@ public class NonInteractiveController {
               .map(k -> Map.entry(k, JobConfigurationNonInteractive.builder().enabled(false).build()))
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new));
 
-          // always rerun these if applicable
+          // always rerun this if applicable
+          rerunJobConfiguration.put("shadow_sync", this.configuration.jobs().get("shadow_sync"));
           rerunJobConfiguration.put("keycloak_sync", this.configuration.jobs().get("keycloak_sync"));
 
           tenants
@@ -477,7 +479,10 @@ public class NonInteractiveController {
               report.append(' ');
               Collection<JobPart> partsInStage = j
                 .getParts()
-                .get(j.getStages().get(Math.min(j.getStages().size() - 1, j.getCurrentStageIndex())));
+                .getOrDefault(
+                  j.getStages().get(Math.min(j.getStages().size() - 1, j.getCurrentStageIndex())),
+                  new ConcurrentLinkedQueue<>()
+                );
               report.append(partsInStage.stream().filter(p -> p.getCompleted().get()).count());
               report.append('/');
               report.append(partsInStage.size());

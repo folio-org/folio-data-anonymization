@@ -200,8 +200,8 @@ public class UserBarcodeAnonymization implements JobFactory {
                     "Propagating anonymized data for shadow users from sibling tenant " + sibling.id(),
                     tenant.tenant(),
                     sibling,
-                    "externalSystemId",
-                    "_danon_%s_user_external_system_ids",
+                    "barcode",
+                    "_danon_%s_user_barcodes",
                     "propagate-shadow-users"
                   )
                 )

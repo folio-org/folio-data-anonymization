@@ -318,8 +318,8 @@ public class UsernameAnonymization implements JobFactory {
                     "Propagating anonymized data for shadow users from sibling tenant " + sibling.id(),
                     tenant.tenant(),
                     sibling,
-                    "externalSystemId",
-                    "_danon_%s_user_external_system_ids",
+                    "username",
+                    "_danon_%s_usernames",
                     "propagate-shadow-users"
                   )
                 )

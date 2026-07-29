@@ -32,7 +32,7 @@ public class ShadowUserPropagationBatchPart extends BatchGenerationFromTablePart
       "Make batches to propagate shadow user data from " + sibling.id(),
       new FieldReference("users", "users", "id"),
       UUID.class,
-      JobConfig.BATCH_SIZE / 10, // we are reading these in to do multiple subsequent queries with explicit
+      JobConfig.BATCH_SIZE / 10, // we are reading these in to do multiple subsequent queries with, so let's be a little nicer...
       stage,
       // copy data from the sibling's temp table to the current tenant's temp table
       (l, condition, start, end) ->
