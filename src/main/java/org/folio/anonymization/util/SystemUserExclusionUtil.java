@@ -29,8 +29,9 @@ public class SystemUserExclusionUtil {
   // return true IFF the user should be included
   public static Condition getExclusionCondition(Tenant tenant) {
     Field<JSONB> column = new FieldReference("users", "users", "jsonb").baseColumn(tenant, JSONB.class);
-    return field("COALESCE({0}->>'type', '')", String.class, column)
-      .ne("system")
-      .and(field("COALESCE({0}->>'username', '')", String.class, column).notEqualIgnoreCase("EBSCOEdge"));
+    return trueCondition()
+      .and(field("COALESCE({0}->>'type', '')", String.class, column).ne("system"))
+      .and(field("COALESCE({0}->>'username', '')", String.class, column).notEqualIgnoreCase("EBSCOEdge"))
+      .and(field("COALESCE({0}->>'username', '')", String.class, column).notLikeIgnoreCase("EBSCOEdge_%"));
   }
 }
