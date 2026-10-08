@@ -9,7 +9,7 @@
 	</parent>
 	<groupId>org.folio</groupId>
 	<artifactId>anonymization</artifactId>
-	<version>1.0.5</version>
+	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>FOLIO Data Anonymization</name>
 	<description />
@@ -26,7 +26,7 @@
 		<url>https://github.com/folio-org/folio-data-anonymization</url>
 		<connection>scm:git:git://github.com/folio-org/folio-data-anonymization.git</connection>
 		<developerConnection>scm:git:git@github.com:folio-org/folio-data-anonymization.git</developerConnection>
-		<tag>v1.0.5</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<distributionManagement>
