@@ -107,7 +107,7 @@
 			<groupId>dev.tamboui</groupId>
 			<artifactId>tamboui-toolkit</artifactId>
 			<!-- installed from lib/ into the local repo by maven-install-plugin below -->
-			<version>0.5.0</version>
+			<version>0.6.0</version>
 		</dependency>
 
 		<!-- best compat with JDK 21 -->
@@ -180,7 +180,7 @@
 							<file>${project.basedir}/lib/tamboui-toolkit-0.2.1-SNAPSHOT.jar</file>
 							<groupId>dev.tamboui</groupId>
 							<artifactId>tamboui-toolkit</artifactId>
-							<version>0.5.0</version>
+							<version>0.6.0</version>
 							<packaging>jar</packaging>
 							<generatePom>true</generatePom>
 						</configuration>
